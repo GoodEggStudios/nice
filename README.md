@@ -1,0 +1,42 @@
+# Nice 👍
+
+> Anonymous like button for the web — no sign-in required
+
+## What is Nice?
+
+Nice is an embeddable like button that doesn't require users to create an account or sign in. Site owners register to get a button, visitors click to like. That's it.
+
+## Why?
+
+- **For users**: No login walls, no tracking, just express appreciation
+- **For site owners**: Simple integration, spam-resistant, privacy-friendly
+
+## Status
+
+🚧 **Spec phase** — See [openspec/specs/NICE.md](openspec/specs/NICE.md) for the full specification.
+
+## Quick Look
+
+```html
+<script 
+  src="https://nice.example/embed.js" 
+  data-button="btn_abc123"
+  async>
+</script>
+```
+
+That's the entire integration.
+
+## Spec
+
+The full specification lives in [`openspec/specs/NICE.md`](openspec/specs/NICE.md), covering:
+
+- Core concepts (buttons, sites, likes)
+- Anti-spam strategy
+- API design
+- Embed options
+- Privacy considerations
+
+## License
+
+MIT
