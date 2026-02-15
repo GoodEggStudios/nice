@@ -1,14 +1,16 @@
 # Nice 👍
 
-> Anonymous like button for the web — no sign-in required
+> The anonymous nice button — no sign-in required
 
 ## What is Nice?
 
-Nice is an embeddable like button that doesn't require users to create an account or sign in. Site owners register to get a button, visitors click to like. That's it.
+Nice is an embeddable "nice" button that doesn't require users to create an account or sign in. Site owners register to get a button, visitors click to nice. That's it.
+
+It's not liking. It's **nice'ing**.
 
 ## Why?
 
-- **For users**: No login walls, no tracking, just express appreciation
+- **For users**: No login walls, no tracking, just say "nice!"
 - **For site owners**: Simple integration, spam-resistant, privacy-friendly
 
 ## Status

@@ -1,10 +1,12 @@
-# Nice — Anonymous Like Button
+# Nice — The Anonymous Nice Button
 
-> "Like buttons without the login wall"
+> "Nice buttons without the login wall"
 
 ## Overview
 
-Nice is an embeddable like button for websites that doesn't require users to sign in. Site owners register to get a button token, embed it on their site, and visitors can like content with a single click.
+Nice is an embeddable "nice" button for websites that doesn't require users to sign in. Site owners register to get a button token, embed it on their site, and visitors can nice content with a single click.
+
+It's not liking. It's **nice'ing**.
 
 ## Goals
 
@@ -16,10 +18,10 @@ Nice is an embeddable like button for websites that doesn't require users to sig
 
 ## Non-Goals
 
-- User accounts/profiles for likers
-- Comments or reactions beyond "like"
+- User accounts/profiles for nice'rs
+- Comments or reactions beyond "nice"
 - Analytics dashboard (v1)
-- Social features (seeing who liked)
+- Social features (seeing who nice'd)
 
 ---
 
@@ -27,7 +29,7 @@ Nice is an embeddable like button for websites that doesn't require users to sig
 
 ### Button
 
-A like button associated with a specific page or content piece.
+A nice button associated with a specific page or content piece.
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -35,7 +37,7 @@ A like button associated with a specific page or content piece.
 | site_id | string | Parent site |
 | name | string | Human label (e.g., "Homepage Hero") |
 | url | string | Optional: canonical URL |
-| count | integer | Total likes |
+| count | integer | Total nices |
 | created_at | timestamp | |
 
 ### Site
@@ -49,9 +51,9 @@ A registered website/domain.
 | token | string | API token (secret) |
 | created_at | timestamp | |
 
-### Like
+### Nice
 
-A single like event.
+A single nice event.
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -80,9 +82,9 @@ Daily salt rotation means the same visitor gets a new hash each day, limiting lo
 
 | Scope | Limit | Window |
 |-------|-------|--------|
-| Per IP | 20 likes | 1 minute |
-| Per button | 100 likes | 1 minute |
-| Per visitor_hash | 1 like | per button (dedupe) |
+| Per IP | 20 nices | 1 minute |
+| Per button | 100 nices | 1 minute |
+| Per visitor_hash | 1 nice | per button (dedupe) |
 
 ### Escalation
 
@@ -104,8 +106,8 @@ Query params:
 - `theme` — light | dark
 - `size` — small | medium | large
 
-#### POST /api/like/:buttonId
-Record a like.
+#### POST /api/nice/:buttonId
+Record a nice.
 
 Headers:
 - `X-Visitor-Fingerprint` — Client-generated fingerprint hash
@@ -114,12 +116,12 @@ Response:
 ```json
 {
   "count": 142,
-  "liked": true
+  "niced": true
 }
 ```
 
 #### GET /api/count/:buttonId
-Get current like count.
+Get current nice count.
 
 Response:
 ```json
@@ -170,9 +172,9 @@ Remove a button.
 
 ```javascript
 Nice.init({ button: 'btn_abc123' });
-Nice.like();           // Trigger like
+Nice.nice();           // Trigger nice
 Nice.getCount();       // Get current count
-Nice.on('liked', fn);  // Event listener
+Nice.on('niced', fn);  // Event listener
 ```
 
 ---
@@ -201,7 +203,7 @@ Nice.on('liked', fn);  // Event listener
 
 ## Open Questions
 
-1. **Undo likes?** — Allow unliking within session? Ever?
+1. **Undo nices?** — Allow un-nice'ing within session? Ever?
 2. **Multiple reactions?** — Just "nice" or also 👍😂❤️?
 3. **Verified domains?** — Require DNS verification or trust on signup?
 4. **Pricing?** — Free tier limits? Paid plans?
@@ -214,9 +216,9 @@ Nice.on('liked', fn);  // Event listener
 ### v0.1 — MVP
 - [ ] Site registration (manual/simple)
 - [ ] Button creation
-- [ ] Embed iframe with like functionality
+- [ ] Embed iframe with nice functionality
 - [ ] Basic rate limiting
-- [ ] Like count display
+- [ ] Nice count display
 
 ### v0.2 — Polish
 - [ ] Script tag embed
@@ -226,5 +228,5 @@ Nice.on('liked', fn);  // Event listener
 
 ### v0.3 — Scale
 - [ ] Domain verification
-- [ ] Analytics (likes over time)
+- [ ] Analytics (nices over time)
 - [ ] Custom styling options
