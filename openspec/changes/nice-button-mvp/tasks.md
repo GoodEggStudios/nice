@@ -1,32 +1,32 @@
 ## 1. Project Setup
 
-- [ ] 1.1 Initialize Cloudflare Workers project with Wrangler
-- [ ] 1.2 Configure KV namespaces (prod and preview bindings)
-- [ ] 1.3 Set up TypeScript and project structure (src/routes, src/lib, src/types)
+- [x] 1.1 Initialize Cloudflare Workers project with Wrangler
+- [x] 1.2 Configure KV namespaces (prod and preview bindings)
+- [x] 1.3 Set up TypeScript and project structure (src/routes, src/lib, src/types)
 - [ ] 1.4 Add testing framework (vitest with miniflare)
 
 ## 2. Core Utilities
 
-- [ ] 2.1 Implement token generation utility (`nice_` + 32 random bytes base64)
-- [ ] 2.2 Implement SHA-256 hashing utility for tokens and visitor hashes
-- [ ] 2.3 Implement daily salt generation and rotation
-- [ ] 2.4 Implement count formatting utility (1.2M, 500K abbreviations)
-- [ ] 2.5 Implement domain validation utility
+- [x] 2.1 Implement token generation utility (`nice_` + 32 random bytes base64)
+- [x] 2.2 Implement SHA-256 hashing utility for tokens and visitor hashes
+- [x] 2.3 Implement daily salt generation and rotation
+- [x] 2.4 Implement count formatting utility (1.2M, 500K abbreviations)
+- [x] 2.5 Implement domain validation utility
 
 ## 3. Site Registration API
 
-- [ ] 3.1 Create POST /api/v1/sites endpoint for site registration
-- [ ] 3.2 Implement domain uniqueness check
-- [ ] 3.3 Generate and return verification token with DNS instructions
-- [ ] 3.4 Create POST /api/v1/sites/{site_id}/verify endpoint for DNS verification
-- [ ] 3.5 Implement DNS TXT record lookup for verification
-- [ ] 3.6 Create POST /api/v1/sites/{site_id}/token/regenerate endpoint
+- [x] 3.1 Create POST /api/v1/sites endpoint for site registration
+- [x] 3.2 Implement domain uniqueness check
+- [x] 3.3 Generate and return verification token with DNS instructions
+- [x] 3.4 Create POST /api/v1/sites/{site_id}/verify endpoint for DNS verification
+- [x] 3.5 Implement DNS TXT record lookup for verification
+- [x] 3.6 Create POST /api/v1/sites/{site_id}/token/regenerate endpoint
 
 ## 4. Authentication Middleware
 
-- [ ] 4.1 Implement bearer token extraction from Authorization header
-- [ ] 4.2 Implement token hash lookup and validation against KV
-- [ ] 4.3 Create authentication middleware that attaches site context
+- [x] 4.1 Implement bearer token extraction from Authorization header
+- [x] 4.2 Implement token hash lookup and validation against KV
+- [x] 4.3 Create authentication middleware that attaches site context
 - [ ] 4.4 Implement token redaction in logging
 
 ## 5. Button Management API
