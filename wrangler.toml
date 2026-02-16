@@ -7,13 +7,7 @@ compatibility_date = "2025-02-01"
 [[kv_namespaces]]
 binding = "NICE_KV"
 id = "a56ec277eb20435190aca39bbcaff401"
-
-# Preview/dev KV namespace
-# Uncomment and configure for local development with wrangler dev
-# [[kv_namespaces]]
-# binding = "NICE_KV"
-# id = "REPLACE_WITH_PREVIEW_KV_ID"
-# preview_id = "REPLACE_WITH_PREVIEW_KV_ID"
+preview_id = "aae1e02bdb4341b4b15db9c277d7bb84"
 
 # Development settings
 [dev]
@@ -25,7 +19,7 @@ local_protocol = "http"
 name = "nice-preview"
 [[env.preview.kv_namespaces]]
 binding = "NICE_KV"
-id = "REPLACE_WITH_PREVIEW_KV_ID"
+id = "aae1e02bdb4341b4b15db9c277d7bb84"
 
 [env.production]
 name = "nice"
