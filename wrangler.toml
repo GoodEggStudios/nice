@@ -6,7 +6,7 @@ compatibility_date = "2025-02-01"
 # Production KV namespace
 [[kv_namespaces]]
 binding = "NICE_KV"
-id = "REPLACE_WITH_PROD_KV_ID"
+id = "a56ec277eb20435190aca39bbcaff401"
 
 # Preview/dev KV namespace
 # Uncomment and configure for local development with wrangler dev
@@ -31,4 +31,4 @@ id = "REPLACE_WITH_PREVIEW_KV_ID"
 name = "nice"
 [[env.production.kv_namespaces]]
 binding = "NICE_KV"
-id = "REPLACE_WITH_PROD_KV_ID"
+id = "a56ec277eb20435190aca39bbcaff401"
