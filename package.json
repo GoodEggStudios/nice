@@ -1,0 +1,20 @@
+{
+  "name": "nice",
+  "version": "0.1.0",
+  "description": "Nice - The Anonymous Nice Button Service",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.7.4",
+    "@cloudflare/workers-types": "^4.20250109.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.4",
+    "wrangler": "^4.0.0"
+  }
+}

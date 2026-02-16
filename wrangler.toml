@@ -1,0 +1,34 @@
+# Nice - Simple Button Service
+name = "nice"
+main = "src/index.ts"
+compatibility_date = "2025-02-01"
+
+# Production KV namespace
+[[kv_namespaces]]
+binding = "NICE_KV"
+id = "REPLACE_WITH_PROD_KV_ID"
+
+# Preview/dev KV namespace
+# Uncomment and configure for local development with wrangler dev
+# [[kv_namespaces]]
+# binding = "NICE_KV"
+# id = "REPLACE_WITH_PREVIEW_KV_ID"
+# preview_id = "REPLACE_WITH_PREVIEW_KV_ID"
+
+# Development settings
+[dev]
+port = 8787
+local_protocol = "http"
+
+# Environment-specific overrides
+[env.preview]
+name = "nice-preview"
+[[env.preview.kv_namespaces]]
+binding = "NICE_KV"
+id = "REPLACE_WITH_PREVIEW_KV_ID"
+
+[env.production]
+name = "nice"
+[[env.production.kv_namespaces]]
+binding = "NICE_KV"
+id = "REPLACE_WITH_PROD_KV_ID"
