@@ -1,6 +1,6 @@
 ## Context
 
-Nice is a greenfield project — an anonymous "nice" button service. Users can nice content without signing in, while site owners get an embeddable widget with spam protection.
+Nice (**nice.sbs** — *Simple Button Service*) is a greenfield project — an anonymous "nice" button service. Users can nice content without signing in, while site owners get an embeddable widget with spam protection.
 
 **Constraints:**
 - Sub-100ms response times globally

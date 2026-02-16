@@ -1,6 +1,8 @@
 # Nice — The Anonymous Nice Button
 
-> "Nice buttons without the login wall"
+> **nice.sbs** — *Simple Button Service*
+>
+> Nice buttons without the login wall
 
 ## Overview
 
@@ -152,7 +154,7 @@ Remove a button.
 
 ```html
 <script 
-  src="https://nice.example/embed.js" 
+  src="https://nice.sbs/embed.js" 
   data-button="btn_abc123"
   data-theme="light"
   async>
@@ -163,7 +165,7 @@ Remove a button.
 
 ```html
 <iframe 
-  src="https://nice.example/embed/btn_abc123?theme=light"
+  src="https://nice.sbs/embed/btn_abc123?theme=light"
   style="border:none; width:100px; height:40px;">
 </iframe>
 ```
