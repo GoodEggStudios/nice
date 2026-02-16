@@ -2,6 +2,8 @@
 
 > The anonymous nice button — no sign-in required
 
+**[nice.sbs](https://nice.sbs)** — *Simple Button Service*
+
 ## What is Nice?
 
 Nice is an embeddable "nice" button that doesn't require users to create an account or sign in. Site owners register to get a button, visitors click to nice. That's it.
@@ -21,7 +23,7 @@ It's not liking. It's **nice'ing**.
 
 ```html
 <script 
-  src="https://nice.example/embed.js" 
+  src="https://nice.sbs/embed.js" 
   data-button="btn_abc123"
   async>
 </script>
