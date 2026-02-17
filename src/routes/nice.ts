@@ -158,6 +158,9 @@ export async function recordNice(
 
 /**
  * GET /api/v1/nice/:button_id/count - Get nice count
+ * 
+ * Returns 200 with count: 0 for non-existent buttons to prevent enumeration.
+ * Attackers cannot determine which button IDs are valid.
  */
 export async function getNiceCount(
   request: Request,
@@ -165,13 +168,10 @@ export async function getNiceCount(
   buttonId: string
 ): Promise<Response> {
   try {
-    // Check button exists
+    // Don't reveal whether button exists - return 0 for non-existent
+    // This prevents button ID enumeration attacks
     const buttonData = await env.NICE_KV.get(`${BUTTON_PREFIX}${buttonId}`);
-    if (!buttonData) {
-      return jsonError("Button not found", "BUTTON_NOT_FOUND", 404);
-    }
-
-    const count = await getCount(env, buttonId);
+    const count = buttonData ? await getCount(env, buttonId) : 0;
 
     const response: CountResponse = {
       count,

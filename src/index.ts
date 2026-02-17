@@ -4,7 +4,7 @@
  * Main entry point for Cloudflare Worker
  */
 
-import type { Env } from "./types";
+import type { Env, Site } from "./types";
 import { registerSite, verifySite, regenerateToken } from "./routes/sites";
 import { createButton, listButtons, getButton, deleteButton } from "./routes/buttons";
 import { recordNice, getNiceCount } from "./routes/nice";
@@ -14,6 +14,30 @@ import { hashToken, isValidTokenFormat } from "./lib";
 // KV key prefix for token lookups
 const TOKEN_PREFIX = "token:";
 const SITE_PREFIX = "site:";
+
+// CORS headers for public endpoints (embeds, nice counts, recording)
+const PUBLIC_CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+// Check if origin is allowed for authenticated endpoints
+function isOriginAllowed(origin: string | null, siteDomain: string | null): boolean {
+  if (!origin) return true; // Server-to-server calls (no Origin header)
+  if (origin === "null") return true; // Local file or privacy mode
+  
+  if (!siteDomain) return false;
+  
+  try {
+    const originUrl = new URL(origin);
+    // Allow exact domain match or subdomains
+    return originUrl.hostname === siteDomain || 
+           originUrl.hostname.endsWith(`.${siteDomain}`);
+  } catch {
+    return false;
+  }
+}
 
 // Favicon SVG - Bungee "N" in gold
 const FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 61.501 72.001"><path d="M18.601 72.001L3.601 72.001Q0.001 72.001 0.001 68.401L0.001 3.601Q0.001 0.001 3.601 0.001L14.001 0.001Q17.601 0.001 19.901 2.701L39.301 24.901L39.301 3.601Q39.301 0.001 42.901 0.001L57.901 0.001Q61.501 0.001 61.501 3.601L61.501 68.401Q61.501 72.001 57.901 72.001L42.901 72.001Q39.301 72.001 39.301 68.401L39.301 56.101L22.201 35.401L22.201 68.401Q22.201 72.001 18.601 72.001Z" fill="#fbbf24"/></svg>`;
@@ -27,16 +51,22 @@ export default {
     const url = new URL(request.url);
     const method = request.method;
     const path = url.pathname;
+    const origin = request.headers.get("Origin");
 
-    // CORS headers for all responses
-    const corsHeaders = {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    };
+    // Determine if this is an authenticated endpoint
+    const isAuthenticatedRoute = path.startsWith("/api/v1/buttons") || 
+                                  path.includes("/token/regenerate");
 
     // Handle CORS preflight
     if (method === "OPTIONS") {
+      // For authenticated routes, only allow specific headers
+      const corsHeaders = isAuthenticatedRoute ? {
+        "Access-Control-Allow-Origin": origin || "*",
+        "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Max-Age": "86400",
+      } : PUBLIC_CORS_HEADERS;
+      
       return new Response(null, { status: 204, headers: corsHeaders });
     }
 
@@ -49,7 +79,7 @@ export default {
           version: "1.0.0",
         }),
         {
-          headers: { "Content-Type": "application/json", ...corsHeaders },
+          headers: { "Content-Type": "application/json", ...PUBLIC_CORS_HEADERS },
         }
       );
     }
@@ -60,7 +90,7 @@ export default {
         headers: {
           "Content-Type": "image/svg+xml",
           "Cache-Control": "public, max-age=86400",
-          ...corsHeaders,
+          ...PUBLIC_CORS_HEADERS,
         },
       });
     }
@@ -175,11 +205,24 @@ export default {
       );
     }
 
-    // Add CORS headers to response
+    // Add CORS headers based on route type
     const newHeaders = new Headers(response.headers);
-    Object.entries(corsHeaders).forEach(([key, value]) => {
-      newHeaders.set(key, value);
-    });
+    
+    if (isAuthenticatedRoute) {
+      // For authenticated routes, only allow the specific origin if it matches site domain
+      // Server-to-server calls (no Origin) are always allowed
+      if (origin) {
+        newHeaders.set("Access-Control-Allow-Origin", origin);
+        newHeaders.set("Access-Control-Allow-Credentials", "true");
+      }
+      newHeaders.set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+      newHeaders.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    } else {
+      // Public endpoints allow any origin
+      Object.entries(PUBLIC_CORS_HEADERS).forEach(([key, value]) => {
+        newHeaders.set(key, value);
+      });
+    }
 
     return new Response(response.body, {
       status: response.status,
@@ -191,11 +234,12 @@ export default {
 
 /**
  * Authenticate request via Bearer token
+ * Returns siteId and domain for CORS validation
  */
 async function authenticate(
   request: Request,
   env: Env
-): Promise<{ authenticated: boolean; siteId?: string; error?: string }> {
+): Promise<{ authenticated: boolean; siteId?: string; domain?: string; error?: string }> {
   const authHeader = request.headers.get("Authorization");
 
   if (!authHeader) {
@@ -220,5 +264,15 @@ async function authenticate(
     return { authenticated: false, error: "Invalid token" };
   }
 
-  return { authenticated: true, siteId };
+  // Get site domain for CORS check
+  const siteData = await env.NICE_KV.get(`${SITE_PREFIX}${siteId}`);
+  let domain: string | undefined;
+  if (siteData) {
+    try {
+      const site: Site = JSON.parse(siteData);
+      domain = site.domain;
+    } catch {}
+  }
+
+  return { authenticated: true, siteId, domain };
 }
