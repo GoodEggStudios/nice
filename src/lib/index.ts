@@ -13,3 +13,8 @@ export {
   urlMatchesDomain,
   getVerificationRecordName,
 } from "./domain";
+export {
+  checkRateLimit,
+  validatePowSolution,
+  rateLimitResponse,
+} from "./ratelimit";

@@ -51,13 +51,13 @@
 
 ## 7. Rate Limiting
 
-- [ ] 7.1 Implement per-IP rate limiting (20/min) with KV counters
-- [ ] 7.2 Implement per-button rate limiting (100/min)
-- [ ] 7.3 Implement burst detection (500/min threshold)
-- [ ] 7.4 Implement proof-of-work challenge generation
-- [ ] 7.5 Implement proof-of-work solution verification
-- [ ] 7.6 Implement difficulty scaling based on attack intensity
-- [ ] 7.7 Implement automatic PoW mode exit after 5 minutes of low traffic
+- [x] 7.1 Implement per-IP rate limiting (20/min) with KV counters
+- [x] 7.2 Implement per-button rate limiting (100/min)
+- [x] 7.3 Implement burst detection (500/min threshold)
+- [x] 7.4 Implement proof-of-work challenge generation
+- [x] 7.5 Implement proof-of-work solution verification
+- [x] 7.6 Implement difficulty scaling based on attack intensity
+- [x] 7.7 Implement automatic PoW mode exit after 5 minutes of low traffic
 
 ## 8. Embed Script
 

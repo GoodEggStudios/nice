@@ -7,7 +7,7 @@
  */
 
 import type { Env, Button, Site } from "../types";
-import { computeVisitorHash, getDailySalt } from "../lib";
+import { computeVisitorHash, getDailySalt, checkRateLimit, validatePowSolution, rateLimitResponse } from "../lib";
 
 // KV key prefixes
 const BUTTON_PREFIX = "button:";
@@ -20,6 +20,10 @@ const DEDUPE_TTL_SECONDS = 24 * 60 * 60;
 
 interface NiceRequest {
   fingerprint?: string;
+  pow_solution?: {
+    challenge: string;
+    nonce: string;
+  };
 }
 
 interface NiceResponse {
@@ -61,19 +65,40 @@ export async function recordNice(
       return jsonError("Site not verified", "SITE_NOT_VERIFIED", 403);
     }
 
-    // Parse request body for fingerprint
-    let fingerprint = "";
-    try {
-      const body = (await request.json()) as NiceRequest;
-      fingerprint = body.fingerprint || "";
-    } catch {
-      // No body or invalid JSON is fine - fingerprint is optional
-    }
-
     // Get visitor IP
     const ip = request.headers.get("CF-Connecting-IP") || 
                request.headers.get("X-Forwarded-For")?.split(",")[0] || 
                "unknown";
+
+    // Parse request body for fingerprint and PoW solution
+    let fingerprint = "";
+    let powSolution: NiceRequest["pow_solution"] | undefined;
+    try {
+      const body = (await request.json()) as NiceRequest;
+      fingerprint = body.fingerprint || "";
+      powSolution = body.pow_solution;
+    } catch {
+      // No body or invalid JSON is fine - fingerprint is optional
+    }
+
+    // Check rate limits
+    const rateLimitResult = await checkRateLimit(env.NICE_KV, ip, buttonId);
+    
+    if (!rateLimitResult.allowed) {
+      // If PoW is required, check for valid solution
+      if (rateLimitResult.reason === "pow_required" && powSolution) {
+        const powResult = await validatePowSolution(env.NICE_KV, buttonId, powSolution);
+        if (!powResult.valid) {
+          return new Response(
+            JSON.stringify({ error: powResult.error, code: "INVALID_POW" }),
+            { status: 400, headers: { "Content-Type": "application/json" } }
+          );
+        }
+        // Valid PoW solution - continue with nice
+      } else {
+        return rateLimitResponse(rateLimitResult);
+      }
+    }
 
     // Compute visitor hash for deduplication
     const dailySalt = await getDailySalt(env.NICE_KV);
