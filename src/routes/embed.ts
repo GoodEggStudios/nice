@@ -203,6 +203,9 @@ if(!niced){count++;niced=true;btn.classList.add('niced','animating');textEl.text
 </body>
 </html>`;
 
+// Button ID format: btn_ followed by 16 base64url characters
+const BUTTON_ID_REGEX = /^btn_[A-Za-z0-9_-]{16}$/;
+
 /**
  * GET /embed/:button_id - Serve the embed iframe content
  */
@@ -239,13 +242,24 @@ export async function serveEmbedPage(
     });
   }
 
+  // Validate button ID format to prevent HTML injection
+  if (!BUTTON_ID_REGEX.test(buttonId)) {
+    return new Response("Invalid button ID", {
+      status: 400,
+      headers: { "Content-Type": "text/plain" },
+    });
+  }
+
   // Get the API base URL from the request
   const apiBase = `${url.protocol}//${url.host}`;
+
+  // HTML-encode button ID as extra safety measure
+  const safeButtonId = buttonId.replace(/[<>"'&]/g, "");
 
   // Replace placeholders in HTML
   const html = EMBED_HTML
     .replace(/\{\{API_BASE\}\}/g, apiBase)
-    .replace(/\{\{BUTTON_ID\}\}/g, buttonId)
+    .replace(/\{\{BUTTON_ID\}\}/g, safeButtonId)
     .replace(/\{\{THEME\}\}/g, safeTheme)
     .replace(/\{\{SIZE\}\}/g, safeSize);
 

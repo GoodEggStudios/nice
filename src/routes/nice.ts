@@ -65,20 +65,20 @@ export async function recordNice(
       return jsonError("Site not verified", "SITE_NOT_VERIFIED", 403);
     }
 
-    // Get visitor IP
-    const ip = request.headers.get("CF-Connecting-IP") || 
-               request.headers.get("X-Forwarded-For")?.split(",")[0] || 
-               "unknown";
+    // Get visitor IP - require CF-Connecting-IP for security
+    const ip = request.headers.get("CF-Connecting-IP");
+    if (!ip) {
+      // Reject requests not coming through Cloudflare to prevent IP spoofing
+      return jsonError("Direct access not allowed", "DIRECT_ACCESS", 403);
+    }
 
-    // Parse request body for fingerprint and PoW solution
-    let fingerprint = "";
+    // Parse request body for PoW solution (fingerprint no longer used for security)
     let powSolution: NiceRequest["pow_solution"] | undefined;
     try {
       const body = (await request.json()) as NiceRequest;
-      fingerprint = body.fingerprint || "";
       powSolution = body.pow_solution;
     } catch {
-      // No body or invalid JSON is fine - fingerprint is optional
+      // No body or invalid JSON is fine
     }
 
     // Check rate limits
@@ -100,9 +100,9 @@ export async function recordNice(
       }
     }
 
-    // Compute visitor hash for deduplication
+    // Compute visitor hash for deduplication (IP-only, no client fingerprint for security)
     const dailySalt = await getDailySalt(env.NICE_KV);
-    const visitorHash = await computeVisitorHash(ip, fingerprint, buttonId, dailySalt);
+    const visitorHash = await computeVisitorHash(ip, "", buttonId, dailySalt);
 
     // Check if already niced
     const niceKey = `${NICE_PREFIX}${buttonId}:${visitorHash}`;
@@ -196,13 +196,36 @@ async function getCount(env: Env, buttonId: string): Promise<number> {
 async function incrementCount(env: Env, buttonId: string): Promise<number> {
   const countKey = `${COUNT_PREFIX}${buttonId}`;
   
-  // KV doesn't have atomic increment, so we do read-modify-write
+  // KV doesn't have atomic increment - use optimistic increment with retry
+  // This reduces (but doesn't eliminate) race condition impact
   // For high-traffic buttons, consider using Durable Objects instead
-  const current = await getCount(env, buttonId);
-  const newCount = current + 1;
-  await env.NICE_KV.put(countKey, newCount.toString());
+  const maxRetries = 3;
   
-  return newCount;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const currentData = await env.NICE_KV.get(countKey, { cacheTtl: 60 });
+    const current = parseInt(currentData || "0", 10) || 0;
+    const newCount = current + 1;
+    
+    // Write the new count
+    await env.NICE_KV.put(countKey, newCount.toString());
+    
+    // Verify the write (basic optimistic check)
+    if (attempt < maxRetries - 1) {
+      const verifyData = await env.NICE_KV.get(countKey, { cacheTtl: 60 });
+      const verified = parseInt(verifyData || "0", 10) || 0;
+      if (verified >= newCount) {
+        return newCount;
+      }
+      // Race detected, retry
+      continue;
+    }
+    
+    return newCount;
+  }
+  
+  // Fallback - just return the current count + 1
+  const fallback = await env.NICE_KV.get(countKey, { cacheTtl: 60 });
+  return (parseInt(fallback || "0", 10) || 0) + 1;
 }
 
 function jsonError(message: string, code: string, status: number): Response {
