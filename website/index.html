@@ -19,6 +19,7 @@
     <meta name="twitter:description" content="Ever wanted to just Nice something you see on the internet? Well you can now.">
     <meta name="twitter:image" content="https://nice.sbs/og-image.png">
     
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
@@ -61,6 +62,30 @@
 
         .nice-wrapper {
             margin-top: 8px;
+            margin-bottom: 32px;
+        }
+
+        .get-started {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #fbbf24;
+            color: #000;
+            font-family: 'Bungee', cursive;
+            font-size: 16px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+
+        .get-started:hover {
+            transform: scale(1.05);
+            background: #f59e0b;
+        }
+
+        .get-started:active {
+            transform: scale(0.95);
         }
 
         @media (max-width: 600px) {
@@ -86,5 +111,7 @@
             title="Nice this">
         </iframe>
     </div>
+
+    <a href="/docs.html" class="get-started">GET STARTED →</a>
 </body>
 </html>
