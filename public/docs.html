@@ -1,8 +1,4 @@
-/**
- * Documentation Page
- */
-
-export const DOCS_HTML = `<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -142,8 +138,8 @@ export const DOCS_HTML = `<!DOCTYPE html>
         <div class="step-number">STEP 1</div>
         <h2>Register Your Site</h2>
         <p>Register your domain to get an API token:</p>
-        <pre><code>curl -X POST https://api.nice.sbs/api/v1/sites \\
-  -H "Content-Type: application/json" \\
+        <pre><code>curl -X POST https://api.nice.sbs/api/v1/sites \
+  -H "Content-Type: application/json" \
   -d '{"domain": "<span class="highlight">yoursite.com</span>"}'</code></pre>
         <p>Save the <code>token</code> from the response — you'll need it for the next steps.</p>
       </div>
@@ -165,14 +161,14 @@ _nice-verify.yoursite.com  TXT  "nice-verify=<span class="highlight">{verificati
         <div class="step-number">STEP 3</div>
         <h2>Create a Button</h2>
         <p>Create your Nice button:</p>
-        <pre><code>curl -X POST https://api.nice.sbs/api/v1/buttons \\
-  -H "Authorization: Bearer <span class="highlight">{your_token}</span>" \\
-  -H "Content-Type: application/json" \\
+        <pre><code>curl -X POST https://api.nice.sbs/api/v1/buttons \
+  -H "Authorization: Bearer <span class="highlight">{your_token}</span>" \
+  -H "Content-Type: application/json" \
   -d '{"name": "My Nice Button"}'</code></pre>
         <p>Add it to your site with an iframe:</p>
         <pre><code><span class="comment">&lt;!-- Add this where you want the button --&gt;</span>
 &lt;iframe 
-  src="https://nice.sbs/embed/<span class="highlight">{button_id}</span>?theme=light"
+  src="https://api.nice.sbs/embed/<span class="highlight">{button_id}</span>?theme=light"
   style="border:none;width:100px;height:36px;"
   title="Nice button"&gt;
 &lt;/iframe&gt;</code></pre>
@@ -189,20 +185,11 @@ _nice-verify.yoursite.com  TXT  "nice-verify=<span class="highlight">{verificati
 ?size=lg
 
 <span class="comment"># Combine them</span>
-?theme=dark&size=sm</code></pre>
+?theme=dark&amp;size=sm</code></pre>
         <p>Example:</p>
-        <pre><code>https://nice.sbs/embed/{button_id}?theme=dark&size=md</code></pre>
+        <pre><code>https://api.nice.sbs/embed/{button_id}?theme=dark&amp;size=md</code></pre>
       </div>
     </div>
   </div>
 </body>
-</html>`;
-
-export function serveDocsPage(): Response {
-  return new Response(DOCS_HTML, {
-    headers: {
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "public, max-age=3600",
-    },
-  });
-}
+</html>

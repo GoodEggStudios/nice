@@ -1,8 +1,4 @@
-/**
- * Home Page
- */
-
-export const HOME_HTML = `<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -82,26 +78,17 @@ export const HOME_HTML = `<!DOCTYPE html>
     <p class="tagline">Simple Button Service</p>
     <div class="demo-button">
       <iframe 
-        src="/embed/demo?theme=dark&size=lg" 
+        src="https://api.nice.sbs/embed/demo?theme=dark&size=lg" 
         style="border:none;overflow:hidden;width:120px;height:50px;" 
         scrolling="no" 
         frameborder="0"
         title="Nice button">
       </iframe>
     </div>
-    <a href="/docs" class="get-started">GET STARTED →</a>
+    <a href="/docs.html" class="get-started">GET STARTED →</a>
   </div>
   <div class="footer">
     <a href="https://github.com/GoodEggStudios/nice">GitHub</a>
   </div>
 </body>
-</html>`;
-
-export function serveHomePage(): Response {
-  return new Response(HOME_HTML, {
-    headers: {
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "public, max-age=3600",
-    },
-  });
-}
+</html>

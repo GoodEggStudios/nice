@@ -9,8 +9,6 @@ import { registerSite, verifySite, regenerateToken } from "./routes/sites";
 import { createButton, listButtons, getButton, deleteButton } from "./routes/buttons";
 import { recordNice, getNiceCount } from "./routes/nice";
 import { serveEmbedScript, serveEmbedPage } from "./routes/embed";
-import { serveHomePage } from "./pages/home";
-import { serveDocsPage } from "./pages/docs";
 import { hashToken, isValidTokenFormat } from "./lib";
 
 // KV key prefix for token lookups
@@ -42,18 +40,8 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders });
     }
 
-    // Home page
-    if (path === "/") {
-      return serveHomePage();
-    }
-
-    // Docs page
-    if (path === "/docs" || path === "/docs.html") {
-      return serveDocsPage();
-    }
-
     // Health check
-    if (path === "/health") {
+    if (path === "/health" || path === "/") {
       return new Response(
         JSON.stringify({
           status: "ok",
