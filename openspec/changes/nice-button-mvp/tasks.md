@@ -90,7 +90,7 @@
 
 ## 11. Deployment & Configuration
 
-- [ ] 11.1 Configure custom domain in Cloudflare
-- [ ] 11.2 Set up wrangler.toml for production deployment
-- [ ] 11.3 Create initial site registration for testing
-- [ ] 11.4 Document API endpoints and embed usage
+- [x] 11.1 Configure custom domain in Cloudflare
+- [x] 11.2 Set up wrangler.toml for production deployment
+- [x] 11.3 Create initial site registration for testing
+- [x] 11.4 Document API endpoints and embed usage

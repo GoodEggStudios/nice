@@ -1,0 +1,27 @@
+meta {
+  name: Health Check
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/health
+  body: none
+  auth: none
+}
+
+docs {
+  # Health check
+  
+  Returns service status.
+  
+  ## Response
+  
+  ```json
+  {
+    "status": "ok",
+    "service": "nice",
+    "version": "1.0.0"
+  }
+  ```
+}

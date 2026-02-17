@@ -1,0 +1,26 @@
+meta {
+  name: Get Count
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/nice/{{buttonId}}/count
+  body: none
+  auth: none
+}
+
+docs {
+  # Get nice count
+  
+  Returns the current nice count for a button. No authentication required.
+  
+  ## Response
+  
+  ```json
+  {
+    "count": 42,
+    "button_id": "btn_abc123"
+  }
+  ```
+}
