@@ -8,36 +8,37 @@
 import type { Env } from "../types";
 
 // Embed script (minified inline)
-const EMBED_SCRIPT = `(function(){'use strict';const EMBED_BASE='https://nice.sbs';function init(){document.querySelectorAll('script[data-button]').forEach(createEmbed)}function createEmbed(script){const buttonId=script.getAttribute('data-button');if(!buttonId)return;const theme=script.getAttribute('data-theme')||'light';const container=document.createElement('div');container.className='nice-embed';container.style.cssText='display:inline-block;vertical-align:middle;';const iframe=document.createElement('iframe');iframe.src=EMBED_BASE+'/embed/'+buttonId+'?theme='+encodeURIComponent(theme);iframe.style.cssText='border:none;overflow:hidden;width:100px;height:36px;';iframe.setAttribute('scrolling','no');iframe.setAttribute('frameborder','0');iframe.setAttribute('allowtransparency','true');iframe.setAttribute('sandbox','allow-scripts allow-same-origin allow-popups');iframe.setAttribute('title','Nice button');container.appendChild(iframe);script.parentNode.insertBefore(container,script.nextSibling);window.addEventListener('message',function(event){if(event.origin!==EMBED_BASE)return;try{const data=event.data;if(data.type==='nice-resize'&&data.buttonId===buttonId){iframe.style.width=data.width+'px';iframe.style.height=data.height+'px'}}catch(e){}})}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}})();`;
+const EMBED_SCRIPT = `(function(){'use strict';const EMBED_BASE='https://nice.sbs';function init(){document.querySelectorAll('script[data-button]').forEach(createEmbed)}function createEmbed(script){const buttonId=script.getAttribute('data-button');if(!buttonId)return;const theme=script.getAttribute('data-theme')||'light';const container=document.createElement('div');container.className='nice-embed';container.style.cssText='display:inline-block;vertical-align:middle;';const iframe=document.createElement('iframe');iframe.src=EMBED_BASE+'/embed/'+buttonId+'?theme='+encodeURIComponent(theme);iframe.style.cssText='border:none;overflow:hidden;width:120px;height:44px;';iframe.setAttribute('scrolling','no');iframe.setAttribute('frameborder','0');iframe.setAttribute('allowtransparency','true');iframe.setAttribute('sandbox','allow-scripts allow-same-origin allow-popups');iframe.setAttribute('title','Nice button');container.appendChild(iframe);script.parentNode.insertBefore(container,script.nextSibling);window.addEventListener('message',function(event){if(event.origin!==EMBED_BASE)return;try{const data=event.data;if(data.type==='nice-resize'&&data.buttonId===buttonId){iframe.style.width=data.width+'px';iframe.style.height=data.height+'px'}}catch(e){}})}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}})();`;
 
-// Embed HTML template
+// Embed HTML template - Bungee font design
 const EMBED_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Nice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:transparent;display:flex;align-items:center;justify-content:center;min-height:36px;padding:4px}
-.nice-button{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:none;border-radius:18px;font-size:14px;font-weight:500;cursor:pointer;transition:all .15s ease;user-select:none;-webkit-tap-highlight-color:transparent}
-.nice-button:hover{transform:scale(1.02)}
-.nice-button:active{transform:scale(.98)}
+body{font-family:'Bungee',cursive;background:transparent;display:flex;align-items:center;justify-content:center;min-height:44px;padding:4px}
+.nice-button{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border:none;border-radius:8px;font-family:'Bungee',cursive;font-size:16px;cursor:pointer;transition:all .15s ease;user-select:none;-webkit-tap-highlight-color:transparent;text-transform:uppercase;letter-spacing:0.5px}
+.nice-button:hover{transform:scale(1.05)}
+.nice-button:active{transform:scale(0.95)}
 .theme-light .nice-button{background:#f3f4f6;color:#374151}
 .theme-light .nice-button:hover{background:#e5e7eb}
 .theme-light .nice-button.niced{background:#fef3c7;color:#92400e}
 .theme-dark .nice-button{background:#374151;color:#f3f4f6}
 .theme-dark .nice-button:hover{background:#4b5563}
-.theme-dark .nice-button.niced{background:#78350f;color:#fef3c7}
-.theme-minimal .nice-button{background:transparent;color:inherit;border:1px solid currentColor;opacity:.7}
+.theme-dark .nice-button.niced{background:#fbbf24;color:#000}
+.theme-minimal .nice-button{background:transparent;color:inherit;border:2px solid currentColor;opacity:.7}
 .theme-minimal .nice-button:hover{opacity:1}
-.theme-minimal .nice-button.niced{opacity:1;border-color:#f59e0b;color:#f59e0b}
-.nice-icon{width:16px;height:16px;flex-shrink:0}
-.nice-icon svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.niced .nice-icon svg{fill:currentColor}
-.nice-count{font-variant-numeric:tabular-nums}
-@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
-@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+.theme-minimal .nice-button.niced{opacity:1;border-color:#fbbf24;color:#fbbf24}
+.nice-text{transition:all .15s ease}
+.nice-count{font-size:14px;opacity:0.8}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 .nice-button.animating{animation:pulse .3s ease}
 .nice-button.shake{animation:shake .3s ease}
 .nice-button.disabled{opacity:.5;cursor:not-allowed}
@@ -46,14 +47,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </head>
 <body class="theme-{{THEME}}">
 <button class="nice-button" id="niceBtn">
-<span class="nice-icon"><svg viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg></span>
-<span class="nice-count" id="niceCount">0</span>
+<span class="nice-text" id="niceText">Nice</span>
+<span class="nice-count" id="niceCount"></span>
 </button>
 <script>
 (function(){'use strict';
 const API_BASE='{{API_BASE}}';
 const BUTTON_ID='{{BUTTON_ID}}';
 const btn=document.getElementById('niceBtn');
+const textEl=document.getElementById('niceText');
 const countEl=document.getElementById('niceCount');
 let count=0,hasNiced=false,isLoading=false;
 function formatCount(n){
@@ -63,8 +65,13 @@ if(n>=1e3)return(n/1e3).toFixed(1).replace(/\\.0$/,'')+'K';
 return n.toString();
 }
 function updateDisplay(){
-countEl.textContent=formatCount(count);
-if(hasNiced)btn.classList.add('niced');
+countEl.textContent=count>0?formatCount(count):'';
+if(hasNiced){
+btn.classList.add('niced');
+textEl.textContent="Nice'd";
+}else{
+textEl.textContent='Nice';
+}
 notifyResize();
 }
 function notifyResize(){
