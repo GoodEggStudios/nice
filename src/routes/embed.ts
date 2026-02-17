@@ -154,6 +154,55 @@ export async function serveEmbedScript(request: Request): Promise<Response> {
   });
 }
 
+// Demo embed HTML - static button for homepage demo
+const DEMO_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nice</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Bungee',cursive;background:transparent;display:flex;align-items:center;justify-content:center;padding:2px}
+.nice-button{display:inline-flex;align-items:center;border:none;font-family:'Bungee',cursive;cursor:pointer;transition:all .15s ease;user-select:none;text-transform:uppercase;letter-spacing:0.5px}
+.nice-button:hover{transform:scale(1.05)}
+.nice-button:active{transform:scale(0.95)}
+.size-lg .nice-button{gap:8px;padding:8px 16px;border-radius:8px;font-size:16px}
+.size-lg .nice-count{font-size:14px}
+.size-md .nice-button{gap:6px;padding:6px 12px;border-radius:6px;font-size:12px}
+.size-md .nice-count{font-size:11px}
+.theme-dark .nice-button{background:#374151;color:#f3f4f6}
+.theme-dark .nice-button:hover{background:#4b5563}
+.theme-dark .nice-button.niced{background:#fbbf24;color:#000}
+.theme-light .nice-button{background:#f3f4f6;color:#374151}
+.theme-light .nice-button:hover{background:#e5e7eb}
+.theme-light .nice-button.niced{background:#fef3c7;color:#92400e}
+.nice-count{opacity:0.8}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
+.nice-button.animating{animation:pulse .3s ease}
+</style>
+</head>
+<body class="theme-{{THEME}} size-{{SIZE}}">
+<button class="nice-button" id="niceBtn">
+<span class="nice-text" id="niceText">Nice</span>
+<span class="nice-count" id="niceCount">42</span>
+</button>
+<script>
+const btn=document.getElementById('niceBtn');
+const textEl=document.getElementById('niceText');
+const countEl=document.getElementById('niceCount');
+let count=42,niced=false;
+btn.addEventListener('click',()=>{
+if(!niced){count++;niced=true;btn.classList.add('niced','animating');textEl.textContent="Nice'd";countEl.textContent=count;setTimeout(()=>btn.classList.remove('animating'),300);}
+});
+</script>
+</body>
+</html>`;
+
 /**
  * GET /embed/:button_id - Serve the embed iframe content
  */
@@ -172,6 +221,23 @@ export async function serveEmbedPage(
   // Validate size
   const validSizes = ["sm", "md", "lg"];
   const safeSize = validSizes.includes(size) ? size : "md";
+
+  // Demo button - static version for homepage
+  if (buttonId === "demo") {
+    const html = DEMO_HTML
+      .replace(/\{\{THEME\}\}/g, safeTheme)
+      .replace(/\{\{SIZE\}\}/g, safeSize);
+    
+    return new Response(html, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "public, max-age=3600",
+        "X-Frame-Options": "ALLOWALL",
+        "Content-Security-Policy": "frame-ancestors *",
+      },
+    });
+  }
 
   // Get the API base URL from the request
   const apiBase = `${url.protocol}//${url.host}`;

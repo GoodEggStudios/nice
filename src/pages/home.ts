@@ -1,0 +1,108 @@
+/**
+ * Home Page
+ */
+
+export const HOME_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nice - Simple Button Service</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f0f0f;
+      color: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .container {
+      text-align: center;
+      max-width: 500px;
+    }
+    .logo {
+      font-family: 'Bungee', cursive;
+      font-size: 4rem;
+      color: #fbbf24;
+      margin-bottom: 1rem;
+      letter-spacing: 2px;
+    }
+    .tagline {
+      font-size: 1.25rem;
+      color: #888;
+      margin-bottom: 3rem;
+    }
+    .demo-button {
+      margin-bottom: 2rem;
+    }
+    .get-started {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #fbbf24;
+      color: #000;
+      font-family: 'Bungee', cursive;
+      font-size: 1rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    .get-started:hover {
+      transform: scale(1.05);
+      background: #f59e0b;
+    }
+    .get-started:active {
+      transform: scale(0.95);
+    }
+    .footer {
+      position: fixed;
+      bottom: 1rem;
+      color: #555;
+      font-size: 0.875rem;
+    }
+    .footer a {
+      color: #fbbf24;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="logo">NICE</h1>
+    <p class="tagline">Simple Button Service</p>
+    <div class="demo-button">
+      <iframe 
+        src="/embed/demo?theme=dark&size=lg" 
+        style="border:none;overflow:hidden;width:120px;height:50px;" 
+        scrolling="no" 
+        frameborder="0"
+        title="Nice button">
+      </iframe>
+    </div>
+    <a href="/docs" class="get-started">GET STARTED →</a>
+  </div>
+  <div class="footer">
+    <a href="https://github.com/GoodEggStudios/nice">GitHub</a>
+  </div>
+</body>
+</html>`;
+
+export function serveHomePage(): Response {
+  return new Response(HOME_HTML, {
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "public, max-age=3600",
+    },
+  });
+}
+`;

@@ -1,0 +1,209 @@
+/**
+ * Documentation Page
+ */
+
+export const DOCS_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Get Started - Nice</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@400;500;600&family=Fira+Code&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f0f0f;
+      color: #f5f5f5;
+      min-height: 100vh;
+      padding: 2rem;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    header {
+      margin-bottom: 3rem;
+    }
+    .logo {
+      font-family: 'Bungee', cursive;
+      font-size: 2rem;
+      color: #fbbf24;
+      text-decoration: none;
+      display: inline-block;
+    }
+    h1 {
+      font-family: 'Bungee', cursive;
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      color: #fff;
+    }
+    .subtitle {
+      color: #888;
+      font-size: 1.125rem;
+    }
+    .steps {
+      margin-top: 2rem;
+    }
+    .step {
+      background: #1a1a1a;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid #333;
+    }
+    .step-number {
+      font-family: 'Bungee', cursive;
+      font-size: 0.875rem;
+      color: #fbbf24;
+      margin-bottom: 0.5rem;
+    }
+    .step h2 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      color: #fff;
+    }
+    .step p {
+      color: #aaa;
+      margin-bottom: 1rem;
+    }
+    code {
+      font-family: 'Fira Code', monospace;
+      background: #0a0a0a;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      color: #fbbf24;
+    }
+    pre {
+      background: #0a0a0a;
+      border-radius: 8px;
+      padding: 1rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+      border: 1px solid #222;
+    }
+    pre code {
+      background: none;
+      padding: 0;
+      font-size: 0.8rem;
+      color: #ddd;
+    }
+    .highlight {
+      color: #fbbf24;
+    }
+    .comment {
+      color: #666;
+    }
+    .note {
+      background: #1a1a0a;
+      border-left: 3px solid #fbbf24;
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .note p {
+      color: #ccc;
+      margin: 0;
+    }
+    a {
+      color: #fbbf24;
+    }
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #888;
+      text-decoration: none;
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+    }
+    .back:hover {
+      color: #fbbf24;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <a href="/" class="back">← Back</a>
+      <a href="/" class="logo">NICE</a>
+    </header>
+    
+    <h1>GET STARTED</h1>
+    <p class="subtitle">Add a Nice button to your site in 3 steps</p>
+    
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">STEP 1</div>
+        <h2>Register Your Site</h2>
+        <p>Register your domain to get an API token:</p>
+        <pre><code>curl -X POST https://api.nice.sbs/api/v1/sites \\
+  -H "Content-Type: application/json" \\
+  -d '{"domain": "<span class="highlight">yoursite.com</span>"}'</code></pre>
+        <p>Save the <code>token</code> from the response — you'll need it for the next steps.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">STEP 2</div>
+        <h2>Verify Your Domain</h2>
+        <p>Add a TXT record to your DNS to prove ownership:</p>
+        <pre><code><span class="comment"># Add this TXT record to your DNS:</span>
+_nice-verify.yoursite.com  TXT  "nice-verify=<span class="highlight">{verification_token}</span>"</code></pre>
+        <p>Then verify:</p>
+        <pre><code>curl -X POST https://api.nice.sbs/api/v1/sites/<span class="highlight">{site_id}</span>/verify</code></pre>
+        <div class="note">
+          <p>💡 DNS changes can take up to 24 hours to propagate, but usually work within minutes.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">STEP 3</div>
+        <h2>Create a Button</h2>
+        <p>Create your Nice button:</p>
+        <pre><code>curl -X POST https://api.nice.sbs/api/v1/buttons \\
+  -H "Authorization: Bearer <span class="highlight">{your_token}</span>" \\
+  -H "Content-Type: application/json" \\
+  -d '{"name": "My Nice Button"}'</code></pre>
+        <p>Add it to your site with an iframe:</p>
+        <pre><code><span class="comment">&lt;!-- Add this where you want the button --&gt;</span>
+&lt;iframe 
+  src="https://nice.sbs/embed/<span class="highlight">{button_id}</span>?theme=light"
+  style="border:none;width:100px;height:36px;"
+  title="Nice button"&gt;
+&lt;/iframe&gt;</code></pre>
+      </div>
+
+      <div class="step">
+        <div class="step-number">OPTIONS</div>
+        <h2>Customize Your Button</h2>
+        <p>Available query parameters:</p>
+        <pre><code><span class="comment"># Themes: light, dark, minimal</span>
+?theme=dark
+
+<span class="comment"># Sizes: sm, md, lg</span>
+?size=lg
+
+<span class="comment"># Combine them</span>
+?theme=dark&size=sm</code></pre>
+        <p>Example:</p>
+        <pre><code>https://nice.sbs/embed/{button_id}?theme=dark&size=md</code></pre>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+
+export function serveDocsPage(): Response {
+  return new Response(DOCS_HTML, {
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "public, max-age=3600",
+    },
+  });
+}
+`;
