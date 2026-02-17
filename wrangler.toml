@@ -3,6 +3,9 @@ name = "nice"
 main = "src/index.ts"
 compatibility_date = "2025-02-01"
 
+# Pages configuration
+pages_build_output_dir = "public"
+
 # Production KV namespace
 [[kv_namespaces]]
 binding = "NICE_KV"
