@@ -88,7 +88,7 @@ if(n>=1e3)return(n/1e3).toFixed(1).replace(/\\.0$/,'')+'K';
 return n.toString();
 }
 function updateDisplay(){
-countEl.textContent=count>0?formatCount(count):'';
+if(count>0){countEl.textContent=formatCount(count);countEl.style.display='';}else{countEl.textContent='';countEl.style.display='none';}
 if(hasNiced){
 btn.classList.add('niced');
 textEl.textContent="Nice'd";
