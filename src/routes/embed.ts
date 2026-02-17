@@ -8,9 +8,9 @@
 import type { Env } from "../types";
 
 // Embed script (minified inline)
-const EMBED_SCRIPT = `(function(){'use strict';const EMBED_BASE='https://nice.sbs';function init(){document.querySelectorAll('script[data-button]').forEach(createEmbed)}function createEmbed(script){const buttonId=script.getAttribute('data-button');if(!buttonId)return;const theme=script.getAttribute('data-theme')||'light';const container=document.createElement('div');container.className='nice-embed';container.style.cssText='display:inline-block;vertical-align:middle;';const iframe=document.createElement('iframe');iframe.src=EMBED_BASE+'/embed/'+buttonId+'?theme='+encodeURIComponent(theme);iframe.style.cssText='border:none;overflow:hidden;width:120px;height:44px;';iframe.setAttribute('scrolling','no');iframe.setAttribute('frameborder','0');iframe.setAttribute('allowtransparency','true');iframe.setAttribute('sandbox','allow-scripts allow-same-origin allow-popups');iframe.setAttribute('title','Nice button');container.appendChild(iframe);script.parentNode.insertBefore(container,script.nextSibling);window.addEventListener('message',function(event){if(event.origin!==EMBED_BASE)return;try{const data=event.data;if(data.type==='nice-resize'&&data.buttonId===buttonId){iframe.style.width=data.width+'px';iframe.style.height=data.height+'px'}}catch(e){}})}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}})();`;
+const EMBED_SCRIPT = `(function(){'use strict';const EMBED_BASE='https://nice.sbs';function init(){document.querySelectorAll('script[data-button]').forEach(createEmbed)}function createEmbed(script){const buttonId=script.getAttribute('data-button');if(!buttonId)return;const theme=script.getAttribute('data-theme')||'light';const size=script.getAttribute('data-size')||'md';const container=document.createElement('div');container.className='nice-embed';container.style.cssText='display:inline-block;vertical-align:middle;';const iframe=document.createElement('iframe');iframe.src=EMBED_BASE+'/embed/'+buttonId+'?theme='+encodeURIComponent(theme)+'&size='+encodeURIComponent(size);iframe.style.cssText='border:none;overflow:hidden;width:100px;height:36px;';iframe.setAttribute('scrolling','no');iframe.setAttribute('frameborder','0');iframe.setAttribute('allowtransparency','true');iframe.setAttribute('sandbox','allow-scripts allow-same-origin allow-popups');iframe.setAttribute('title','Nice button');container.appendChild(iframe);script.parentNode.insertBefore(container,script.nextSibling);window.addEventListener('message',function(event){if(event.origin!==EMBED_BASE)return;try{const data=event.data;if(data.type==='nice-resize'&&data.buttonId===buttonId){iframe.style.width=data.width+'px';iframe.style.height=data.height+'px'}}catch(e){}})}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}})();`;
 
-// Embed HTML template - Bungee font design
+// Embed HTML template - Bungee font design with size variants
 const EMBED_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,21 +22,42 @@ const EMBED_HTML = `<!DOCTYPE html>
 <link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Bungee',cursive;background:transparent;display:flex;align-items:center;justify-content:center;min-height:44px;padding:4px}
-.nice-button{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border:none;border-radius:8px;font-family:'Bungee',cursive;font-size:16px;cursor:pointer;transition:all .15s ease;user-select:none;-webkit-tap-highlight-color:transparent;text-transform:uppercase;letter-spacing:0.5px}
+body{font-family:'Bungee',cursive;background:transparent;display:flex;align-items:center;justify-content:center;padding:2px}
+.nice-button{display:inline-flex;align-items:center;border:none;font-family:'Bungee',cursive;cursor:pointer;transition:all .15s ease;user-select:none;-webkit-tap-highlight-color:transparent;text-transform:uppercase;letter-spacing:0.5px}
 .nice-button:hover{transform:scale(1.05)}
 .nice-button:active{transform:scale(0.95)}
+
+/* Size variants */
+.size-sm .nice-button{gap:4px;padding:4px 8px;border-radius:4px;font-size:10px}
+.size-sm .nice-count{font-size:9px}
+.size-sm body{min-height:24px}
+
+.size-md .nice-button{gap:6px;padding:6px 12px;border-radius:6px;font-size:12px}
+.size-md .nice-count{font-size:11px}
+.size-md body{min-height:32px}
+
+.size-lg .nice-button{gap:8px;padding:8px 16px;border-radius:8px;font-size:16px}
+.size-lg .nice-count{font-size:14px}
+.size-lg body{min-height:44px}
+
+/* Theme: Light */
 .theme-light .nice-button{background:#f3f4f6;color:#374151}
 .theme-light .nice-button:hover{background:#e5e7eb}
 .theme-light .nice-button.niced{background:#fef3c7;color:#92400e}
+
+/* Theme: Dark */
 .theme-dark .nice-button{background:#374151;color:#f3f4f6}
 .theme-dark .nice-button:hover{background:#4b5563}
 .theme-dark .nice-button.niced{background:#fbbf24;color:#000}
+
+/* Theme: Minimal */
 .theme-minimal .nice-button{background:transparent;color:inherit;border:2px solid currentColor;opacity:.7}
 .theme-minimal .nice-button:hover{opacity:1}
 .theme-minimal .nice-button.niced{opacity:1;border-color:#fbbf24;color:#fbbf24}
+
 .nice-text{transition:all .15s ease}
-.nice-count{font-size:14px;opacity:0.8}
+.nice-count{opacity:0.8}
+
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 .nice-button.animating{animation:pulse .3s ease}
@@ -45,7 +66,7 @@ body{font-family:'Bungee',cursive;background:transparent;display:flex;align-item
 .nice-button.disabled:hover{transform:none}
 </style>
 </head>
-<body class="theme-{{THEME}}">
+<body class="theme-{{THEME}} size-{{SIZE}}">
 <button class="nice-button" id="niceBtn">
 <span class="nice-text" id="niceText">Nice</span>
 <span class="nice-count" id="niceCount"></span>
@@ -139,10 +160,15 @@ export async function serveEmbedPage(
 ): Promise<Response> {
   const url = new URL(request.url);
   const theme = url.searchParams.get("theme") || "light";
+  const size = url.searchParams.get("size") || "md";
   
   // Validate theme
   const validThemes = ["light", "dark", "minimal"];
   const safeTheme = validThemes.includes(theme) ? theme : "light";
+
+  // Validate size
+  const validSizes = ["sm", "md", "lg"];
+  const safeSize = validSizes.includes(size) ? size : "md";
 
   // Get the API base URL from the request
   const apiBase = `${url.protocol}//${url.host}`;
@@ -151,7 +177,8 @@ export async function serveEmbedPage(
   const html = EMBED_HTML
     .replace(/\{\{API_BASE\}\}/g, apiBase)
     .replace(/\{\{BUTTON_ID\}\}/g, buttonId)
-    .replace(/\{\{THEME\}\}/g, safeTheme);
+    .replace(/\{\{THEME\}\}/g, safeTheme)
+    .replace(/\{\{SIZE\}\}/g, safeSize);
 
   return new Response(html, {
     status: 200,
