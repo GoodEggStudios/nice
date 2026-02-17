@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nice - Simple Button Service</title>
+    <meta name="description" content="Ever wanted to just Nice something you see on the internet? Well you can now.">
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://nice.sbs/">
+    <meta property="og:title" content="Nice - Simple Button Service">
+    <meta property="og:description" content="Ever wanted to just Nice something you see on the internet? Well you can now.">
+    <meta property="og:image" content="https://nice.sbs/og-image.png">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Nice - Simple Button Service">
+    <meta name="twitter:description" content="Ever wanted to just Nice something you see on the internet? Well you can now.">
+    <meta name="twitter:image" content="https://nice.sbs/og-image.png">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            font-family: 'Bungee', cursive;
+            font-size: 72px;
+            color: #fbbf24;
+            margin-bottom: 24px;
+            text-transform: uppercase;
+        }
+
+        .tagline {
+            font-size: 18px;
+            color: #9ca3af;
+            max-width: 500px;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+
+        .nice-wrapper {
+            margin-top: 8px;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 48px;
+            }
+            .tagline {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Nice</h1>
+    <p class="tagline">Ever wanted to just "Nice" something you see on the internet? Well you can now.</p>
+    
+    <div class="nice-wrapper">
+        <iframe 
+            src="https://api.nice.sbs/embed/btn_I79oNtbz6FxKURsg?theme=dark&size=lg"
+            style="border:none; width:140px; height:50px;"
+            scrolling="no"
+            frameborder="0"
+            title="Nice this">
+        </iframe>
+    </div>
+</body>
+</html>
