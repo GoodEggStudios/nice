@@ -8,6 +8,7 @@ import type { Env } from "./types";
 import { registerSite, verifySite, regenerateToken } from "./routes/sites";
 import { createButton, listButtons, getButton, deleteButton } from "./routes/buttons";
 import { recordNice, getNiceCount } from "./routes/nice";
+import { serveEmbedScript, serveEmbedPage } from "./routes/embed";
 import { hashToken, isValidTokenFormat } from "./lib";
 
 // KV key prefix for token lookups
@@ -48,6 +49,15 @@ export default {
           headers: { "Content-Type": "application/json", ...corsHeaders },
         }
       );
+    }
+
+    // Embed routes (no CORS wrapper needed - they have their own headers)
+    if (method === "GET" && path === "/embed.js") {
+      return serveEmbedScript(request);
+    }
+    if (method === "GET" && path.match(/^\/embed\/[^/]+$/)) {
+      const buttonId = path.split("/")[2];
+      return serveEmbedPage(request, buttonId);
     }
 
     // Route matching

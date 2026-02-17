@@ -61,32 +61,32 @@
 
 ## 8. Embed Script
 
-- [ ] 8.1 Create embed.js script loader
-- [ ] 8.2 Implement iframe creation at script location
-- [ ] 8.3 Pass button_id and theme config via iframe URL params
-- [ ] 8.4 Implement postMessage handler for iframe resize events
-- [ ] 8.5 Implement origin validation for postMessage security
+- [x] 8.1 Create embed.js script loader
+- [x] 8.2 Implement iframe creation at script location
+- [x] 8.3 Pass button_id and theme config via iframe URL params
+- [x] 8.4 Implement postMessage handler for iframe resize events
+- [x] 8.5 Implement origin validation for postMessage security
 
 ## 9. Embed UI (iframe content)
 
-- [ ] 9.1 Create nice button HTML/CSS component
-- [ ] 9.2 Implement light theme styles
-- [ ] 9.3 Implement dark theme styles
-- [ ] 9.4 Implement minimal theme with transparent background
-- [ ] 9.5 Implement click animation (pulse/burst effect)
-- [ ] 9.6 Implement "niced" visual state (filled icon)
-- [ ] 9.7 Implement shake animation for repeat clicks
-- [ ] 9.8 Implement optimistic count update on click
-- [ ] 9.9 Implement lightweight fingerprint collection
-- [ ] 9.10 Implement postMessage resize notifications to parent
+- [x] 9.1 Create nice button HTML/CSS component
+- [x] 9.2 Implement light theme styles
+- [x] 9.3 Implement dark theme styles
+- [x] 9.4 Implement minimal theme with transparent background
+- [x] 9.5 Implement click animation (pulse/burst effect)
+- [x] 9.6 Implement "niced" visual state (filled icon)
+- [x] 9.7 Implement shake animation for repeat clicks
+- [x] 9.8 Implement optimistic count update on click
+- [x] 9.9 Implement lightweight fingerprint collection
+- [x] 9.10 Implement postMessage resize notifications to parent
 
 ## 10. Security & Hardening
 
-- [ ] 10.1 Set iframe sandbox attributes (allow-scripts allow-same-origin)
-- [ ] 10.2 Implement CORS headers for API endpoints
-- [ ] 10.3 Implement abuse logging (hashed IPs, retained 7 days)
-- [ ] 10.4 Add input validation for all API endpoints
-- [ ] 10.5 Implement error responses with appropriate HTTP status codes
+- [x] 10.1 Set iframe sandbox attributes (allow-scripts allow-same-origin)
+- [x] 10.2 Implement CORS headers for API endpoints
+- [x] 10.3 Implement abuse logging (hashed IPs, retained 7 days)
+- [x] 10.4 Add input validation for all API endpoints
+- [x] 10.5 Implement error responses with appropriate HTTP status codes
 
 ## 11. Deployment & Configuration
 
