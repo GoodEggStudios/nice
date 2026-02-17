@@ -1,0 +1,29 @@
+meta {
+  name: Regenerate Token
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/sites/{{siteId}}/token/regenerate
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("token", res.body.token);
+  }
+}
+
+docs {
+  # Regenerate API token
+  
+  Generates a new API token. Your old token will be invalidated immediately.
+  
+  Requires authentication with current token.
+}

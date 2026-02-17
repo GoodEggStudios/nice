@@ -1,0 +1,45 @@
+meta {
+  name: Record Nice
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/nice/{{buttonId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "fingerprint": "test-fingerprint-123"
+  }
+}
+
+docs {
+  # Record a nice
+  
+  Records a nice for a button. No authentication required.
+  
+  ## Response
+  
+  **Success (first nice):**
+  ```json
+  {"success": true, "count": 43}
+  ```
+  
+  **Already niced today:**
+  ```json
+  {"success": false, "reason": "already_niced", "count": 43}
+  ```
+  
+  **Rate limited:**
+  ```json
+  {"error": "Rate limit exceeded", "code": "IP_LIMIT"}
+  ```
+  
+  ## Fingerprint
+  
+  The fingerprint is optional and used for deduplication.
+  The embed generates this automatically from screen size, timezone, and language.
+}

@@ -1,0 +1,23 @@
+meta {
+  name: Delete Button
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/buttons/{{buttonId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # Delete a button
+  
+  Permanently deletes a button and all its nice count data.
+  
+  The embed for this button will show as disabled.
+}

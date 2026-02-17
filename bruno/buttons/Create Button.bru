@@ -1,0 +1,38 @@
+meta {
+  name: Create Button
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/buttons
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "My Blog Post",
+    "url": "https://example.com/blog/post-1"
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("buttonId", res.body.button_id);
+  }
+}
+
+docs {
+  # Create a nice button
+  
+  Creates a new button for a specific URL on your verified domain.
+  
+  The response includes ready-to-use embed code.
+  
+  **Note:** Site must be verified before creating buttons.
+}
