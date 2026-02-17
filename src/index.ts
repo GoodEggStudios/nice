@@ -15,6 +15,12 @@ import { hashToken, isValidTokenFormat } from "./lib";
 const TOKEN_PREFIX = "token:";
 const SITE_PREFIX = "site:";
 
+// Favicon SVG - Bungee-style "N" in gold
+const FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="6" fill="#f59e0b"/>
+  <path d="M7 6h6v12l6-12h6v20h-6V14l-6 12H7V6z" fill="#ffffff"/>
+</svg>`;
+
 export default {
   async fetch(
     request: Request,
@@ -49,6 +55,17 @@ export default {
           headers: { "Content-Type": "application/json", ...corsHeaders },
         }
       );
+    }
+
+    // Favicon
+    if (method === "GET" && (path === "/favicon.svg" || path === "/favicon.ico")) {
+      return new Response(FAVICON_SVG, {
+        headers: {
+          "Content-Type": "image/svg+xml",
+          "Cache-Control": "public, max-age=86400",
+          ...corsHeaders,
+        },
+      });
     }
 
     // Embed routes (no CORS wrapper needed - they have their own headers)
