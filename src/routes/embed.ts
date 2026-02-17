@@ -75,10 +75,12 @@ body{font-family:'Bungee',cursive;background:transparent;display:flex;align-item
 (function(){'use strict';
 const API_BASE='{{API_BASE}}';
 const BUTTON_ID='{{BUTTON_ID}}';
+const STORAGE_KEY='nice:'+BUTTON_ID;
 const btn=document.getElementById('niceBtn');
 const textEl=document.getElementById('niceText');
 const countEl=document.getElementById('niceCount');
 let count=0,hasNiced=false,isLoading=false;
+try{hasNiced=localStorage.getItem(STORAGE_KEY)==='1';}catch(e){}
 function formatCount(n){
 if(n>=1e9)return(n/1e9).toFixed(1).replace(/\\.0$/,'')+'B';
 if(n>=1e6)return(n/1e6).toFixed(1).replace(/\\.0$/,'')+'M';
@@ -119,7 +121,7 @@ setTimeout(()=>btn.classList.remove('animating'),300);
 try{
 const res=await fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fingerprint:getFingerprint()})});
 const data=await res.json();
-if(res.ok){count=data.count;if(!data.success&&data.reason==='already_niced')hasNiced=true;}
+if(res.ok){count=data.count;if(data.success||data.reason==='already_niced'){hasNiced=true;try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}}
 else if(res.status===429){count--;hasNiced=false;btn.classList.remove('niced');}
 updateDisplay();
 }catch(e){count--;hasNiced=false;btn.classList.remove('niced');updateDisplay();console.error('Nice: Failed to record',e);}
