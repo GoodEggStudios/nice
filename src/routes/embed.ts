@@ -22,8 +22,8 @@ const EMBED_HTML = `<!DOCTYPE html>
 <link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Bungee',cursive;background:transparent;display:flex;align-items:center;justify-content:center;min-height:44px;padding:4px}
-.nice-button{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border:none;border-radius:8px;font-family:'Bungee',cursive;font-size:16px;cursor:pointer;transition:all .15s ease;user-select:none;-webkit-tap-highlight-color:transparent;text-transform:uppercase;letter-spacing:0.5px}
+body{font-family:'Bungee',cursive;background:transparent;display:flex;align-items:center;justify-content:center;min-height:32px;padding:2px}
+.nice-button{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:none;border-radius:6px;font-family:'Bungee',cursive;font-size:12px;cursor:pointer;transition:all .15s ease;user-select:none;-webkit-tap-highlight-color:transparent;text-transform:uppercase;letter-spacing:0.5px}
 .nice-button:hover{transform:scale(1.05)}
 .nice-button:active{transform:scale(0.95)}
 .theme-light .nice-button{background:#f3f4f6;color:#374151}
@@ -36,7 +36,7 @@ body{font-family:'Bungee',cursive;background:transparent;display:flex;align-item
 .theme-minimal .nice-button:hover{opacity:1}
 .theme-minimal .nice-button.niced{opacity:1;border-color:#fbbf24;color:#fbbf24}
 .nice-text{transition:all .15s ease}
-.nice-count{font-size:14px;opacity:0.8}
+.nice-count{font-size:11px;opacity:0.8}
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 .nice-button.animating{animation:pulse .3s ease}
