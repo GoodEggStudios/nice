@@ -118,7 +118,7 @@ export async function recordNice(
       };
       return new Response(JSON.stringify(response), {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: noCacheHeaders(),
       });
     }
 
@@ -139,7 +139,7 @@ export async function recordNice(
 
     return new Response(JSON.stringify(response), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: noCacheHeaders(),
     });
   } catch (e) {
     console.error("recordNice error:", e);
@@ -171,7 +171,12 @@ export async function getNiceCount(
 
     return new Response(JSON.stringify(response), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+        "CDN-Cache-Control": "no-store",
+        "Cloudflare-CDN-Cache-Control": "no-store",
+      },
     });
   } catch (e) {
     console.error("getNiceCount error:", e);
@@ -182,7 +187,8 @@ export async function getNiceCount(
 // Helper functions
 
 async function getCount(env: Env, buttonId: string): Promise<number> {
-  const countData = await env.NICE_KV.get(`${COUNT_PREFIX}${buttonId}`);
+  // Use cacheTtl: 60 (minimum) to reduce edge caching staleness
+  const countData = await env.NICE_KV.get(`${COUNT_PREFIX}${buttonId}`, { cacheTtl: 60 });
   if (!countData) return 0;
   return parseInt(countData, 10) || 0;
 }
@@ -204,4 +210,13 @@ function jsonError(message: string, code: string, status: number): Response {
     status,
     headers: { "Content-Type": "application/json" },
   });
+}
+
+function noCacheHeaders(): Record<string, string> {
+  return {
+    "Content-Type": "application/json",
+    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    "CDN-Cache-Control": "no-store",
+    "Cloudflare-CDN-Cache-Control": "no-store",
+  };
 }
