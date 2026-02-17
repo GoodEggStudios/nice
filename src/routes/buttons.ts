@@ -102,11 +102,11 @@ export async function createButton(
       `${URL_BUTTON_PREFIX}${siteId}:${urlHash}`
     );
     if (existingButtonId) {
+      // Don't leak existing_button_id for security
       return new Response(
         JSON.stringify({
           error: "A button already exists for this URL",
           code: "DUPLICATE_URL",
-          existing_button_id: existingButtonId,
         }),
         { status: 409, headers: { "Content-Type": "application/json" } }
       );

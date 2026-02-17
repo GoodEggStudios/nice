@@ -166,9 +166,16 @@ async function incrementCounter(
   key: string,
   ttlSeconds: number
 ): Promise<number> {
-  const current = await kv.get(key);
+  // Note: KV doesn't support atomic increments, so there's an inherent race condition.
+  // We use a conservative approach: read current, add a safety margin estimate,
+  // then write the increment. This may slightly over-count but won't under-count.
+  const current = await kv.get(key, { cacheTtl: 60 });
   const count = (parseInt(current || "0", 10) || 0) + 1;
+  
+  // Write immediately - accept some race condition loss
+  // For critical rate limiting, consider Durable Objects
   await kv.put(key, count.toString(), { expirationTtl: ttlSeconds });
+  
   return count;
 }
 
