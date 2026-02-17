@@ -6,6 +6,7 @@
 
 import type { Env } from "./types";
 import { registerSite, verifySite, regenerateToken } from "./routes/sites";
+import { createButton, listButtons, getButton, deleteButton } from "./routes/buttons";
 import { hashToken, isValidTokenFormat } from "./lib";
 
 // KV key prefix for token lookups
@@ -72,6 +73,56 @@ export default {
           );
         } else {
           response = await regenerateToken(request, env, siteId, auth.siteId!);
+        }
+      }
+      // POST /api/v1/buttons - Create button (auth required)
+      else if (method === "POST" && path === "/api/v1/buttons") {
+        const auth = await authenticate(request, env);
+        if (!auth.authenticated) {
+          response = new Response(
+            JSON.stringify({ error: auth.error, code: "UNAUTHORIZED" }),
+            { status: 401, headers: { "Content-Type": "application/json" } }
+          );
+        } else {
+          response = await createButton(request, env, auth.siteId!);
+        }
+      }
+      // GET /api/v1/buttons - List buttons (auth required)
+      else if (method === "GET" && path === "/api/v1/buttons") {
+        const auth = await authenticate(request, env);
+        if (!auth.authenticated) {
+          response = new Response(
+            JSON.stringify({ error: auth.error, code: "UNAUTHORIZED" }),
+            { status: 401, headers: { "Content-Type": "application/json" } }
+          );
+        } else {
+          response = await listButtons(request, env, auth.siteId!);
+        }
+      }
+      // GET /api/v1/buttons/:button_id - Get button (auth required)
+      else if (method === "GET" && path.match(/^\/api\/v1\/buttons\/[^/]+$/)) {
+        const buttonId = path.split("/")[4];
+        const auth = await authenticate(request, env);
+        if (!auth.authenticated) {
+          response = new Response(
+            JSON.stringify({ error: auth.error, code: "UNAUTHORIZED" }),
+            { status: 401, headers: { "Content-Type": "application/json" } }
+          );
+        } else {
+          response = await getButton(request, env, buttonId, auth.siteId!);
+        }
+      }
+      // DELETE /api/v1/buttons/:button_id - Delete button (auth required)
+      else if (method === "DELETE" && path.match(/^\/api\/v1\/buttons\/[^/]+$/)) {
+        const buttonId = path.split("/")[4];
+        const auth = await authenticate(request, env);
+        if (!auth.authenticated) {
+          response = new Response(
+            JSON.stringify({ error: auth.error, code: "UNAUTHORIZED" }),
+            { status: 401, headers: { "Content-Type": "application/json" } }
+          );
+        } else {
+          response = await deleteButton(request, env, buttonId, auth.siteId!);
         }
       }
       // 404 - Not found
