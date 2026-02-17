@@ -31,14 +31,14 @@
 
 ## 5. Button Management API
 
-- [ ] 5.1 Create POST /api/v1/buttons endpoint for button creation
-- [ ] 5.2 Implement URL domain validation against site's verified domain
-- [ ] 5.3 Implement URL uniqueness check per site
-- [ ] 5.4 Generate button_id with `btn_` prefix
-- [ ] 5.5 Create GET /api/v1/buttons endpoint with pagination (cursor-based)
-- [ ] 5.6 Create GET /api/v1/buttons/{button_id} endpoint
-- [ ] 5.7 Create DELETE /api/v1/buttons/{button_id} endpoint
-- [ ] 5.8 Generate embed code snippets in button responses
+- [x] 5.1 Create POST /api/v1/buttons endpoint for button creation
+- [x] 5.2 Implement URL domain validation against site's verified domain
+- [x] 5.3 Implement URL uniqueness check per site
+- [x] 5.4 Generate button_id with `btn_` prefix
+- [x] 5.5 Create GET /api/v1/buttons endpoint with pagination (cursor-based)
+- [x] 5.6 Create GET /api/v1/buttons/{button_id} endpoint
+- [x] 5.7 Create DELETE /api/v1/buttons/{button_id} endpoint
+- [x] 5.8 Generate embed code snippets in button responses
 
 ## 6. Nice Recording API
 
