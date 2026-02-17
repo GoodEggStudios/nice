@@ -18,7 +18,7 @@ const SITE_PREFIX = "site:";
 // Favicon SVG - Bungee-style "N" in gold
 const FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <rect width="32" height="32" rx="6" fill="#f59e0b"/>
-  <path d="M7 6h6v12l6-12h6v20h-6V14l-6 12H7V6z" fill="#ffffff"/>
+  <path d="M4 4h8v10l8-10h8v24h-8V18l-8 10H4z" fill="#fff"/>
 </svg>`;
 
 export default {
