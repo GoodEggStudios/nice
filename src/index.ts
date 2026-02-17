@@ -15,6 +15,9 @@ import { hashToken, isValidTokenFormat } from "./lib";
 const TOKEN_PREFIX = "token:";
 const SITE_PREFIX = "site:";
 
+// Favicon SVG - Bungee "N" in gold
+const FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 61.501 72.001"><path d="M18.601 72.001L3.601 72.001Q0.001 72.001 0.001 68.401L0.001 3.601Q0.001 0.001 3.601 0.001L14.001 0.001Q17.601 0.001 19.901 2.701L39.301 24.901L39.301 3.601Q39.301 0.001 42.901 0.001L57.901 0.001Q61.501 0.001 61.501 3.601L61.501 68.401Q61.501 72.001 57.901 72.001L42.901 72.001Q39.301 72.001 39.301 68.401L39.301 56.101L22.201 35.401L22.201 68.401Q22.201 72.001 18.601 72.001Z" fill="#fbbf24"/></svg>`;
+
 export default {
   async fetch(
     request: Request,
@@ -49,6 +52,17 @@ export default {
           headers: { "Content-Type": "application/json", ...corsHeaders },
         }
       );
+    }
+
+    // Favicon
+    if (method === "GET" && (path === "/favicon.svg" || path === "/favicon.ico")) {
+      return new Response(FAVICON_SVG, {
+        headers: {
+          "Content-Type": "image/svg+xml",
+          "Cache-Control": "public, max-age=86400",
+          ...corsHeaders,
+        },
+      });
     }
 
     // Embed routes (no CORS wrapper needed - they have their own headers)
