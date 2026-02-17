@@ -44,6 +44,32 @@
             text-align: center;
         }
 
+        .get-started {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #fbbf24;
+            color: #000;
+            font-family: 'Bungee', cursive;
+            font-size: 14px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+
+        .get-started:hover {
+            transform: scale(1.05);
+            background: #f59e0b;
+        }
+
+        .get-started:active {
+            transform: scale(0.95);
+        }
+
         h1 {
             font-family: 'Bungee', cursive;
             font-size: 72px;
@@ -60,58 +86,60 @@
             margin-bottom: 32px;
         }
 
-        .nice-wrapper {
-            margin-top: 8px;
-            margin-bottom: 32px;
-        }
-
-        .get-started {
-            display: inline-flex;
+        .cta {
+            display: flex;
             align-items: center;
-            gap: 8px;
-            background: #fbbf24;
-            color: #000;
-            font-family: 'Bungee', cursive;
-            font-size: 16px;
-            padding: 12px 24px;
-            border-radius: 8px;
-            text-decoration: none;
-            transition: transform 0.15s ease, background 0.15s ease;
+            justify-content: center;
+            gap: 12px;
+            font-size: 24px;
+            color: #9ca3af;
+            flex-wrap: wrap;
         }
 
-        .get-started:hover {
-            transform: scale(1.05);
-            background: #f59e0b;
+        .cta-text {
+            line-height: 1.6;
         }
 
-        .get-started:active {
-            transform: scale(0.95);
+        .nice-inline {
+            display: inline-flex;
+            vertical-align: middle;
         }
 
         @media (max-width: 600px) {
             h1 {
                 font-size: 48px;
             }
-            .tagline {
-                font-size: 16px;
+            .cta {
+                font-size: 18px;
+                gap: 8px;
+            }
+            .get-started {
+                font-size: 12px;
+                padding: 8px 16px;
+                top: 16px;
+                right: 16px;
             }
         }
     </style>
 </head>
 <body>
+    <a href="/docs.html" class="get-started">GET STARTED →</a>
+
     <h1>Nice</h1>
+    
     <p class="tagline">Ever wanted to just "Nice" something you see on the internet? Well you can now.</p>
     
-    <div class="nice-wrapper">
-        <iframe 
-            src="https://api.nice.sbs/embed/btn_I79oNtbz6FxKURsg?theme=dark&size=lg"
-            style="border:none; width:140px; height:50px;"
-            scrolling="no"
-            frameborder="0"
-            title="Nice this">
-        </iframe>
+    <div class="cta">
+        <span class="cta-text">We know what you're thinking,</span>
+        <span class="nice-inline">
+            <iframe 
+                src="https://api.nice.sbs/embed/btn_I79oNtbz6FxKURsg?theme=dark&size=md"
+                style="border:none; width:100px; height:36px;"
+                scrolling="no"
+                frameborder="0"
+                title="Nice this">
+            </iframe>
+        </span>
     </div>
-
-    <a href="/docs.html" class="get-started">GET STARTED →</a>
 </body>
 </html>
