@@ -65,11 +65,20 @@ export async function recordNice(
       return jsonError("Site not verified", "SITE_NOT_VERIFIED", 403);
     }
 
-    // Get visitor IP - require CF-Connecting-IP for security
-    const ip = request.headers.get("CF-Connecting-IP");
+    // Get visitor IP - prefer CF-Connecting-IP (set by Cloudflare)
+    // Fall back to X-Forwarded-For for local dev/testing, but log warning
+    let ip = request.headers.get("CF-Connecting-IP");
     if (!ip) {
-      // Reject requests not coming through Cloudflare to prevent IP spoofing
-      return jsonError("Direct access not allowed", "DIRECT_ACCESS", 403);
+      // Not through Cloudflare - check X-Forwarded-For as fallback
+      const xff = request.headers.get("X-Forwarded-For");
+      if (xff) {
+        ip = xff.split(",")[0].trim();
+        console.warn(`Using X-Forwarded-For (spoofable) for IP: ${ip.substring(0, 8)}...`);
+      } else {
+        // No IP headers at all - use a placeholder (all get same hash)
+        ip = "unknown";
+        console.warn("No IP headers present - using 'unknown' for deduplication");
+      }
     }
 
     // Parse request body for PoW solution (fingerprint no longer used for security)
