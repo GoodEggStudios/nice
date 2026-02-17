@@ -4,19 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nice - Simple Button Service</title>
-    <meta name="description" content="Ever wanted to just Nice something you see on the internet? Well you can now.">
+    <meta name="description" content="Ever wanted to just Nice something you see on the internet?">
     
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://nice.sbs/">
     <meta property="og:title" content="Nice - Simple Button Service">
-    <meta property="og:description" content="Ever wanted to just Nice something you see on the internet? Well you can now.">
+    <meta property="og:description" content="Ever wanted to just Nice something you see on the internet?">
     <meta property="og:image" content="https://nice.sbs/og-image.png">
     
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Nice - Simple Button Service">
-    <meta name="twitter:description" content="Ever wanted to just Nice something you see on the internet? Well you can now.">
+    <meta name="twitter:description" content="Ever wanted to just Nice something you see on the internet?">
     <meta name="twitter:image" content="https://nice.sbs/og-image.png">
     
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -31,10 +31,14 @@
             box-sizing: border-box;
         }
 
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
         body {
             background-color: #000;
             color: #fff;
-            min-height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -127,7 +131,7 @@
 
     <h1>Nice</h1>
     
-    <p class="tagline">Ever wanted to just "Nice" something you see on the internet? Well you can now.</p>
+    <p class="tagline">Ever wanted to just "Nice" something you see on the internet?</p>
     
     <div class="cta">
         <span class="cta-text">We know what you're thinking,</span>
