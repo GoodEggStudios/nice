@@ -7,6 +7,7 @@
 import type { Env } from "./types";
 import { registerSite, verifySite, regenerateToken } from "./routes/sites";
 import { createButton, listButtons, getButton, deleteButton } from "./routes/buttons";
+import { recordNice, getNiceCount } from "./routes/nice";
 import { hashToken, isValidTokenFormat } from "./lib";
 
 // KV key prefix for token lookups
@@ -124,6 +125,16 @@ export default {
         } else {
           response = await deleteButton(request, env, buttonId, auth.siteId!);
         }
+      }
+      // POST /api/v1/nice/:button_id - Record a nice (public, no auth)
+      else if (method === "POST" && path.match(/^\/api\/v1\/nice\/[^/]+$/)) {
+        const buttonId = path.split("/")[4];
+        response = await recordNice(request, env, buttonId);
+      }
+      // GET /api/v1/nice/:button_id/count - Get nice count (public, no auth)
+      else if (method === "GET" && path.match(/^\/api\/v1\/nice\/[^/]+\/count$/)) {
+        const buttonId = path.split("/")[4];
+        response = await getNiceCount(request, env, buttonId);
       }
       // 404 - Not found
       else {

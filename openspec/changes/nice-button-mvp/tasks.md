@@ -42,12 +42,12 @@
 
 ## 6. Nice Recording API
 
-- [ ] 6.1 Create POST /api/v1/nice/{button_id} endpoint
-- [ ] 6.2 Implement visitor hash generation (IP + fingerprint + button_id + daily_salt)
-- [ ] 6.3 Implement 24-hour deduplication check using KV with TTL
-- [ ] 6.4 Implement atomic count increment in KV
-- [ ] 6.5 Create GET /api/v1/nice/{button_id}/count endpoint
-- [ ] 6.6 Verify site is verified before accepting nices
+- [x] 6.1 Create POST /api/v1/nice/{button_id} endpoint
+- [x] 6.2 Implement visitor hash generation (IP + fingerprint + button_id + daily_salt)
+- [x] 6.3 Implement 24-hour deduplication check using KV with TTL
+- [x] 6.4 Implement atomic count increment in KV
+- [x] 6.5 Create GET /api/v1/nice/{button_id}/count endpoint
+- [x] 6.6 Verify site is verified before accepting nices
 
 ## 7. Rate Limiting
 
