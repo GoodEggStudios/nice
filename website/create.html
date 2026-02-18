@@ -65,6 +65,78 @@
       font-size: 0.875rem;
     }
     
+    .url-input-group {
+      display: flex;
+      gap: 0;
+    }
+    
+    .protocol-btn {
+      padding: 0.75rem 0.75rem;
+      font-size: 0.875rem;
+      font-family: 'Fira Code', monospace;
+      font-weight: 500;
+      background: #252525;
+      color: #888;
+      border: 2px solid #333;
+      border-right: none;
+      border-radius: 8px 0 0 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    
+    .protocol-btn:hover {
+      background: #2a2a2a;
+      color: #fff;
+    }
+    
+    .protocol-btn.https {
+      color: #22c55e;
+    }
+    
+    .protocol-btn.http {
+      color: #f59e0b;
+    }
+    
+    .url-input {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border: 2px solid #333;
+      border-radius: 0 8px 8px 0;
+      background: #1a1a1a;
+      color: #fff;
+      font-family: 'Fira Code', monospace;
+    }
+    
+    .url-input:focus {
+      outline: none;
+      border-color: #fbbf24;
+    }
+    
+    .url-input::placeholder {
+      color: #555;
+    }
+    
+    .url-input.error {
+      border-color: #ef4444;
+    }
+    
+    .protocol-btn.error {
+      border-color: #ef4444;
+    }
+    
+    .url-error {
+      color: #ef4444;
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+    
+    .url-error.show {
+      display: block;
+    }
+    
     input[type="url"] {
       width: 100%;
       padding: 0.75rem 1rem;
@@ -364,8 +436,12 @@
     
     <form id="createForm">
       <div class="form-group">
-        <label for="url">Content URL <span class="label-hint">(the page where this button will be embedded)</span></label>
-        <input type="url" id="url" name="url" placeholder="https://example.com/my-article" required>
+        <label for="urlInput">Content URL <span class="label-hint">(the page where this button will be embedded)</span></label>
+        <div class="url-input-group">
+          <button type="button" class="protocol-btn https" id="protocolBtn">https://</button>
+          <input type="text" class="url-input" id="urlInput" name="url" placeholder="example.com/my-article" required>
+        </div>
+        <div class="url-error" id="urlError">Please enter a valid URL</div>
       </div>
       
       <div class="form-group">
@@ -496,11 +572,79 @@
   
   <script>
     const form = document.getElementById('createForm');
-    const urlInput = document.getElementById('url');
+    const urlInput = document.getElementById('urlInput');
+    const protocolBtn = document.getElementById('protocolBtn');
+    const urlError = document.getElementById('urlError');
     const previewFrame = document.getElementById('previewFrame');
     const submitBtn = document.getElementById('submitBtn');
     const errorBox = document.getElementById('errorBox');
     const resultDiv = document.getElementById('result');
+    
+    // Protocol state
+    let protocol = 'https://';
+    
+    // Toggle protocol
+    protocolBtn.addEventListener('click', () => {
+      if (protocol === 'https://') {
+        protocol = 'http://';
+        protocolBtn.textContent = 'http://';
+        protocolBtn.classList.remove('https');
+        protocolBtn.classList.add('http');
+      } else {
+        protocol = 'https://';
+        protocolBtn.textContent = 'https://';
+        protocolBtn.classList.remove('http');
+        protocolBtn.classList.add('https');
+      }
+      validateUrl();
+    });
+    
+    // URL validation
+    function validateUrl() {
+      const value = urlInput.value.trim();
+      if (!value) {
+        hideUrlError();
+        return false;
+      }
+      
+      // Build full URL
+      const fullUrl = protocol + value;
+      
+      try {
+        const url = new URL(fullUrl);
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+          showUrlError('Only http and https URLs are supported');
+          return false;
+        }
+        hideUrlError();
+        return true;
+      } catch {
+        showUrlError('Please enter a valid URL');
+        return false;
+      }
+    }
+    
+    function showUrlError(msg) {
+      urlError.textContent = msg;
+      urlError.classList.add('show');
+      urlInput.classList.add('error');
+      protocolBtn.classList.add('error');
+    }
+    
+    function hideUrlError() {
+      urlError.classList.remove('show');
+      urlInput.classList.remove('error');
+      protocolBtn.classList.remove('error');
+    }
+    
+    // Get full URL
+    function getFullUrl() {
+      return protocol + urlInput.value.trim();
+    }
+    
+    // Validate on input
+    urlInput.addEventListener('input', validateUrl);
+    urlInput.addEventListener('blur', validateUrl);
     
     // Size dimensions for preview
     const SIZES = {
@@ -521,7 +665,7 @@
     
     function updateRestrictionDesc() {
       const restriction = document.querySelector('input[name="restriction"]:checked').value;
-      restrictionDescEl.textContent = restrictionDescs[restriction];
+      if (restrictionDescEl) restrictionDescEl.textContent = restrictionDescs[restriction];
     }
     
     // Handle option selection
@@ -551,12 +695,18 @@
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       
+      // Validate URL first
+      if (!validateUrl()) {
+        urlInput.focus();
+        return;
+      }
+      
       submitBtn.disabled = true;
       submitBtn.textContent = 'Creating...';
       errorBox.classList.remove('show');
       resultDiv.classList.remove('show');
       
-      const url = urlInput.value;
+      const url = getFullUrl();
       const theme = document.querySelector('input[name="theme"]:checked').value;
       const size = document.querySelector('input[name="size"]:checked').value;
       const restriction = document.querySelector('input[name="restriction"]:checked').value;
@@ -595,8 +745,13 @@
         form.style.display = 'none';
         
       } catch (err) {
-        errorBox.textContent = err.message;
-        errorBox.classList.add('show');
+        // Show URL errors in the URL field
+        if (err.message.toLowerCase().includes('url')) {
+          showUrlError(err.message);
+        } else {
+          errorBox.textContent = err.message;
+          errorBox.classList.add('show');
+        }
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Create Button';
