@@ -21,6 +21,11 @@ import {
 const SITE_PREFIX = "site:";
 const DOMAIN_PREFIX = "domain:";
 const TOKEN_PREFIX = "token:";
+const REG_RATE_PREFIX = "reg_rate:"; // Registration rate limiting
+
+// Registration rate limit: 3 per IP per hour
+const REG_RATE_LIMIT = 3;
+const REG_RATE_WINDOW_SECONDS = 3600; // 1 hour
 
 interface RegisterSiteRequest {
   domain: string;
@@ -60,6 +65,25 @@ export async function registerSite(
   env: Env
 ): Promise<Response> {
   try {
+    // Get IP for rate limiting
+    const ip = request.headers.get("CF-Connecting-IP") || 
+               request.headers.get("X-Forwarded-For")?.split(",")[0]?.trim() || 
+               "unknown";
+
+    // Check registration rate limit
+    const rateLimitKey = `${REG_RATE_PREFIX}${await hashIp(ip)}`;
+    const currentCount = await env.NICE_KV.get(rateLimitKey);
+    const count = parseInt(currentCount || "0", 10);
+    
+    if (count >= REG_RATE_LIMIT) {
+      return jsonError(
+        "Rate limit exceeded. Maximum 3 registrations per hour.",
+        "RATE_LIMITED",
+        429,
+        { "Retry-After": "3600" }
+      );
+    }
+
     const body = await request.json() as RegisterSiteRequest;
 
     // Validate domain
@@ -73,11 +97,26 @@ export async function registerSite(
       return jsonError("Invalid domain format", "INVALID_DOMAIN", 400);
     }
 
+    // Verify domain exists (DNS resolution check)
+    const domainExists = await checkDomainExists(normalizedDomain);
+    if (!domainExists) {
+      return jsonError(
+        "Domain does not resolve. Please ensure the domain exists and has DNS records.",
+        "DOMAIN_NOT_FOUND",
+        400
+      );
+    }
+
     // Check if domain is already registered
     const existingDomain = await env.NICE_KV.get(`${DOMAIN_PREFIX}${normalizedDomain}`);
     if (existingDomain) {
       return jsonError("Domain already registered", "DOMAIN_EXISTS", 409);
     }
+
+    // Increment rate limit counter (only after validation passes)
+    await env.NICE_KV.put(rateLimitKey, (count + 1).toString(), { 
+      expirationTtl: REG_RATE_WINDOW_SECONDS 
+    });
 
     // Generate IDs and tokens
     const siteId = generateSiteId();
@@ -283,9 +322,65 @@ async function checkDnsTxtRecord(recordName: string, expectedValue: string): Pro
   }
 }
 
-function jsonError(message: string, code: string, status: number): Response {
+function jsonError(
+  message: string, 
+  code: string, 
+  status: number, 
+  extraHeaders?: Record<string, string>
+): Response {
   return new Response(JSON.stringify({ error: message, code }), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...extraHeaders },
   });
+}
+
+/**
+ * Hash IP address for rate limiting (privacy)
+ */
+async function hashIp(ip: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(ip);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.slice(0, 8).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * Check if a domain exists by attempting DNS resolution
+ */
+async function checkDomainExists(domain: string): Promise<boolean> {
+  try {
+    // Use Cloudflare's DNS-over-HTTPS to check if domain has any records
+    const response = await fetch(
+      `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(domain)}&type=A`,
+      {
+        headers: { Accept: "application/dns-json" },
+      }
+    );
+
+    if (!response.ok) {
+      // If DNS query fails, also try AAAA (IPv6)
+      const response6 = await fetch(
+        `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(domain)}&type=AAAA`,
+        {
+          headers: { Accept: "application/dns-json" },
+        }
+      );
+      if (!response6.ok) return false;
+      const data6 = await response6.json() as { Answer?: unknown[] };
+      return Boolean(data6.Answer && data6.Answer.length > 0);
+    }
+
+    const data = await response.json() as { Answer?: unknown[], Authority?: unknown[] };
+    
+    // Domain exists if it has A records, or at least has authority (SOA) records
+    return Boolean(
+      (data.Answer && data.Answer.length > 0) || 
+      (data.Authority && data.Authority.length > 0)
+    );
+  } catch (e) {
+    console.error("Domain check error:", e);
+    // On error, be permissive (don't block registration due to DNS issues)
+    return true;
+  }
 }
