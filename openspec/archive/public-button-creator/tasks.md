@@ -95,18 +95,18 @@
 
 ## 11. Testing
 
-- [ ] 11.1 Test button creation flow end-to-end
-- [ ] 11.2 Test referrer verification (all three modes)
-- [ ] 11.3 Test rate limiting triggers
-- [ ] 11.4 Test stats page access with valid/invalid IDs
-- [ ] 11.5 Test button deletion
-- [ ] 11.6 Test embed with new n_ ID format
-- [ ] 11.7 Test URL normalization edge cases
+- [x] 11.1 Test button creation flow end-to-end
+- [x] 11.2 Test referrer verification (all three modes)
+- [x] 11.3 Test rate limiting triggers
+- [x] 11.4 Test stats page access with valid/invalid IDs
+- [x] 11.5 Test button deletion
+- [x] 11.6 Test embed with new n_ ID format
+- [x] 11.7 Test URL normalization edge cases
 
 ## 12. Deployment
 
-- [ ] 12.1 Deploy to preview environment
-- [ ] 12.2 Verify all routes work
-- [ ] 12.3 Test with real button creation
-- [ ] 12.4 Deploy to production
-- [ ] 12.5 Verify production deployment
+- [x] 12.1 Deploy to preview environment
+- [x] 12.2 Verify all routes work
+- [x] 12.3 Test with real button creation
+- [x] 12.4 Deploy to production
+- [x] 12.5 Verify production deployment
