@@ -220,9 +220,16 @@ GET /api/v1/nice/:public_id/count
 ```json
 {
   "count": 43,
-  "button_id": "n_x7Kf9mQ2"
+  "button_id": "n_x7Kf9mQ2",
+  "has_niced": true
 }
 ```
+
+| Field | Description |
+|-------|-------------|
+| `count` | Total nice count |
+| `button_id` | The button ID |
+| `has_niced` | Whether the current visitor (by IP) has already niced |
 
 ---
 
