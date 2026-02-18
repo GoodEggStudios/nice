@@ -154,6 +154,48 @@
       margin-top: 1rem;
     }
     
+    .restriction-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    
+    .restriction-options {
+      display: flex;
+      gap: 0.5rem;
+      width: 100%;
+    }
+    
+    .restriction-btn {
+      flex: 1;
+      padding: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: #1a1a1a;
+      color: #888;
+      border: 2px solid #333;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-transform: uppercase;
+    }
+    
+    .restriction-btn:hover {
+      border-color: #555;
+      color: #fff;
+    }
+    
+    .restriction-btn.active {
+      border-color: #fbbf24;
+      color: #fbbf24;
+      background: #1a1a10;
+    }
+    
+    .restriction-btn.saving {
+      opacity: 0.5;
+      cursor: wait;
+    }
+    
     .btn-delete {
       width: 100%;
       padding: 0.75rem;
@@ -316,9 +358,13 @@
           <span class="stat-label">Content URL</span>
           <span class="stat-value"><a id="urlLink" href="#" target="_blank" rel="noopener"></a></span>
         </div>
-        <div class="stat-row">
+        <div class="stat-row restriction-row">
           <span class="stat-label">Restriction</span>
-          <span class="stat-value" id="restriction"></span>
+          <div class="restriction-options" id="restrictionOptions">
+            <button type="button" class="restriction-btn" data-value="url">URL</button>
+            <button type="button" class="restriction-btn" data-value="domain">Domain</button>
+            <button type="button" class="restriction-btn" data-value="global">Global</button>
+          </div>
         </div>
         <div class="stat-row">
           <span class="stat-label">Public ID</span>
@@ -390,15 +436,48 @@
       return params.get('id');
     }
     
-    // Format restriction for display
-    function formatRestriction(mode) {
-      switch (mode) {
-        case 'url': return 'This URL only';
-        case 'domain': return 'This domain';
-        case 'global': return 'Global (any site)';
-        default: return mode;
+    // Set active restriction button
+    function setActiveRestriction(mode) {
+      document.querySelectorAll('.restriction-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.value === mode);
+      });
+    }
+    
+    // Update restriction via API
+    async function updateRestriction(newMode) {
+      const privateId = window.PRIVATE_ID;
+      if (!privateId) return;
+      
+      const btns = document.querySelectorAll('.restriction-btn');
+      btns.forEach(b => b.classList.add('saving'));
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/v2/buttons/${privateId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ restriction: newMode })
+        });
+        
+        if (res.ok) {
+          setActiveRestriction(newMode);
+        } else {
+          alert('Failed to update restriction');
+        }
+      } catch (e) {
+        console.error('Failed to update restriction:', e);
+        alert('Failed to update restriction');
+      } finally {
+        btns.forEach(b => b.classList.remove('saving'));
       }
     }
+    
+    // Restriction button click handlers
+    document.querySelectorAll('.restriction-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.classList.contains('active') || btn.classList.contains('saving')) return;
+        updateRestriction(btn.dataset.value);
+      });
+    });
     
     // Format date
     function formatDate(iso) {
@@ -450,7 +529,7 @@
       urlLink.href = data.url;
       urlLink.textContent = truncateUrl(data.url);
       
-      document.getElementById('restriction').textContent = formatRestriction(data.restriction);
+      setActiveRestriction(data.restriction);
       document.getElementById('publicId').textContent = data.id;
       document.getElementById('created').textContent = formatDate(data.created_at);
       
