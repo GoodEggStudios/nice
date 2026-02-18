@@ -1,0 +1,2 @@
+# Pretty URL for stats page
+/stats/*  /stats.html?id=:splat  200

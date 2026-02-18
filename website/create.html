@@ -307,6 +307,26 @@
       color: #22c55e;
     }
     
+    .btn-manage {
+      display: block;
+      text-align: center;
+      margin-top: 1.5rem;
+      padding: 0.75rem;
+      font-family: 'Bungee', cursive;
+      font-size: 0.875rem;
+      background: transparent;
+      color: #fbbf24;
+      border: 2px solid #fbbf24;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    
+    .btn-manage:hover {
+      background: #fbbf24;
+      color: #000;
+    }
+    
     .error {
       background: #1a0a0a;
       border: 2px solid #ef4444;
@@ -472,6 +492,8 @@
         <div class="preview-label">Your Button</div>
         <div class="preview-container" id="resultPreview"></div>
       </div>
+      
+      <a href="#" class="btn-manage" id="manageLink">Manage Button →</a>
     </div>
   </div>
   
@@ -551,6 +573,9 @@
         document.getElementById('resultPreview').innerHTML = 
           '<iframe src="https://api.nice.sbs/e/' + data.public_id + '?theme=' + theme + '&size=' + size + '" ' +
           'style="border:none;width:' + dims.w + 'px;height:' + dims.h + 'px;" title="Nice button"></iframe>';
+        
+        // Set manage link with pretty URL
+        document.getElementById('manageLink').href = '/stats/' + data.private_id;
         
         resultDiv.classList.add('show');
         resultDiv.scrollIntoView({ behavior: 'smooth' });
