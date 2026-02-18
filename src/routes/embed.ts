@@ -227,7 +227,10 @@ const textEl=document.getElementById('niceText');
 const countEl=document.getElementById('niceCount');
 let count=42,niced=false;
 btn.addEventListener('click',()=>{
-if(!niced){count++;niced=true;btn.classList.add('niced','animating');textEl.textContent="Nice'd";countEl.textContent=count;setTimeout(()=>btn.classList.remove('animating'),300);}
+btn.classList.add('animating');
+setTimeout(()=>btn.classList.remove('animating'),300);
+if(niced){count--;niced=false;btn.classList.remove('niced');textEl.textContent='Nice';countEl.textContent=count;}
+else{count++;niced=true;btn.classList.add('niced');textEl.textContent="Nice'd";countEl.textContent=count;}
 });
 </script>
 </body>
