@@ -13,7 +13,7 @@ export interface Site {
 }
 
 /**
- * Button data stored in KV
+ * Button data stored in KV (v1 - legacy, requires site registration)
  */
 export interface Button {
   id: string;
@@ -21,6 +21,29 @@ export interface Button {
   name: string;
   url: string;
   count: number;
+  createdAt: string;
+}
+
+/**
+ * Restriction mode for v2 buttons
+ * - url: Only allow nices from exact URL match
+ * - domain: Allow nices from any page on same domain
+ * - global: Allow nices from any site
+ */
+export type RestrictionMode = "url" | "domain" | "global";
+
+/**
+ * Button data stored in KV (v2 - public, no site registration required)
+ */
+export interface ButtonV2 {
+  id: string; // Public ID: n_xxx
+  secretHash: string; // SHA256 of private ID
+  url: string; // Content URL
+  restriction: RestrictionMode; // Referrer verification mode
+  creatorIpHash: string; // SHA256 of creator IP (for rate limiting)
+  count: number;
+  theme?: string; // Default theme
+  size?: string; // Default size
   createdAt: string;
 }
 

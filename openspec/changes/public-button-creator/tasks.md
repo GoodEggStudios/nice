@@ -1,10 +1,10 @@
 ## 1. Core Infrastructure
 
-- [ ] 1.1 Add ID generation utilities (n_xxx public, ns_xxx private, base62)
-- [ ] 1.2 Add URL normalization utility (strip query params, trailing slash, lowercase host)
-- [ ] 1.3 Update KV storage schema for v2 buttons (id, secret_hash, url, restriction, creator_ip_hash, count, created_at)
+- [x] 1.1 Add ID generation utilities (n_xxx public, ns_xxx private, base62)
+- [x] 1.2 Add URL normalization utility (strip query params, trailing slash, lowercase host)
+- [x] 1.3 Update KV storage schema for v2 buttons (id, secret_hash, url, restriction, creator_ip_hash, count, created_at)
 - [ ] 1.4 Add secret lookup index (secret:hash → public_id)
-- [ ] 1.5 Add hash utilities for private ID and IP storage
+- [x] 1.5 Add hash utilities for private ID and IP storage
 
 ## 2. API v2 - Button Creation
 
