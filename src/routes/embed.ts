@@ -233,8 +233,15 @@ if(!niced){count++;niced=true;btn.classList.add('niced','animating');textEl.text
 </body>
 </html>`;
 
-// Button ID format: btn_ followed by 16 base64url characters
-const BUTTON_ID_REGEX = /^btn_[A-Za-z0-9_-]{16}$/;
+// Button ID formats:
+// - v1 (legacy): btn_ followed by 16 base64url characters
+// - v2 (new): n_ followed by 8 base62 characters
+const BUTTON_ID_V1_REGEX = /^btn_[A-Za-z0-9_-]{16}$/;
+const BUTTON_ID_V2_REGEX = /^n_[A-Za-z0-9]{8}$/;
+
+function isValidButtonIdFormat(id: string): boolean {
+  return BUTTON_ID_V1_REGEX.test(id) || BUTTON_ID_V2_REGEX.test(id);
+}
 
 /**
  * GET /embed/:button_id - Serve the embed iframe content
@@ -273,7 +280,7 @@ export async function serveEmbedPage(
   }
 
   // Validate button ID format to prevent HTML injection
-  if (!BUTTON_ID_REGEX.test(buttonId)) {
+  if (!isValidButtonIdFormat(buttonId)) {
     return new Response("Invalid button ID", {
       status: 400,
       headers: { "Content-Type": "text/plain" },

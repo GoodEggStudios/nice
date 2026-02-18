@@ -1,39 +1,39 @@
 ## 1. Core Infrastructure
 
-- [ ] 1.1 Add ID generation utilities (n_xxx public, ns_xxx private, base62)
-- [ ] 1.2 Add URL normalization utility (strip query params, trailing slash, lowercase host)
-- [ ] 1.3 Update KV storage schema for v2 buttons (id, secret_hash, url, restriction, creator_ip_hash, count, created_at)
-- [ ] 1.4 Add secret lookup index (secret:hash → public_id)
-- [ ] 1.5 Add hash utilities for private ID and IP storage
+- [x] 1.1 Add ID generation utilities (n_xxx public, ns_xxx private, base62)
+- [x] 1.2 Add URL normalization utility (strip query params, trailing slash, lowercase host)
+- [x] 1.3 Update KV storage schema for v2 buttons (id, secret_hash, url, restriction, creator_ip_hash, count, created_at)
+- [x] 1.4 Add secret lookup index (secret:hash → public_id)
+- [x] 1.5 Add hash utilities for private ID and IP storage
 
 ## 2. API v2 - Button Creation
 
-- [ ] 2.1 Create POST /api/v2/buttons endpoint structure
-- [ ] 2.2 Implement request validation (url required, valid format)
-- [ ] 2.3 Implement optional params (theme, size, restriction with defaults)
-- [ ] 2.4 Generate public + private IDs
-- [ ] 2.5 Store button in KV with hashed secret
-- [ ] 2.6 Store secret lookup index
-- [ ] 2.7 Return response with IDs and embed snippets
-- [ ] 2.8 Hash and store creator IP
+- [x] 2.1 Create POST /api/v2/buttons endpoint structure
+- [x] 2.2 Implement request validation (url required, valid format)
+- [x] 2.3 Implement optional params (theme, size, restriction with defaults)
+- [x] 2.4 Generate public + private IDs
+- [x] 2.5 Store button in KV with hashed secret
+- [x] 2.6 Store secret lookup index
+- [x] 2.7 Return response with IDs and embed snippets
+- [x] 2.8 Hash and store creator IP
 
 ## 3. API v2 - Stats & Management
 
-- [ ] 3.1 Create GET /api/v2/buttons/stats/:private_id endpoint
-- [ ] 3.2 Implement private ID → public ID lookup
-- [ ] 3.3 Return button data (id, url, count, created_at, restriction)
-- [ ] 3.4 Create DELETE /api/v2/buttons/:private_id endpoint
-- [ ] 3.5 Implement button deletion (remove button + secret index)
-- [ ] 3.6 Add 404 handling for invalid private IDs
+- [x] 3.1 Create GET /api/v2/buttons/stats/:private_id endpoint
+- [x] 3.2 Implement private ID → public ID lookup
+- [x] 3.3 Return button data (id, url, count, created_at, restriction)
+- [x] 3.4 Create DELETE /api/v2/buttons/:private_id endpoint
+- [x] 3.5 Implement button deletion (remove button + secret index)
+- [x] 3.6 Add 404 handling for invalid private IDs
 
 ## 4. Referrer Verification
 
-- [ ] 4.1 Add referrer extraction from request headers
-- [ ] 4.2 Implement URL normalization for comparison
-- [ ] 4.3 Implement domain extraction for domain mode
-- [ ] 4.4 Add restriction check to nice endpoint (POST /api/v1/nice/:id)
-- [ ] 4.5 Return 403 for referrer mismatch with appropriate error message
-- [ ] 4.6 Handle missing referrer header (reject for url/domain, allow for global)
+- [x] 4.1 Add referrer extraction from request headers
+- [x] 4.2 Implement URL normalization for comparison
+- [x] 4.3 Implement domain extraction for domain mode
+- [x] 4.4 Add restriction check to nice endpoint (POST /api/v1/nice/:id)
+- [x] 4.5 Return 403 for referrer mismatch with appropriate error message
+- [x] 4.6 Handle missing referrer header (reject for url/domain, allow for global)
 
 ## 5. Rate Limiting for Creation
 
@@ -48,10 +48,10 @@
 
 ## 6. Embed Updates
 
-- [ ] 6.1 Add /e/:id short route (alias to /embed/:id)
-- [ ] 6.2 Support n_xxx ID format in embed routes
-- [ ] 6.3 Validate ID format before KV lookup (n_ or btn_ prefix)
-- [ ] 6.4 Load v2 button data for n_ prefixed IDs
+- [x] 6.1 Add /e/:id short route (alias to /embed/:id)
+- [x] 6.2 Support n_xxx ID format in embed routes
+- [x] 6.3 Validate ID format before KV lookup (n_ or btn_ prefix)
+- [x] 6.4 Load v2 button data for n_ prefixed IDs
 
 ## 7. Create Page UI
 
