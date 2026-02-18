@@ -239,7 +239,7 @@ GET /api/v1/nice/{button_id}/count
 </script>
 ```
 
-### With Theme
+### Themes
 
 ```html
 <!-- Light (default) -->
@@ -250,14 +250,56 @@ GET /api/v1/nice/{button_id}/count
 
 <!-- Minimal (transparent) -->
 <script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-theme="minimal" async></script>
+
+<!-- Mono Dark (white on black, inverts when clicked) -->
+<script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-theme="mono-dark" async></script>
+
+<!-- Mono Light (black on white, inverts when clicked) -->
+<script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-theme="mono-light" async></script>
+```
+
+### Sizes
+
+| Size | Font | Padding | Default Iframe |
+|------|------|---------|----------------|
+| `xs` | 10px | 4px 8px | 70×28 |
+| `sm` | 11px | 5px 10px | 85×32 |
+| `md` | 12px | 6px 12px | 100×36 |
+| `lg` | 14px | 7px 14px | 120×44 |
+| `xl` | 16px | 8px 16px | 140×52 |
+
+```html
+<!-- Extra Small -->
+<script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-size="xs" async></script>
+
+<!-- Small -->
+<script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-size="sm" async></script>
+
+<!-- Medium (default) -->
+<script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-size="md" async></script>
+
+<!-- Large -->
+<script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-size="lg" async></script>
+
+<!-- Extra Large -->
+<script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-size="xl" async></script>
 ```
 
 ### Manual iframe
 
 ```html
+<!-- Medium (default) -->
 <iframe 
-  src="https://nice.sbs/embed/btn_abc123?theme=light"
+  src="https://nice.sbs/embed/btn_abc123?theme=light&size=md"
   style="border:none; width:100px; height:36px;"
+  scrolling="no"
+  frameborder="0">
+</iframe>
+
+<!-- Extra Large, Dark theme -->
+<iframe 
+  src="https://nice.sbs/embed/btn_abc123?theme=dark&size=xl"
+  style="border:none; width:140px; height:52px;"
   scrolling="no"
   frameborder="0">
 </iframe>

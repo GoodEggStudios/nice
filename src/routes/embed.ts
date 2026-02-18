@@ -8,7 +8,7 @@
 import type { Env } from "../types";
 
 // Embed script (minified inline)
-const EMBED_SCRIPT = `(function(){'use strict';const EMBED_BASE='https://nice.sbs';function init(){document.querySelectorAll('script[data-button]').forEach(createEmbed)}function createEmbed(script){const buttonId=script.getAttribute('data-button');if(!buttonId)return;const theme=script.getAttribute('data-theme')||'light';const size=script.getAttribute('data-size')||'md';const container=document.createElement('div');container.className='nice-embed';container.style.cssText='display:inline-block;vertical-align:middle;';const iframe=document.createElement('iframe');iframe.src=EMBED_BASE+'/embed/'+buttonId+'?theme='+encodeURIComponent(theme)+'&size='+encodeURIComponent(size);iframe.style.cssText='border:none;overflow:hidden;width:100px;height:36px;';iframe.setAttribute('scrolling','no');iframe.setAttribute('frameborder','0');iframe.setAttribute('allowtransparency','true');iframe.setAttribute('sandbox','allow-scripts allow-same-origin allow-popups');iframe.setAttribute('title','Nice button');container.appendChild(iframe);script.parentNode.insertBefore(container,script.nextSibling);window.addEventListener('message',function(event){if(event.origin!==EMBED_BASE)return;try{const data=event.data;if(data.type==='nice-resize'&&data.buttonId===buttonId){iframe.style.width=data.width+'px';iframe.style.height=data.height+'px'}}catch(e){}})}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}})();`;
+const EMBED_SCRIPT = `(function(){'use strict';const EMBED_BASE='https://nice.sbs';const SIZES={xs:{w:70,h:28},sm:{w:85,h:32},md:{w:100,h:36},lg:{w:120,h:44},xl:{w:140,h:52}};function init(){document.querySelectorAll('script[data-button]').forEach(createEmbed)}function createEmbed(script){const buttonId=script.getAttribute('data-button');if(!buttonId)return;const theme=script.getAttribute('data-theme')||'light';const size=script.getAttribute('data-size')||'md';const dims=SIZES[size]||SIZES.md;const container=document.createElement('div');container.className='nice-embed';container.style.cssText='display:inline-block;vertical-align:middle;';const iframe=document.createElement('iframe');iframe.src=EMBED_BASE+'/embed/'+buttonId+'?theme='+encodeURIComponent(theme)+'&size='+encodeURIComponent(size);iframe.style.cssText='border:none;overflow:hidden;width:'+dims.w+'px;height:'+dims.h+'px;';iframe.setAttribute('scrolling','no');iframe.setAttribute('frameborder','0');iframe.setAttribute('allowtransparency','true');iframe.setAttribute('sandbox','allow-scripts allow-same-origin allow-popups');iframe.setAttribute('title','Nice button');container.appendChild(iframe);script.parentNode.insertBefore(container,script.nextSibling);window.addEventListener('message',function(event){if(event.origin!==EMBED_BASE)return;try{const data=event.data;if(data.type==='nice-resize'&&data.buttonId===buttonId){iframe.style.width=data.width+'px';iframe.style.height=data.height+'px'}}catch(e){}})}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}})();`;
 
 // Embed HTML template - Bungee font design with size variants
 const EMBED_HTML = `<!DOCTYPE html>
@@ -29,17 +29,25 @@ body{font-family:'Bungee',cursive;background:transparent;display:flex;align-item
 .nice-button:active{transform:scale(0.95)}
 
 /* Size variants */
-.size-sm .nice-button{gap:4px;padding:4px 8px;border-radius:4px;font-size:10px}
-.size-sm .nice-count{font-size:9px}
-.size-sm body{min-height:24px}
+.size-xs .nice-button{gap:4px;padding:4px 8px;border-radius:4px;font-size:10px}
+.size-xs .nice-count{font-size:9px}
+.size-xs body{min-height:24px}
+
+.size-sm .nice-button{gap:5px;padding:5px 10px;border-radius:5px;font-size:11px}
+.size-sm .nice-count{font-size:10px}
+.size-sm body{min-height:28px}
 
 .size-md .nice-button{gap:6px;padding:6px 12px;border-radius:6px;font-size:12px}
 .size-md .nice-count{font-size:11px}
 .size-md body{min-height:32px}
 
-.size-lg .nice-button{gap:8px;padding:8px 16px;border-radius:8px;font-size:16px}
-.size-lg .nice-count{font-size:14px}
-.size-lg body{min-height:44px}
+.size-lg .nice-button{gap:7px;padding:7px 14px;border-radius:7px;font-size:14px}
+.size-lg .nice-count{font-size:13px}
+.size-lg body{min-height:40px}
+
+.size-xl .nice-button{gap:8px;padding:8px 16px;border-radius:8px;font-size:16px}
+.size-xl .nice-count{font-size:14px}
+.size-xl body{min-height:48px}
 
 /* Theme: Light */
 .theme-light .nice-button{background:#f3f4f6;color:#374151}
@@ -181,10 +189,16 @@ body{font-family:'Bungee',cursive;background:transparent;display:flex;align-item
 .nice-button{display:inline-flex;align-items:center;border:none;font-family:'Bungee',cursive;cursor:pointer;transition:all .15s ease;user-select:none;text-transform:uppercase;letter-spacing:0.5px}
 .nice-button:hover{transform:scale(1.05)}
 .nice-button:active{transform:scale(0.95)}
-.size-lg .nice-button{gap:8px;padding:8px 16px;border-radius:8px;font-size:16px}
-.size-lg .nice-count{font-size:14px}
+.size-xl .nice-button{gap:8px;padding:8px 16px;border-radius:8px;font-size:16px}
+.size-xl .nice-count{font-size:14px}
+.size-lg .nice-button{gap:7px;padding:7px 14px;border-radius:7px;font-size:14px}
+.size-lg .nice-count{font-size:13px}
 .size-md .nice-button{gap:6px;padding:6px 12px;border-radius:6px;font-size:12px}
 .size-md .nice-count{font-size:11px}
+.size-sm .nice-button{gap:5px;padding:5px 10px;border-radius:5px;font-size:11px}
+.size-sm .nice-count{font-size:10px}
+.size-xs .nice-button{gap:4px;padding:4px 8px;border-radius:4px;font-size:10px}
+.size-xs .nice-count{font-size:9px}
 .theme-dark .nice-button{background:#374151;color:#f3f4f6}
 .theme-dark .nice-button:hover{background:#4b5563}
 .theme-dark .nice-button.niced{background:#fbbf24;color:#000}
@@ -238,7 +252,7 @@ export async function serveEmbedPage(
   const safeTheme = validThemes.includes(theme) ? theme : "light";
 
   // Validate size
-  const validSizes = ["sm", "md", "lg"];
+  const validSizes = ["xs", "sm", "md", "lg", "xl"];
   const safeSize = validSizes.includes(size) ? size : "md";
 
   // Demo button - static version for homepage
