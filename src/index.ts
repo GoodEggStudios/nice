@@ -54,8 +54,9 @@ export default {
     const path = url.pathname;
     const origin = request.headers.get("Origin");
 
-    // Determine if this is an authenticated endpoint
+    // Determine if this is an authenticated endpoint (needs DELETE support)
     const isAuthenticatedRoute = path.startsWith("/api/v1/buttons") || 
+                                  path.startsWith("/api/v2/buttons") ||
                                   path.includes("/token/regenerate");
 
     // Handle CORS preflight
