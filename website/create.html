@@ -586,7 +586,7 @@
           'style="border:none;width:' + dims.w + 'px;height:' + dims.h + 'px;" title="Nice button"></iframe>';
         
         // Set manage link with pretty URL
-        document.getElementById('manageLink').href = '/stats/' + data.private_id;
+        document.getElementById('manageLink').href = '/stats?id=' + data.private_id;
         
         resultDiv.classList.add('show');
         resultDiv.scrollIntoView({ behavior: 'smooth' });
