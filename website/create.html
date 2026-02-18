@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Button - Nice</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@400;500;600&family=Fira+Code&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f0f0f;
+      color: #f5f5f5;
+      min-height: 100vh;
+      padding: 2rem;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    header {
+      margin-bottom: 2rem;
+    }
+    
+    .logo {
+      font-family: 'Bungee', cursive;
+      font-size: 2rem;
+      color: #fbbf24;
+      text-decoration: none;
+    }
+    
+    h1 {
+      font-family: 'Bungee', cursive;
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: #fff;
+    }
+    
+    .subtitle {
+      color: #888;
+      margin-bottom: 2rem;
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: #ccc;
+    }
+    
+    .label-hint {
+      font-weight: normal;
+      color: #666;
+      font-size: 0.875rem;
+    }
+    
+    input[type="url"] {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border: 2px solid #333;
+      border-radius: 8px;
+      background: #1a1a1a;
+      color: #fff;
+      font-family: 'Fira Code', monospace;
+    }
+    
+    input[type="url"]:focus {
+      outline: none;
+      border-color: #fbbf24;
+    }
+    
+    input[type="url"]::placeholder {
+      color: #555;
+    }
+    
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 0.5rem;
+    }
+    
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    
+    .option:hover {
+      border-color: #555;
+    }
+    
+    .option.selected {
+      border-color: #fbbf24;
+      background: #1a1a10;
+    }
+    
+    .option input {
+      display: none;
+    }
+    
+    .option-label {
+      font-size: 0.875rem;
+    }
+    
+    .restriction-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .restriction-option {
+      padding: 0.75rem 1rem;
+    }
+    
+    .restriction-option .option-desc {
+      font-size: 0.75rem;
+      color: #666;
+      margin-top: 0.25rem;
+    }
+    
+    .btn-create {
+      width: 100%;
+      padding: 1rem;
+      font-family: 'Bungee', cursive;
+      font-size: 1.125rem;
+      background: #fbbf24;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-transform: uppercase;
+    }
+    
+    .btn-create:hover {
+      background: #f59e0b;
+      transform: translateY(-1px);
+    }
+    
+    .btn-create:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .preview-section {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: #1a1a1a;
+      border-radius: 12px;
+      border: 1px solid #333;
+    }
+    
+    .preview-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #666;
+      margin-bottom: 1rem;
+    }
+    
+    .preview-container {
+      display: flex;
+      justify-content: center;
+      padding: 1rem;
+      background: #0f0f0f;
+      border-radius: 8px;
+    }
+    
+    /* Result section */
+    .result {
+      display: none;
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: #0a1a0a;
+      border: 2px solid #22c55e;
+      border-radius: 12px;
+    }
+    
+    .result.show {
+      display: block;
+    }
+    
+    .result-title {
+      font-family: 'Bungee', cursive;
+      color: #22c55e;
+      margin-bottom: 1rem;
+    }
+    
+    .result-row {
+      margin-bottom: 1rem;
+    }
+    
+    .result-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #666;
+      margin-bottom: 0.25rem;
+    }
+    
+    .result-value {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.875rem;
+      background: #1a1a1a;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      word-break: break-all;
+    }
+    
+    .warning {
+      background: #1a1a0a;
+      border-left: 3px solid #fbbf24;
+      padding: 0.75rem 1rem;
+      margin: 1rem 0;
+      border-radius: 0 6px 6px 0;
+    }
+    
+    .warning-title {
+      font-weight: 600;
+      color: #fbbf24;
+      margin-bottom: 0.25rem;
+    }
+    
+    .warning-text {
+      font-size: 0.875rem;
+      color: #aaa;
+    }
+    
+    .snippet-container {
+      position: relative;
+    }
+    
+    .snippet {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.75rem;
+      background: #0a0a0a;
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      border: 1px solid #333;
+    }
+    
+    .btn-copy {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+      background: #333;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .btn-copy:hover {
+      background: #444;
+    }
+    
+    .btn-copy.copied {
+      background: #22c55e;
+    }
+    
+    .error {
+      background: #1a0a0a;
+      border: 2px solid #ef4444;
+      color: #ef4444;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 1rem;
+      display: none;
+    }
+    
+    .error.show {
+      display: block;
+    }
+    
+    @media (max-width: 480px) {
+      body { padding: 1rem; }
+      h1 { font-size: 1.5rem; }
+      .options-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <a href="/" class="logo">NICE</a>
+    </header>
+    
+    <h1>CREATE BUTTON</h1>
+    <p class="subtitle">Add a Nice button to any page</p>
+    
+    <form id="createForm">
+      <div class="form-group">
+        <label for="url">Content URL <span class="label-hint">(the page where this button will be embedded)</span></label>
+        <input type="url" id="url" name="url" placeholder="https://example.com/my-article" required>
+      </div>
+      
+      <div class="form-group">
+        <label>Theme</label>
+        <div class="options-grid" id="themeOptions">
+          <label class="option selected">
+            <input type="radio" name="theme" value="light" checked>
+            <span class="option-label">Light</span>
+          </label>
+          <label class="option">
+            <input type="radio" name="theme" value="dark">
+            <span class="option-label">Dark</span>
+          </label>
+          <label class="option">
+            <input type="radio" name="theme" value="minimal">
+            <span class="option-label">Minimal</span>
+          </label>
+          <label class="option">
+            <input type="radio" name="theme" value="mono-dark">
+            <span class="option-label">Mono Dark</span>
+          </label>
+          <label class="option">
+            <input type="radio" name="theme" value="mono-light">
+            <span class="option-label">Mono Light</span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label>Size</label>
+        <div class="options-grid" id="sizeOptions">
+          <label class="option">
+            <input type="radio" name="size" value="xs">
+            <span class="option-label">XS</span>
+          </label>
+          <label class="option">
+            <input type="radio" name="size" value="sm">
+            <span class="option-label">SM</span>
+          </label>
+          <label class="option selected">
+            <input type="radio" name="size" value="md" checked>
+            <span class="option-label">MD</span>
+          </label>
+          <label class="option">
+            <input type="radio" name="size" value="lg">
+            <span class="option-label">LG</span>
+          </label>
+          <label class="option">
+            <input type="radio" name="size" value="xl">
+            <span class="option-label">XL</span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label>Restriction <span class="label-hint">(who can nice this button)</span></label>
+        <div class="restriction-options" id="restrictionOptions">
+          <label class="option restriction-option selected">
+            <input type="radio" name="restriction" value="url" checked>
+            <div>
+              <span class="option-label">This URL only</span>
+              <div class="option-desc">Only allow nices from readers of this exact page (recommended)</div>
+            </div>
+          </label>
+          <label class="option restriction-option">
+            <input type="radio" name="restriction" value="domain">
+            <div>
+              <span class="option-label">This domain</span>
+              <div class="option-desc">Allow nices from any page on the same domain</div>
+            </div>
+          </label>
+          <label class="option restriction-option">
+            <input type="radio" name="restriction" value="global">
+            <div>
+              <span class="option-label">Global</span>
+              <div class="option-desc">Allow nices from anywhere (embed on any site)</div>
+            </div>
+          </label>
+        </div>
+      </div>
+      
+      <div class="preview-section">
+        <div class="preview-label">Preview</div>
+        <div class="preview-container" id="previewContainer">
+          <iframe id="previewFrame" src="https://api.nice.sbs/embed/demo?theme=light&size=md" style="border:none;width:100px;height:36px;" title="Preview"></iframe>
+        </div>
+      </div>
+      
+      <button type="submit" class="btn-create" id="submitBtn">Create Button</button>
+      
+      <div class="error" id="errorBox"></div>
+    </form>
+    
+    <div class="result" id="result">
+      <div class="result-title">✓ BUTTON CREATED</div>
+      
+      <div class="result-row">
+        <div class="result-label">Public ID</div>
+        <div class="result-value" id="publicId"></div>
+      </div>
+      
+      <div class="warning">
+        <div class="warning-title">⚠️ Save your Private ID!</div>
+        <div class="warning-text">This is only shown once. You'll need it to manage your button later.</div>
+      </div>
+      
+      <div class="result-row">
+        <div class="result-label">Private ID</div>
+        <div class="result-value" id="privateId"></div>
+      </div>
+      
+      <div class="result-row">
+        <div class="result-label">Embed Snippet</div>
+        <div class="snippet-container">
+          <pre class="snippet" id="snippet"></pre>
+          <button type="button" class="btn-copy" id="copyBtn">Copy</button>
+        </div>
+      </div>
+      
+      <div class="preview-section" style="margin-top:1rem;">
+        <div class="preview-label">Your Button</div>
+        <div class="preview-container" id="resultPreview"></div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const form = document.getElementById('createForm');
+    const urlInput = document.getElementById('url');
+    const previewFrame = document.getElementById('previewFrame');
+    const submitBtn = document.getElementById('submitBtn');
+    const errorBox = document.getElementById('errorBox');
+    const resultDiv = document.getElementById('result');
+    
+    // Size dimensions for preview
+    const SIZES = {
+      xs: { w: 70, h: 28 },
+      sm: { w: 85, h: 32 },
+      md: { w: 100, h: 36 },
+      lg: { w: 120, h: 44 },
+      xl: { w: 140, h: 52 }
+    };
+    
+    // Handle option selection
+    document.querySelectorAll('.option').forEach(option => {
+      option.addEventListener('click', () => {
+        const group = option.closest('.options-grid, .restriction-options');
+        group.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+        option.classList.add('selected');
+        option.querySelector('input').checked = true;
+        updatePreview();
+      });
+    });
+    
+    // Update preview on changes
+    function updatePreview() {
+      const theme = document.querySelector('input[name="theme"]:checked').value;
+      const size = document.querySelector('input[name="size"]:checked').value;
+      const dims = SIZES[size];
+      
+      previewFrame.src = 'https://api.nice.sbs/embed/demo?theme=' + theme + '&size=' + size;
+      previewFrame.style.width = dims.w + 'px';
+      previewFrame.style.height = dims.h + 'px';
+    }
+    
+    // Form submission
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating...';
+      errorBox.classList.remove('show');
+      resultDiv.classList.remove('show');
+      
+      const url = urlInput.value;
+      const theme = document.querySelector('input[name="theme"]:checked').value;
+      const size = document.querySelector('input[name="size"]:checked').value;
+      const restriction = document.querySelector('input[name="restriction"]:checked').value;
+      
+      try {
+        const response = await fetch('https://api.nice.sbs/api/v2/buttons', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, theme, size, restriction })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to create button');
+        }
+        
+        // Show result
+        document.getElementById('publicId').textContent = data.public_id;
+        document.getElementById('privateId').textContent = data.private_id;
+        document.getElementById('snippet').textContent = data.embed.iframe;
+        
+        // Show preview of actual button
+        const dims = SIZES[size];
+        document.getElementById('resultPreview').innerHTML = 
+          '<iframe src="https://api.nice.sbs/e/' + data.public_id + '?theme=' + theme + '&size=' + size + '" ' +
+          'style="border:none;width:' + dims.w + 'px;height:' + dims.h + 'px;" title="Nice button"></iframe>';
+        
+        resultDiv.classList.add('show');
+        resultDiv.scrollIntoView({ behavior: 'smooth' });
+        
+        // Hide form
+        form.style.display = 'none';
+        
+      } catch (err) {
+        errorBox.textContent = err.message;
+        errorBox.classList.add('show');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Button';
+      }
+    });
+    
+    // Copy button
+    document.getElementById('copyBtn').addEventListener('click', () => {
+      const snippet = document.getElementById('snippet').textContent;
+      navigator.clipboard.writeText(snippet).then(() => {
+        const btn = document.getElementById('copyBtn');
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    });
+  </script>
+</body>
+</html>`;
+
+/**
+ * GET /create - Serve the button creator page
+ */
+export function serveCreatePage(): Response {
+  return new Response(CREATE_HTML, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "public, max-age=3600",
+    },
+  });
