@@ -1,0 +1,269 @@
+/**
+ * V2 Button Routes - Public button creation without site registration
+ *
+ * POST /api/v2/buttons - Create a new button
+ * GET /api/v2/buttons/stats/:private_id - Get button stats
+ * DELETE /api/v2/buttons/:private_id - Delete a button
+ */
+
+import type { Env, ButtonV2, RestrictionMode } from "../types";
+import {
+  generatePublicId,
+  generatePrivateId,
+  isValidPrivateId,
+  isValidHttpUrl,
+  sha256,
+} from "../lib";
+
+// Valid themes and sizes
+const VALID_THEMES = ["light", "dark", "minimal", "mono-dark", "mono-light"];
+const VALID_SIZES = ["xs", "sm", "md", "lg", "xl"];
+const VALID_RESTRICTIONS: RestrictionMode[] = ["url", "domain", "global"];
+
+/**
+ * Get client IP from request
+ */
+function getClientIp(request: Request): string {
+  return request.headers.get("CF-Connecting-IP") || "unknown";
+}
+
+/**
+ * Generate embed snippets for a button
+ */
+function generateEmbedSnippets(
+  publicId: string,
+  baseUrl: string,
+  theme: string,
+  size: string
+): { iframe: string; script: string } {
+  const embedUrl = `${baseUrl}/e/${publicId}?theme=${theme}&size=${size}`;
+
+  // Iframe dimensions based on size
+  const dimensions: Record<string, { w: number; h: number }> = {
+    xs: { w: 70, h: 28 },
+    sm: { w: 85, h: 32 },
+    md: { w: 100, h: 36 },
+    lg: { w: 120, h: 44 },
+    xl: { w: 140, h: 52 },
+  };
+  const dim = dimensions[size] || dimensions.md;
+
+  const iframe = `<iframe src="${embedUrl}" style="border:none;width:${dim.w}px;height:${dim.h}px;" title="Nice button"></iframe>`;
+  const script = `<script src="${baseUrl}/embed.js" data-button="${publicId}" data-theme="${theme}" data-size="${size}" async></script>`;
+
+  return { iframe, script };
+}
+
+/**
+ * POST /api/v2/buttons - Create a new button
+ */
+export async function createButtonV2(
+  request: Request,
+  env: Env
+): Promise<Response> {
+  // Parse request body
+  let body: {
+    url?: string;
+    theme?: string;
+    size?: string;
+    restriction?: string;
+  };
+
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json(
+      { error: "Invalid JSON", code: "INVALID_JSON" },
+      { status: 400 }
+    );
+  }
+
+  // Validate URL (required)
+  if (!body.url) {
+    return Response.json(
+      { error: "URL is required", code: "MISSING_URL" },
+      { status: 400 }
+    );
+  }
+
+  if (!isValidHttpUrl(body.url)) {
+    return Response.json(
+      { error: "Invalid URL format", code: "INVALID_URL" },
+      { status: 400 }
+    );
+  }
+
+  // Validate optional params
+  const theme = body.theme || "light";
+  if (!VALID_THEMES.includes(theme)) {
+    return Response.json(
+      { error: "Invalid theme", code: "INVALID_THEME" },
+      { status: 400 }
+    );
+  }
+
+  const size = body.size || "md";
+  if (!VALID_SIZES.includes(size)) {
+    return Response.json(
+      { error: "Invalid size", code: "INVALID_SIZE" },
+      { status: 400 }
+    );
+  }
+
+  const restriction = (body.restriction || "url") as RestrictionMode;
+  if (!VALID_RESTRICTIONS.includes(restriction)) {
+    return Response.json(
+      { error: "Invalid restriction mode", code: "INVALID_RESTRICTION" },
+      { status: 400 }
+    );
+  }
+
+  // TODO: Rate limit check (Phase 5)
+
+  // Generate IDs
+  const publicId = generatePublicId();
+  const privateId = generatePrivateId();
+
+  // Hash secrets for storage
+  const secretHash = await sha256(privateId);
+  const creatorIpHash = await sha256(getClientIp(request));
+
+  // Create button data
+  const button: ButtonV2 = {
+    id: publicId,
+    secretHash,
+    url: body.url,
+    restriction,
+    creatorIpHash,
+    count: 0,
+    theme,
+    size,
+    createdAt: new Date().toISOString(),
+  };
+
+  // Store button in KV
+  await env.NICE_KV.put(`btn:${publicId}`, JSON.stringify(button));
+
+  // Store secret lookup index
+  await env.NICE_KV.put(`secret:${secretHash}`, publicId);
+
+  // Generate embed snippets
+  const url = new URL(request.url);
+  const baseUrl = `${url.protocol}//${url.host}`;
+  const embed = generateEmbedSnippets(publicId, baseUrl, theme, size);
+
+  // Return response with both IDs (private shown only once!)
+  return Response.json(
+    {
+      public_id: publicId,
+      private_id: privateId, // Only shown once!
+      url: body.url,
+      restriction,
+      theme,
+      size,
+      count: 0,
+      created_at: button.createdAt,
+      embed,
+    },
+    { status: 201 }
+  );
+}
+
+/**
+ * GET /api/v2/buttons/stats/:private_id - Get button stats
+ */
+export async function getButtonStatsV2(
+  request: Request,
+  privateId: string,
+  env: Env
+): Promise<Response> {
+  // Validate private ID format
+  if (!isValidPrivateId(privateId)) {
+    return Response.json(
+      { error: "Button not found", code: "NOT_FOUND" },
+      { status: 404 }
+    );
+  }
+
+  // Hash the private ID to look up the public ID
+  const secretHash = await sha256(privateId);
+  const publicId = await env.NICE_KV.get(`secret:${secretHash}`);
+
+  if (!publicId) {
+    return Response.json(
+      { error: "Button not found", code: "NOT_FOUND" },
+      { status: 404 }
+    );
+  }
+
+  // Get button data
+  const buttonData = await env.NICE_KV.get(`btn:${publicId}`);
+  if (!buttonData) {
+    return Response.json(
+      { error: "Button not found", code: "NOT_FOUND" },
+      { status: 404 }
+    );
+  }
+
+  const button: ButtonV2 = JSON.parse(buttonData);
+
+  // Generate embed snippet for convenience
+  const url = new URL(request.url);
+  const baseUrl = `${url.protocol}//${url.host}`;
+  const embed = generateEmbedSnippets(
+    publicId,
+    baseUrl,
+    button.theme || "light",
+    button.size || "md"
+  );
+
+  return Response.json({
+    id: publicId,
+    url: button.url,
+    restriction: button.restriction,
+    count: button.count,
+    theme: button.theme,
+    size: button.size,
+    created_at: button.createdAt,
+    embed,
+  });
+}
+
+/**
+ * DELETE /api/v2/buttons/:private_id - Delete a button
+ */
+export async function deleteButtonV2(
+  request: Request,
+  privateId: string,
+  env: Env
+): Promise<Response> {
+  // Validate private ID format
+  if (!isValidPrivateId(privateId)) {
+    return Response.json(
+      { error: "Button not found", code: "NOT_FOUND" },
+      { status: 404 }
+    );
+  }
+
+  // Hash the private ID to look up the public ID
+  const secretHash = await sha256(privateId);
+  const publicId = await env.NICE_KV.get(`secret:${secretHash}`);
+
+  if (!publicId) {
+    return Response.json(
+      { error: "Button not found", code: "NOT_FOUND" },
+      { status: 404 }
+    );
+  }
+
+  // Delete button data
+  await env.NICE_KV.delete(`btn:${publicId}`);
+
+  // Delete secret lookup index
+  await env.NICE_KV.delete(`secret:${secretHash}`);
+
+  return Response.json({
+    success: true,
+    message: "Button deleted",
+  });
+}
