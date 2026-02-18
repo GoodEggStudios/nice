@@ -1,11 +1,18 @@
 ## ADDED Requirements
 
-### Requirement: Button creator form on homepage
-The system SHALL display a button creator form on the homepage.
+### Requirement: Button creator page
+The system SHALL serve a button creator page at `/create`.
 
-#### Scenario: Form is visible
-- **WHEN** user visits the homepage
-- **THEN** a form is displayed with URL input, theme selector, size selector, and submit button
+#### Scenario: Page is accessible
+- **WHEN** user visits /create
+- **THEN** a form is displayed with URL input, theme selector, size selector, restriction selector, and submit button
+
+### Requirement: Get Started link
+The system SHALL link "Get Started" on homepage to the button creator page.
+
+#### Scenario: Get Started navigation
+- **WHEN** user clicks "Get Started" on homepage
+- **THEN** user is navigated to /create
 
 ### Requirement: URL input field
 The system SHALL provide a URL input field that accepts valid HTTP/HTTPS URLs.

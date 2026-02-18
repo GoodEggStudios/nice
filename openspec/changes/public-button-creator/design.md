@@ -143,14 +143,24 @@ https://api.nice.sbs/embed/btn_xxx
 - New ID prefix `n_` distinguishes from legacy `btn_`
 - Both routes render same embed component
 
-### 6. Homepage Button Creator
+### 6. Button Creator Page
 
-**Decision:** Client-side form that calls API
+**Decision:** Separate `/create` page, not on homepage
 
+**Routes:**
+- Homepage (`/`) — unchanged, marketing/landing
+- Button creator (`/create`) — new form page
+- "Get Started" button on homepage → links to `/create`
+- Docs (`/docs`) — updated to v2 API
+
+**Soft launch:** No public marketing of `/create` yet. Discoverable via "Get Started" but not promoted.
+
+**Form UI:**
 ```
 [URL input: https://dev.to/my-post    ]
 [Theme: ◉ Light ○ Dark ○ Minimal     ]
 [Size:  ○ XS ○ SM ◉ MD ○ LG ○ XL     ]
+[Restrict: ◉ This URL ○ Domain ○ Global]
 [        Create Button               ]
 
 ↓ Shows after creation:
@@ -170,9 +180,11 @@ Your snippet:
 ```
 
 **Rationale:**
+- Homepage stays clean/marketing-focused
+- Dedicated page for creation flow
 - Static HTML + JS, no server rendering needed
 - Same API that programmatic users call
-- Theme/size picker for convenience
+- Theme/size/restriction picker for convenience
 - Clear warning about private ID
 
 ## Risks / Trade-offs
