@@ -1,3 +1,2 @@
-# Pretty URLs
-/stats/*  /stats.html  200
-/create   /create.html 200
+# Pretty URL for stats page
+/stats/*  /stats.html?id=:splat  200
