@@ -1,11 +1,4 @@
-/**
- * Create Page - Button creator form
- *
- * GET /create - Serve the button creator page
- */
-
-// Create page HTML
-const CREATE_HTML = `<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -405,7 +398,7 @@ const CREATE_HTML = `<!DOCTYPE html>
       <div class="preview-section">
         <div class="preview-label">Preview</div>
         <div class="preview-container" id="previewContainer">
-          <iframe id="previewFrame" src="/embed/demo?theme=light&size=md" style="border:none;width:100px;height:36px;" title="Preview"></iframe>
+          <iframe id="previewFrame" src="https://api.nice.sbs/embed/demo?theme=light&size=md" style="border:none;width:100px;height:36px;" title="Preview"></iframe>
         </div>
       </div>
       
@@ -481,7 +474,7 @@ const CREATE_HTML = `<!DOCTYPE html>
       const size = document.querySelector('input[name="size"]:checked').value;
       const dims = SIZES[size];
       
-      previewFrame.src = '/embed/demo?theme=' + theme + '&size=' + size;
+      previewFrame.src = 'https://api.nice.sbs/embed/demo?theme=' + theme + '&size=' + size;
       previewFrame.style.width = dims.w + 'px';
       previewFrame.style.height = dims.h + 'px';
     }
@@ -501,7 +494,7 @@ const CREATE_HTML = `<!DOCTYPE html>
       const restriction = document.querySelector('input[name="restriction"]:checked').value;
       
       try {
-        const response = await fetch('/api/v2/buttons', {
+        const response = await fetch('https://api.nice.sbs/api/v2/buttons', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url, theme, size, restriction })
@@ -521,7 +514,7 @@ const CREATE_HTML = `<!DOCTYPE html>
         // Show preview of actual button
         const dims = SIZES[size];
         document.getElementById('resultPreview').innerHTML = 
-          '<iframe src="/e/' + data.public_id + '?theme=' + theme + '&size=' + size + '" ' +
+          '<iframe src="https://api.nice.sbs/e/' + data.public_id + '?theme=' + theme + '&size=' + size + '" ' +
           'style="border:none;width:' + dims.w + 'px;height:' + dims.h + 'px;" title="Nice button"></iframe>';
         
         resultDiv.classList.add('show');
@@ -567,4 +560,3 @@ export function serveCreatePage(): Response {
       "Cache-Control": "public, max-age=3600",
     },
   });
-}
