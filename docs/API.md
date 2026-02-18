@@ -129,6 +129,32 @@ Delete a button. Requires the private ID. **This action cannot be undone.**
 
 ---
 
+### Record Nice (Authenticated)
+
+```http
+POST /api/v2/buttons/:private_id/nice
+```
+
+Record a "nice" using the private ID. **Owner only** — no restrictions.
+
+Unlike the public nice endpoint:
+- No referrer check
+- No IP deduplication
+- No rate limiting
+
+Use this for programmatic nice recording.
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "count": 43,
+  "public_id": "n_x7Kf9mQ2Ab3Z"
+}
+```
+
+---
+
 ## Nice Endpoints (Public)
 
 These endpoints don't require authentication.
