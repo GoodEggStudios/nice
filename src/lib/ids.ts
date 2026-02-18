@@ -21,12 +21,15 @@ function randomBase62(length: number): string {
 
 /**
  * Generate a public button ID
- * Format: n_<8 base62 chars>
+ * Format: n_<12 base62 chars>
+ * 
+ * 12 chars = ~71 bits of entropy (62^12 ≈ 3.2 × 10^21)
+ * Much harder to enumerate than 8 chars (~47 bits)
  *
  * @returns A new public button ID
  */
 export function generatePublicId(): string {
-  return `n_${randomBase62(8)}`;
+  return `n_${randomBase62(12)}`;
 }
 
 /**
@@ -43,12 +46,13 @@ export function generatePrivateId(): string {
  * Validate public ID format
  *
  * @param id - The ID to validate
- * @returns true if valid n_xxx format
+ * @returns true if valid n_xxx format (8 or 12 chars for backwards compat)
  */
 export function isValidPublicId(id: string): boolean {
   if (!id.startsWith("n_")) return false;
   const payload = id.slice(2);
-  if (payload.length !== 8) return false;
+  // Accept both old (8) and new (12) length for backwards compatibility
+  if (payload.length !== 8 && payload.length !== 12) return false;
   return /^[0-9A-Za-z]+$/.test(payload);
 }
 
