@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
+    "predeploy": "npm run typecheck && npm test -- --run",
     "deploy": "wrangler deploy",
     "test": "vitest",
     "test:coverage": "vitest --coverage",

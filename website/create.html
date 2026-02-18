@@ -547,16 +547,4 @@
     });
   </script>
 </body>
-</html>`;
-
-/**
- * GET /create - Serve the button creator page
- */
-export function serveCreatePage(): Response {
-  return new Response(CREATE_HTML, {
-    status: 200,
-    headers: {
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "public, max-age=3600",
-    },
-  });
+</html>

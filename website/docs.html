@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Get Started - Nice</title>
+  <title>API Documentation - Nice</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,57 +19,63 @@
       line-height: 1.6;
     }
     .container {
-      max-width: 700px;
+      max-width: 800px;
       margin: 0 auto;
     }
     header {
-      margin-bottom: 3rem;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .logo {
       font-family: 'Bungee', cursive;
       font-size: 2rem;
       color: #fbbf24;
       text-decoration: none;
-      display: inline-block;
+    }
+    .btn-create {
+      font-family: 'Bungee', cursive;
+      font-size: 0.875rem;
+      background: #fbbf24;
+      color: #000;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      text-decoration: none;
+    }
+    .btn-create:hover {
+      background: #f59e0b;
     }
     h1 {
       font-family: 'Bungee', cursive;
-      font-size: 2.5rem;
+      font-size: 2rem;
       margin-bottom: 0.5rem;
       color: #fff;
+    }
+    h2 {
+      font-family: 'Bungee', cursive;
+      font-size: 1.25rem;
+      color: #fbbf24;
+      margin: 2rem 0 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #333;
+    }
+    h3 {
+      font-size: 1rem;
+      color: #fff;
+      margin: 1.5rem 0 0.5rem;
     }
     .subtitle {
       color: #888;
-      font-size: 1.125rem;
+      margin-bottom: 2rem;
     }
-    .steps {
-      margin-top: 2rem;
-    }
-    .step {
-      background: #1a1a1a;
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-      border: 1px solid #333;
-    }
-    .step-number {
-      font-family: 'Bungee', cursive;
-      font-size: 0.875rem;
-      color: #fbbf24;
-      margin-bottom: 0.5rem;
-    }
-    .step h2 {
-      font-size: 1.25rem;
-      margin-bottom: 1rem;
-      color: #fff;
-    }
-    .step p {
+    p {
       color: #aaa;
       margin-bottom: 1rem;
     }
     code {
       font-family: 'Fira Code', monospace;
-      background: #0a0a0a;
+      background: #1a1a1a;
       padding: 0.2rem 0.4rem;
       border-radius: 4px;
       font-size: 0.875rem;
@@ -89,11 +95,50 @@
       font-size: 0.8rem;
       color: #ddd;
     }
-    .highlight {
+    .endpoint {
+      background: #1a1a1a;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      border: 1px solid #333;
+    }
+    .method {
+      font-family: 'Fira Code', monospace;
+      font-weight: bold;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      margin-right: 0.5rem;
+    }
+    .method.post { background: #22c55e; color: #000; }
+    .method.get { background: #3b82f6; color: #fff; }
+    .method.delete { background: #ef4444; color: #fff; }
+    .path {
+      font-family: 'Fira Code', monospace;
+      color: #fff;
+    }
+    .param {
       color: #fbbf24;
     }
-    .comment {
-      color: #666;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.875rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.75rem;
+      border-bottom: 1px solid #333;
+    }
+    th {
+      color: #888;
+      font-weight: normal;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+    }
+    td code {
+      font-size: 0.8rem;
     }
     .note {
       background: #1a1a0a;
@@ -102,279 +147,227 @@
       margin: 1rem 0;
       border-radius: 0 8px 8px 0;
     }
-    .note p {
-      color: #ccc;
-      margin: 0;
+    .note p { margin: 0; color: #ccc; }
+    .toc {
+      background: #1a1a1a;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 2rem;
     }
-    a {
-      color: #fbbf24;
+    .toc-title {
+      font-family: 'Bungee', cursive;
+      font-size: 0.75rem;
+      color: #666;
+      margin-bottom: 0.5rem;
     }
+    .toc a {
+      color: #aaa;
+      text-decoration: none;
+      display: block;
+      padding: 0.25rem 0;
+      font-size: 0.875rem;
+    }
+    .toc a:hover { color: #fbbf24; }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
       <a href="/" class="logo">NICE</a>
+      <a href="/create.html" class="btn-create">Create Button</a>
     </header>
     
-    <h1>GET STARTED</h1>
-    <p class="subtitle">Add a Nice button to your site in 3 steps</p>
+    <h1>API DOCUMENTATION</h1>
+    <p class="subtitle">Base URL: <code>https://api.nice.sbs</code></p>
     
-    <div class="steps">
-      <div class="step">
-        <div class="step-number">STEP 1</div>
-        <h2>Register Your Site</h2>
-        <p>Register your domain to get an API token:</p>
-        <pre><code>curl -X POST https://api.nice.sbs/api/v1/sites \
+    <div class="toc">
+      <div class="toc-title">Contents</div>
+      <a href="#quickstart">Quick Start</a>
+      <a href="#create">Create Button</a>
+      <a href="#stats">Get Stats</a>
+      <a href="#delete">Delete Button</a>
+      <a href="#nice">Record Nice</a>
+      <a href="#count">Get Count</a>
+      <a href="#embed">Embed Options</a>
+    </div>
+    
+    <h2 id="quickstart">Quick Start</h2>
+    <p>Create a button with a single API call — no signup required:</p>
+    <pre><code>curl -X POST https://api.nice.sbs/api/v2/buttons \
   -H "Content-Type: application/json" \
-  -d '{"domain": "<span class="highlight">yoursite.com</span>"}'</code></pre>
-        <p>Save the <code>token</code> from the response — you'll need it for the next steps.</p>
-      </div>
-
-      <div class="step">
-        <div class="step-number">STEP 2</div>
-        <h2>Verify Your Domain</h2>
-        <p>Add a TXT record to your DNS to prove ownership:</p>
-        <pre><code><span class="comment"># Add this TXT record to your DNS:</span>
-_nice-verify.yoursite.com  TXT  "nice-verify=<span class="highlight">{verification_token}</span>"</code></pre>
-        <p>Then verify:</p>
-        <pre><code>curl -X POST https://api.nice.sbs/api/v1/sites/<span class="highlight">{site_id}</span>/verify</code></pre>
-        <div class="note">
-          <p>💡 DNS changes can take up to 24 hours to propagate, but usually work within minutes.</p>
-        </div>
-      </div>
-
-      <div class="step">
-        <div class="step-number">STEP 3</div>
-        <h2>Create a Button</h2>
-        <p>Create your Nice button:</p>
-        <pre><code>curl -X POST https://api.nice.sbs/api/v1/buttons \
-  -H "Authorization: Bearer <span class="highlight">{your_token}</span>" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "My Nice Button"}'</code></pre>
-        <p>Add it to your site with an iframe:</p>
-        <pre><code><span class="comment">&lt;!-- Add this where you want the button --&gt;</span>
-&lt;iframe 
-  src="https://api.nice.sbs/embed/<span class="highlight">{button_id}</span>?theme=light"
+  -d '{"url": "https://example.com/my-article"}'</code></pre>
+    
+    <p>Response:</p>
+    <pre><code>{
+  "public_id": "n_x7Kf9mQ2",
+  "private_id": "ns_4vK9mPq8wL2nRt5xYz7bC",
+  "url": "https://example.com/my-article",
+  "embed": {
+    "iframe": "&lt;iframe src=\"...\" ...&gt;&lt;/iframe&gt;"
+  }
+}</code></pre>
+    
+    <div class="note">
+      <p>⚠️ <strong>Save your private_id!</strong> It's only shown once and is needed to manage your button.</p>
+    </div>
+    
+    <h2 id="create">Create Button</h2>
+    
+    <div class="endpoint">
+      <span class="method post">POST</span>
+      <span class="path">/api/v2/buttons</span>
+    </div>
+    
+    <p>Create a new Nice button.</p>
+    
+    <h3>Request Body</h3>
+    <table>
+      <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+      <tr><td><code>url</code></td><td>string</td><td>Yes</td><td>Content URL where the button will be embedded</td></tr>
+      <tr><td><code>theme</code></td><td>string</td><td>No</td><td>Button theme: <code>light</code> (default), <code>dark</code>, <code>minimal</code>, <code>mono-dark</code>, <code>mono-light</code></td></tr>
+      <tr><td><code>size</code></td><td>string</td><td>No</td><td>Button size: <code>xs</code>, <code>sm</code>, <code>md</code> (default), <code>lg</code>, <code>xl</code></td></tr>
+      <tr><td><code>restriction</code></td><td>string</td><td>No</td><td>Where nices are allowed from: <code>url</code> (default), <code>domain</code>, <code>global</code></td></tr>
+    </table>
+    
+    <h3>Restriction Modes</h3>
+    <table>
+      <tr><th>Mode</th><th>Description</th></tr>
+      <tr><td><code>url</code></td><td>Only allow nices from the exact URL (recommended)</td></tr>
+      <tr><td><code>domain</code></td><td>Allow nices from any page on the same domain</td></tr>
+      <tr><td><code>global</code></td><td>Allow nices from any site</td></tr>
+    </table>
+    
+    <h3>Response</h3>
+    <pre><code>{
+  "public_id": "n_x7Kf9mQ2",
+  "private_id": "ns_4vK9mPq8wL2nRt5xYz7bC",
+  "url": "https://example.com/my-article",
+  "restriction": "url",
+  "theme": "light",
+  "size": "md",
+  "count": 0,
+  "created_at": "2026-02-18T10:00:00Z",
+  "embed": {
+    "iframe": "&lt;iframe src=\"https://api.nice.sbs/e/n_x7Kf9mQ2?theme=light&size=md\" style=\"border:none;width:100px;height:36px;\" title=\"Nice button\"&gt;&lt;/iframe&gt;",
+    "script": "&lt;script src=\"https://api.nice.sbs/embed.js\" data-button=\"n_x7Kf9mQ2\" data-theme=\"light\" data-size=\"md\" async&gt;&lt;/script&gt;"
+  }
+}</code></pre>
+    
+    <h2 id="stats">Get Stats</h2>
+    
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/api/v2/buttons/stats/<span class="param">:private_id</span></span>
+    </div>
+    
+    <p>Get button statistics. Requires the private ID.</p>
+    
+    <h3>Response</h3>
+    <pre><code>{
+  "id": "n_x7Kf9mQ2",
+  "url": "https://example.com/my-article",
+  "restriction": "url",
+  "count": 42,
+  "theme": "light",
+  "size": "md",
+  "created_at": "2026-02-18T10:00:00Z",
+  "embed": { ... }
+}</code></pre>
+    
+    <h2 id="delete">Delete Button</h2>
+    
+    <div class="endpoint">
+      <span class="method delete">DELETE</span>
+      <span class="path">/api/v2/buttons/<span class="param">:private_id</span></span>
+    </div>
+    
+    <p>Delete a button. Requires the private ID. This action cannot be undone.</p>
+    
+    <h3>Response</h3>
+    <pre><code>{
+  "success": true,
+  "message": "Button deleted"
+}</code></pre>
+    
+    <h2 id="nice">Record Nice</h2>
+    
+    <div class="endpoint">
+      <span class="method post">POST</span>
+      <span class="path">/api/v1/nice/<span class="param">:public_id</span></span>
+    </div>
+    
+    <p>Record a "nice" on a button. Public endpoint, no auth required.</p>
+    
+    <h3>Response</h3>
+    <pre><code>{
+  "success": true,
+  "count": 43
+}</code></pre>
+    
+    <p>If already niced (deduplicated by IP per day):</p>
+    <pre><code>{
+  "success": false,
+  "reason": "already_niced",
+  "count": 43
+}</code></pre>
+    
+    <h2 id="count">Get Count</h2>
+    
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/api/v1/nice/<span class="param">:public_id</span>/count</span>
+    </div>
+    
+    <p>Get the current nice count. Public endpoint.</p>
+    
+    <h3>Response</h3>
+    <pre><code>{
+  "count": 43,
+  "button_id": "n_x7Kf9mQ2"
+}</code></pre>
+    
+    <h2 id="embed">Embed Options</h2>
+    
+    <h3>iframe (Recommended)</h3>
+    <pre><code>&lt;iframe 
+  src="https://api.nice.sbs/e/<span class="param">:public_id</span>?theme=light&size=md"
   style="border:none;width:100px;height:36px;"
   title="Nice button"&gt;
 &lt;/iframe&gt;</code></pre>
-      </div>
-
-      <div class="step">
-        <div class="step-number">OPTIONS</div>
-        <h2>Customize Your Button</h2>
-        <p>Available query parameters:</p>
-        <pre><code><span class="comment"># Themes: light, dark, minimal, mono-dark, mono-light</span>
-?theme=dark
-
-<span class="comment"># Sizes: xs, sm, md, lg, xl</span>
-?size=lg
-
-<span class="comment"># Combine them</span>
-?theme=dark&amp;size=sm</code></pre>
-        <p>Example:</p>
-        <pre><code>https://api.nice.sbs/embed/{button_id}?theme=dark&amp;size=md</code></pre>
-      </div>
-
-      <div class="step">
-        <div class="step-number">SHOWCASE</div>
-        <h2>All Sizes &amp; Themes</h2>
-        <p>Live examples of every size and theme combination:</p>
-        
-        <div class="showcase">
-          <div class="showcase-section">
-            <h3>Sizes</h3>
-            <div class="showcase-row">
-              <div class="showcase-item">
-                <span class="showcase-label">xs</span>
-                <iframe src="https://api.nice.sbs/embed/demo?theme=dark&size=xs" style="border:none;width:70px;height:28px;" title="xs"></iframe>
-              </div>
-              <div class="showcase-item">
-                <span class="showcase-label">sm</span>
-                <iframe src="https://api.nice.sbs/embed/demo?theme=dark&size=sm" style="border:none;width:85px;height:32px;" title="sm"></iframe>
-              </div>
-              <div class="showcase-item">
-                <span class="showcase-label">md</span>
-                <iframe src="https://api.nice.sbs/embed/demo?theme=dark&size=md" style="border:none;width:100px;height:36px;" title="md"></iframe>
-              </div>
-              <div class="showcase-item">
-                <span class="showcase-label">lg</span>
-                <iframe src="https://api.nice.sbs/embed/demo?theme=dark&size=lg" style="border:none;width:120px;height:44px;" title="lg"></iframe>
-              </div>
-              <div class="showcase-item">
-                <span class="showcase-label">xl</span>
-                <iframe src="https://api.nice.sbs/embed/demo?theme=dark&size=xl" style="border:none;width:140px;height:52px;" title="xl"></iframe>
-              </div>
-            </div>
-          </div>
-
-          <div class="showcase-section">
-            <h3>Themes (md size)</h3>
-            <div class="showcase-grid">
-              <div class="showcase-item theme-preview light-bg">
-                <span class="showcase-label">light</span>
-                <iframe src="https://api.nice.sbs/embed/demo?theme=light&size=md" style="border:none;width:100px;height:36px;" title="light"></iframe>
-              </div>
-              <div class="showcase-item theme-preview">
-                <span class="showcase-label">dark</span>
-                <iframe src="https://api.nice.sbs/embed/demo?theme=dark&size=md" style="border:none;width:100px;height:36px;" title="dark"></iframe>
-              </div>
-              <div class="showcase-item theme-preview">
-                <span class="showcase-label">minimal</span>
-                <iframe src="https://api.nice.sbs/embed/demo?theme=minimal&size=md" style="border:none;width:100px;height:36px;" title="minimal"></iframe>
-              </div>
-              <div class="showcase-item theme-preview">
-                <span class="showcase-label">mono-dark</span>
-                <iframe src="https://api.nice.sbs/embed/demo?theme=mono-dark&size=md" style="border:none;width:100px;height:36px;" title="mono-dark"></iframe>
-              </div>
-              <div class="showcase-item theme-preview light-bg">
-                <span class="showcase-label">mono-light</span>
-                <iframe src="https://api.nice.sbs/embed/demo?theme=mono-light&size=md" style="border:none;width:100px;height:36px;" title="mono-light"></iframe>
-              </div>
-            </div>
-          </div>
-
-          <div class="showcase-section">
-            <h3>Full Matrix</h3>
-            <div class="matrix">
-              <table>
-                <thead>
-                  <tr>
-                    <th></th>
-                    <th>light</th>
-                    <th>dark</th>
-                    <th>minimal</th>
-                    <th>mono-dark</th>
-                    <th>mono-light</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td class="size-label">xs</td>
-                    <td class="light-bg"><iframe src="https://api.nice.sbs/embed/demo?theme=light&size=xs" style="border:none;width:70px;height:28px;"></iframe></td>
-                    <td><iframe src="https://api.nice.sbs/embed/demo?theme=dark&size=xs" style="border:none;width:70px;height:28px;"></iframe></td>
-                    <td><iframe src="https://api.nice.sbs/embed/demo?theme=minimal&size=xs" style="border:none;width:70px;height:28px;"></iframe></td>
-                    <td><iframe src="https://api.nice.sbs/embed/demo?theme=mono-dark&size=xs" style="border:none;width:70px;height:28px;"></iframe></td>
-                    <td class="light-bg"><iframe src="https://api.nice.sbs/embed/demo?theme=mono-light&size=xs" style="border:none;width:70px;height:28px;"></iframe></td>
-                  </tr>
-                  <tr>
-                    <td class="size-label">sm</td>
-                    <td class="light-bg"><iframe src="https://api.nice.sbs/embed/demo?theme=light&size=sm" style="border:none;width:85px;height:32px;"></iframe></td>
-                    <td><iframe src="https://api.nice.sbs/embed/demo?theme=dark&size=sm" style="border:none;width:85px;height:32px;"></iframe></td>
-                    <td><iframe src="https://api.nice.sbs/embed/demo?theme=minimal&size=sm" style="border:none;width:85px;height:32px;"></iframe></td>
-                    <td><iframe src="https://api.nice.sbs/embed/demo?theme=mono-dark&size=sm" style="border:none;width:85px;height:32px;"></iframe></td>
-                    <td class="light-bg"><iframe src="https://api.nice.sbs/embed/demo?theme=mono-light&size=sm" style="border:none;width:85px;height:32px;"></iframe></td>
-                  </tr>
-                  <tr>
-                    <td class="size-label">md</td>
-                    <td class="light-bg"><iframe src="https://api.nice.sbs/embed/demo?theme=light&size=md" style="border:none;width:100px;height:36px;"></iframe></td>
-                    <td><iframe src="https://api.nice.sbs/embed/demo?theme=dark&size=md" style="border:none;width:100px;height:36px;"></iframe></td>
-                    <td><iframe src="https://api.nice.sbs/embed/demo?theme=minimal&size=md" style="border:none;width:100px;height:36px;"></iframe></td>
-                    <td><iframe src="https://api.nice.sbs/embed/demo?theme=mono-dark&size=md" style="border:none;width:100px;height:36px;"></iframe></td>
-                    <td class="light-bg"><iframe src="https://api.nice.sbs/embed/demo?theme=mono-light&size=md" style="border:none;width:100px;height:36px;"></iframe></td>
-                  </tr>
-                  <tr>
-                    <td class="size-label">lg</td>
-                    <td class="light-bg"><iframe src="https://api.nice.sbs/embed/demo?theme=light&size=lg" style="border:none;width:120px;height:44px;"></iframe></td>
-                    <td><iframe src="https://api.nice.sbs/embed/demo?theme=dark&size=lg" style="border:none;width:120px;height:44px;"></iframe></td>
-                    <td><iframe src="https://api.nice.sbs/embed/demo?theme=minimal&size=lg" style="border:none;width:120px;height:44px;"></iframe></td>
-                    <td><iframe src="https://api.nice.sbs/embed/demo?theme=mono-dark&size=lg" style="border:none;width:120px;height:44px;"></iframe></td>
-                    <td class="light-bg"><iframe src="https://api.nice.sbs/embed/demo?theme=mono-light&size=lg" style="border:none;width:120px;height:44px;"></iframe></td>
-                  </tr>
-                  <tr>
-                    <td class="size-label">xl</td>
-                    <td class="light-bg"><iframe src="https://api.nice.sbs/embed/demo?theme=light&size=xl" style="border:none;width:140px;height:52px;"></iframe></td>
-                    <td><iframe src="https://api.nice.sbs/embed/demo?theme=dark&size=xl" style="border:none;width:140px;height:52px;"></iframe></td>
-                    <td><iframe src="https://api.nice.sbs/embed/demo?theme=minimal&size=xl" style="border:none;width:140px;height:52px;"></iframe></td>
-                    <td><iframe src="https://api.nice.sbs/embed/demo?theme=mono-dark&size=xl" style="border:none;width:140px;height:52px;"></iframe></td>
-                    <td class="light-bg"><iframe src="https://api.nice.sbs/embed/demo?theme=mono-light&size=xl" style="border:none;width:140px;height:52px;"></iframe></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    
+    <h3>Themes</h3>
+    <table>
+      <tr><th>Theme</th><th>Description</th></tr>
+      <tr><td><code>light</code></td><td>Light gray background (default)</td></tr>
+      <tr><td><code>dark</code></td><td>Dark gray background</td></tr>
+      <tr><td><code>minimal</code></td><td>Transparent with border</td></tr>
+      <tr><td><code>mono-dark</code></td><td>Black background, inverts when clicked</td></tr>
+      <tr><td><code>mono-light</code></td><td>White background, inverts when clicked</td></tr>
+    </table>
+    
+    <h3>Sizes</h3>
+    <table>
+      <tr><th>Size</th><th>Dimensions</th></tr>
+      <tr><td><code>xs</code></td><td>70 × 28px</td></tr>
+      <tr><td><code>sm</code></td><td>85 × 32px</td></tr>
+      <tr><td><code>md</code></td><td>100 × 36px (default)</td></tr>
+      <tr><td><code>lg</code></td><td>120 × 44px</td></tr>
+      <tr><td><code>xl</code></td><td>140 × 52px</td></tr>
+    </table>
+    
+    <h3>Error Codes</h3>
+    <table>
+      <tr><th>Code</th><th>HTTP</th><th>Description</th></tr>
+      <tr><td><code>INVALID_JSON</code></td><td>400</td><td>Request body is not valid JSON</td></tr>
+      <tr><td><code>MISSING_URL</code></td><td>400</td><td>URL field is required</td></tr>
+      <tr><td><code>INVALID_URL</code></td><td>400</td><td>URL format is invalid</td></tr>
+      <tr><td><code>INVALID_THEME</code></td><td>400</td><td>Invalid theme value</td></tr>
+      <tr><td><code>INVALID_SIZE</code></td><td>400</td><td>Invalid size value</td></tr>
+      <tr><td><code>NOT_FOUND</code></td><td>404</td><td>Button not found</td></tr>
+      <tr><td><code>REFERRER_DENIED</code></td><td>403</td><td>Nice not allowed from this referrer</td></tr>
+      <tr><td><code>IP_LIMIT</code></td><td>429</td><td>Rate limit exceeded</td></tr>
+    </table>
+    
   </div>
-
-  <style>
-    .showcase {
-      margin-top: 1.5rem;
-    }
-    .showcase-section {
-      margin-bottom: 2rem;
-    }
-    .showcase-section h3 {
-      font-size: 0.875rem;
-      color: #888;
-      margin-bottom: 1rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .showcase-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1.5rem;
-      align-items: flex-end;
-    }
-    .showcase-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 1rem;
-    }
-    .showcase-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .showcase-label {
-      font-family: 'Fira Code', monospace;
-      font-size: 0.75rem;
-      color: #666;
-    }
-    .theme-preview {
-      padding: 1rem;
-      border-radius: 8px;
-      background: #1a1a1a;
-    }
-    .light-bg {
-      background: #e5e7eb !important;
-    }
-    .matrix {
-      overflow-x: auto;
-    }
-    .matrix table {
-      border-collapse: collapse;
-      width: 100%;
-    }
-    .matrix th, .matrix td {
-      padding: 0.75rem;
-      text-align: center;
-      vertical-align: middle;
-    }
-    .matrix th {
-      font-family: 'Fira Code', monospace;
-      font-size: 0.7rem;
-      color: #888;
-      font-weight: normal;
-    }
-    .matrix td {
-      border-top: 1px solid #333;
-    }
-    .matrix .size-label {
-      font-family: 'Fira Code', monospace;
-      font-size: 0.75rem;
-      color: #666;
-      text-align: right;
-      padding-right: 1rem;
-    }
-    .matrix td.light-bg {
-      background: #e5e7eb;
-      border-radius: 4px;
-    }
-  </style>
 </body>
 </html>

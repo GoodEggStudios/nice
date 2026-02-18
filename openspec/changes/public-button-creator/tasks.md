@@ -86,12 +86,12 @@
 
 ## 10. Docs Update
 
-- [ ] 10.1 Update /docs page with v2 API documentation
-- [ ] 10.2 Document POST /api/v2/buttons endpoint
-- [ ] 10.3 Document GET /api/v2/buttons/stats/:private_id endpoint
-- [ ] 10.4 Document DELETE /api/v2/buttons/:private_id endpoint
-- [ ] 10.5 Document restriction modes (url, domain, global)
-- [ ] 10.6 Add migration note for v1 → v2
+- [x] 10.1 Update /docs page with v2 API documentation
+- [x] 10.2 Document POST /api/v2/buttons endpoint
+- [x] 10.3 Document GET /api/v2/buttons/stats/:private_id endpoint
+- [x] 10.4 Document DELETE /api/v2/buttons/:private_id endpoint
+- [x] 10.5 Document restriction modes (url, domain, global)
+- [x] 10.6 Add migration note for v1 → v2
 
 ## 11. Testing
 

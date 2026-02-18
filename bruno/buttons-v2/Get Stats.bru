@@ -1,0 +1,37 @@
+meta {
+  name: Get Stats
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v2/buttons/stats/{{privateId}}
+  body: none
+  auth: none
+}
+
+docs {
+  # Get Button Stats (v2)
+  
+  Get statistics for a button using the private ID.
+  
+  ## Path Parameters
+  
+  | Parameter | Description |
+  |-----------|-------------|
+  | privateId | Private ID (ns_xxx format) |
+  
+  ## Response
+  
+  ```json
+  {
+    "id": "n_x7Kf9mQ2",
+    "url": "https://example.com/my-article",
+    "restriction": "url",
+    "count": 42,
+    "theme": "light",
+    "size": "md",
+    "created_at": "2026-02-18T10:00:00Z"
+  }
+  ```
+}
