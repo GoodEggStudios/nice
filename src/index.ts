@@ -7,7 +7,7 @@
 import type { Env, Site } from "./types";
 import { registerSite, verifySite, regenerateToken } from "./routes/sites";
 import { createButton, listButtons, getButton, deleteButton } from "./routes/buttons";
-import { createButtonV2, getButtonStatsV2, deleteButtonV2, recordNiceV2 } from "./routes/buttons-v2";
+import { createButtonV2, getButtonStatsV2, updateButtonV2, deleteButtonV2, recordNiceV2 } from "./routes/buttons-v2";
 import { recordNice, getNiceCount } from "./routes/nice";
 import { serveEmbedScript, serveEmbedPage } from "./routes/embed";
 import { hashToken, isValidTokenFormat } from "./lib";
@@ -64,7 +64,7 @@ export default {
       // For authenticated routes, only allow specific headers
       const corsHeaders = isAuthenticatedRoute ? {
         "Access-Control-Allow-Origin": origin || "*",
-        "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+        "Access-Control-Allow-Methods": "GET, POST, DELETE, PATCH, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type, Authorization",
         "Access-Control-Max-Age": "86400",
       } : PUBLIC_CORS_HEADERS;
@@ -212,6 +212,11 @@ export default {
         const privateId = path.split("/")[4];
         response = await deleteButtonV2(request, privateId, env);
       }
+      // PATCH /api/v2/buttons/:private_id - Update button settings
+      else if (method === "PATCH" && path.match(/^\/api\/v2\/buttons\/[^/]+$/)) {
+        const privateId = path.split("/")[4];
+        response = await updateButtonV2(request, privateId, env);
+      }
       // POST /api/v2/buttons/:private_id/nice - Record nice (authenticated)
       else if (method === "POST" && path.match(/^\/api\/v2\/buttons\/[^/]+\/nice$/)) {
         const privateId = path.split("/")[4];
@@ -242,7 +247,7 @@ export default {
         newHeaders.set("Access-Control-Allow-Origin", origin);
         newHeaders.set("Access-Control-Allow-Credentials", "true");
       }
-      newHeaders.set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+      newHeaders.set("Access-Control-Allow-Methods", "GET, POST, DELETE, PATCH, OPTIONS");
       newHeaders.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
     } else {
       // Public endpoints allow any origin

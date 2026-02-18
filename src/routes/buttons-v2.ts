@@ -238,6 +238,116 @@ export async function getButtonStatsV2(
 }
 
 /**
+ * PATCH /api/v2/buttons/:private_id - Update button settings
+ */
+export async function updateButtonV2(
+  request: Request,
+  privateId: string,
+  env: Env
+): Promise<Response> {
+  // Validate private ID format
+  if (!isValidPrivateId(privateId)) {
+    return Response.json(
+      { error: "Button not found", code: "NOT_FOUND" },
+      { status: 404 }
+    );
+  }
+
+  // Parse request body
+  let body: {
+    restriction?: string;
+    theme?: string;
+    size?: string;
+  };
+
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json(
+      { error: "Invalid JSON", code: "INVALID_JSON" },
+      { status: 400 }
+    );
+  }
+
+  // Hash the private ID to look up the public ID
+  const secretHash = await sha256(privateId);
+  const publicId = await env.NICE_KV.get(`secret:${secretHash}`);
+
+  if (!publicId) {
+    return Response.json(
+      { error: "Button not found", code: "NOT_FOUND" },
+      { status: 404 }
+    );
+  }
+
+  // Get button data
+  const buttonData = await env.NICE_KV.get(`btn:${publicId}`);
+  if (!buttonData) {
+    return Response.json(
+      { error: "Button not found", code: "NOT_FOUND" },
+      { status: 404 }
+    );
+  }
+
+  const button: ButtonV2 = JSON.parse(buttonData);
+
+  // Update allowed fields
+  if (body.restriction !== undefined) {
+    if (!VALID_RESTRICTIONS.includes(body.restriction as RestrictionMode)) {
+      return Response.json(
+        { error: "Invalid restriction mode", code: "INVALID_RESTRICTION" },
+        { status: 400 }
+      );
+    }
+    button.restriction = body.restriction as RestrictionMode;
+  }
+
+  if (body.theme !== undefined) {
+    if (!VALID_THEMES.includes(body.theme)) {
+      return Response.json(
+        { error: "Invalid theme", code: "INVALID_THEME" },
+        { status: 400 }
+      );
+    }
+    button.theme = body.theme;
+  }
+
+  if (body.size !== undefined) {
+    if (!VALID_SIZES.includes(body.size)) {
+      return Response.json(
+        { error: "Invalid size", code: "INVALID_SIZE" },
+        { status: 400 }
+      );
+    }
+    button.size = body.size;
+  }
+
+  // Save updated button
+  await env.NICE_KV.put(`btn:${publicId}`, JSON.stringify(button));
+
+  // Generate updated embed snippet
+  const url = new URL(request.url);
+  const baseUrl = `${url.protocol}//${url.host}`;
+  const embed = generateEmbedSnippets(
+    publicId,
+    baseUrl,
+    button.theme || "light",
+    button.size || "md"
+  );
+
+  return Response.json({
+    id: publicId,
+    url: button.url,
+    restriction: button.restriction,
+    count: button.count,
+    theme: button.theme,
+    size: button.size,
+    created_at: button.createdAt,
+    embed,
+  });
+}
+
+/**
  * DELETE /api/v2/buttons/:private_id - Delete a button
  */
 export async function deleteButtonV2(
