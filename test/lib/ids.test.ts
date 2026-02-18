@@ -15,10 +15,10 @@ describe("ID utilities", () => {
       expect(id.startsWith("n_")).toBe(true);
     });
 
-    it("should generate 8 character payload", () => {
+    it("should generate 12 character payload", () => {
       const id = generatePublicId();
       const payload = id.slice(2);
-      expect(payload.length).toBe(8);
+      expect(payload.length).toBe(12);
     });
 
     it("should generate base62 characters only", () => {
@@ -58,28 +58,34 @@ describe("ID utilities", () => {
   });
 
   describe("isValidPublicId", () => {
-    it("should accept valid public ID", () => {
+    it("should accept valid public ID (12 chars - new)", () => {
+      expect(isValidPublicId("n_x7Kf9mQ2Ab3Z")).toBe(true);
+      expect(isValidPublicId("n_ABCD12345678")).toBe(true);
+      expect(isValidPublicId("n_000000000000")).toBe(true);
+    });
+
+    it("should accept valid public ID (8 chars - legacy)", () => {
       expect(isValidPublicId("n_x7Kf9mQ2")).toBe(true);
       expect(isValidPublicId("n_ABCD1234")).toBe(true);
       expect(isValidPublicId("n_00000000")).toBe(true);
     });
 
     it("should reject invalid prefix", () => {
-      expect(isValidPublicId("ns_x7Kf9mQ2")).toBe(false);
+      expect(isValidPublicId("ns_x7Kf9mQ2Ab3Z")).toBe(false);
       expect(isValidPublicId("btn_x7Kf9mQ2")).toBe(false);
       expect(isValidPublicId("x_x7Kf9mQ2")).toBe(false);
     });
 
     it("should reject wrong length", () => {
       expect(isValidPublicId("n_short")).toBe(false);
-      expect(isValidPublicId("n_toolongpayload")).toBe(false);
+      expect(isValidPublicId("n_toolongpayloadhere")).toBe(false);
       expect(isValidPublicId("n_")).toBe(false);
     });
 
     it("should reject invalid characters", () => {
-      expect(isValidPublicId("n_x7Kf-mQ2")).toBe(false);
-      expect(isValidPublicId("n_x7Kf_mQ2")).toBe(false);
-      expect(isValidPublicId("n_x7Kf mQ2")).toBe(false);
+      expect(isValidPublicId("n_x7Kf-mQ2Ab3Z")).toBe(false);
+      expect(isValidPublicId("n_x7Kf_mQ2Ab3Z")).toBe(false);
+      expect(isValidPublicId("n_x7Kf mQ2Ab3Z")).toBe(false);
     });
   });
 
@@ -127,8 +133,9 @@ describe("ID utilities", () => {
   });
 
   describe("isValidButtonId", () => {
-    it("should accept v2 public IDs", () => {
-      expect(isValidButtonId("n_x7Kf9mQ2")).toBe(true);
+    it("should accept v2 public IDs (new and legacy)", () => {
+      expect(isValidButtonId("n_x7Kf9mQ2Ab3Z")).toBe(true); // 12 chars
+      expect(isValidButtonId("n_x7Kf9mQ2")).toBe(true); // 8 chars legacy
     });
 
     it("should accept legacy button IDs", () => {

@@ -21,7 +21,7 @@ curl -X POST https://api.nice.sbs/api/v2/buttons \
 Response:
 ```json
 {
-  "public_id": "n_x7Kf9mQ2",
+  "public_id": "n_x7Kf9mQ2Ab3Z",
   "private_id": "ns_4vK9mPq8wL2nRt5xYz7bC",
   "url": "https://example.com/my-article",
   "embed": {
@@ -57,30 +57,20 @@ Content-Type: application/json
 | `url` | string | Yes | Content URL where the button will be embedded |
 | `theme` | string | No | `light` (default), `dark`, `minimal`, `mono-dark`, `mono-light` |
 | `size` | string | No | `xs`, `sm`, `md` (default), `lg`, `xl` |
-| `restriction` | string | No | `url` (default), `domain`, `global` |
-
-**Restriction Modes:**
-
-| Mode | Description |
-|------|-------------|
-| `url` | Only allow nices from the exact URL (recommended) |
-| `domain` | Allow nices from any page on the same domain |
-| `global` | Allow nices from any site |
 
 **Response (201 Created):**
 ```json
 {
-  "public_id": "n_x7Kf9mQ2",
+  "public_id": "n_x7Kf9mQ2Ab3Z",
   "private_id": "ns_4vK9mPq8wL2nRt5xYz7bC",
   "url": "https://example.com/my-article",
-  "restriction": "url",
   "theme": "light",
   "size": "md",
   "count": 0,
   "created_at": "2026-02-18T10:00:00Z",
   "embed": {
-    "iframe": "<iframe src=\"https://api.nice.sbs/e/n_x7Kf9mQ2?theme=light&size=md\" style=\"border:none;width:100px;height:36px;\" title=\"Nice button\"></iframe>",
-    "script": "<script src=\"https://api.nice.sbs/embed.js\" data-button=\"n_x7Kf9mQ2\" data-theme=\"light\" data-size=\"md\" async></script>"
+    "iframe": "<iframe src=\"https://api.nice.sbs/e/n_x7Kf9mQ2Ab3Z?theme=light&size=md\" style=\"border:none;width:100px;height:36px;\" title=\"Nice button\"></iframe>",
+    "script": "<script src=\"https://api.nice.sbs/embed.js\" data-button=\"n_x7Kf9mQ2Ab3Z\" data-theme=\"light\" data-size=\"md\" async></script>"
   }
 }
 ```
@@ -98,9 +88,8 @@ Get button statistics. Requires the private ID.
 **Response (200 OK):**
 ```json
 {
-  "id": "n_x7Kf9mQ2",
+  "id": "n_x7Kf9mQ2Ab3Z",
   "url": "https://example.com/my-article",
-  "restriction": "url",
   "count": 42,
   "theme": "light",
   "size": "md",
