@@ -280,6 +280,33 @@
       background: #22c55e;
     }
     
+    .private-id-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .btn-copy-inline {
+      background: transparent;
+      border: none;
+      color: #888;
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      transition: all 0.15s ease;
+    }
+    
+    .btn-copy-inline:hover {
+      color: #fbbf24;
+      background: rgba(251, 191, 36, 0.1);
+    }
+    
+    .btn-copy-inline.copied {
+      color: #22c55e;
+    }
+    
     .error {
       background: #1a0a0a;
       border: 2px solid #ef4444;
@@ -422,7 +449,15 @@
       
       <div class="result-row">
         <div class="result-label">Private ID</div>
-        <div class="result-value" id="privateId"></div>
+        <div class="result-value private-id-row">
+          <span id="privateId"></span>
+          <button type="button" class="btn-copy-inline" id="copyPrivateBtn" title="Copy Private ID">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+        </div>
       </div>
       
       <div class="result-row">
@@ -532,7 +567,7 @@
       }
     });
     
-    // Copy button
+    // Copy snippet button
     document.getElementById('copyBtn').addEventListener('click', () => {
       const snippet = document.getElementById('snippet').textContent;
       navigator.clipboard.writeText(snippet).then(() => {
@@ -541,6 +576,18 @@
         btn.classList.add('copied');
         setTimeout(() => {
           btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    });
+    
+    // Copy private ID button
+    document.getElementById('copyPrivateBtn').addEventListener('click', () => {
+      const privateId = document.getElementById('privateId').textContent;
+      navigator.clipboard.writeText(privateId).then(() => {
+        const btn = document.getElementById('copyPrivateBtn');
+        btn.classList.add('copied');
+        setTimeout(() => {
           btn.classList.remove('copied');
         }, 2000);
       });

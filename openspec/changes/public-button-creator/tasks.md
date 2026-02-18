@@ -37,14 +37,14 @@
 
 ## 5. Rate Limiting for Creation
 
-- [ ] 5.1 Add creation rate limit storage keys (ratelimit:ip:hash:create:hour, :day)
-- [ ] 5.2 Implement hourly limit check (10/hour)
-- [ ] 5.3 Implement daily limit check (50/day)
-- [ ] 5.4 Add TTL-based counter increment
-- [ ] 5.5 Return 429 with appropriate message when limits exceeded
-- [ ] 5.6 Add captcha trigger threshold (5 creates/hour)
-- [ ] 5.7 Integrate Cloudflare Turnstile for captcha
-- [ ] 5.8 Accept and validate captcha token in creation request
+- [x] 5.1 Add creation rate limit storage keys (rate:create:ip:hash:hour/day)
+- [x] 5.2 Implement hourly limit check (10/hour)
+- [x] 5.3 Implement daily limit check (50/day)
+- [x] 5.4 Add TTL-based counter increment
+- [x] 5.5 Return 429 with appropriate message when limits exceeded
+- [ ] ~~5.6 Add captcha trigger threshold (5 creates/hour)~~ (skipped)
+- [ ] ~~5.7 Integrate Cloudflare Turnstile for captcha~~ (skipped)
+- [ ] ~~5.8 Accept and validate captcha token in creation request~~ (skipped)
 
 ## 6. Embed Updates
 
