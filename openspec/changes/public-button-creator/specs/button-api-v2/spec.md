@@ -58,3 +58,22 @@ The system SHALL accept optional theme and size parameters when creating buttons
 #### Scenario: Invalid theme value
 - **WHEN** user sends POST /api/v2/buttons with theme="invalid"
 - **THEN** system returns 400 with error "Invalid theme"
+
+### Requirement: Restriction mode on creation
+The system SHALL accept optional restriction parameter when creating buttons.
+
+#### Scenario: Default restriction is URL
+- **WHEN** user sends POST /api/v2/buttons without restriction parameter
+- **THEN** button is created with restriction="url"
+
+#### Scenario: Create with domain restriction
+- **WHEN** user sends POST /api/v2/buttons with restriction="domain"
+- **THEN** button is created with restriction="domain"
+
+#### Scenario: Create with global restriction
+- **WHEN** user sends POST /api/v2/buttons with restriction="global"
+- **THEN** button is created with restriction="global"
+
+#### Scenario: Invalid restriction value
+- **WHEN** user sends POST /api/v2/buttons with restriction="invalid"
+- **THEN** system returns 400 with error "Invalid restriction mode"

@@ -63,3 +63,53 @@ The system SHALL rate limit stats endpoint requests.
 #### Scenario: Stats rate limit
 - **WHEN** more than 60 requests to /stats/:id in 1 minute from same IP
 - **THEN** system returns 429
+
+### Requirement: Referrer verification on nice
+The system SHALL verify the Referer header against the button's restriction mode.
+
+#### Scenario: URL mode - exact match
+- **WHEN** button has restriction="url" AND Referer matches stored URL (normalized)
+- **THEN** nice is allowed
+
+#### Scenario: URL mode - mismatch
+- **WHEN** button has restriction="url" AND Referer does not match stored URL
+- **THEN** system returns 403 with error "Nice not allowed from this page"
+
+#### Scenario: Domain mode - same domain
+- **WHEN** button has restriction="domain" AND Referer domain matches stored URL domain
+- **THEN** nice is allowed
+
+#### Scenario: Domain mode - different domain
+- **WHEN** button has restriction="domain" AND Referer domain differs from stored URL domain
+- **THEN** system returns 403 with error "Nice not allowed from this domain"
+
+#### Scenario: Global mode
+- **WHEN** button has restriction="global"
+- **THEN** nice is allowed regardless of Referer
+
+#### Scenario: Missing Referer header with URL/domain restriction
+- **WHEN** button has restriction="url" or "domain" AND Referer header is missing
+- **THEN** system returns 403 with error "Referer header required"
+
+#### Scenario: Missing Referer header with global restriction
+- **WHEN** button has restriction="global" AND Referer header is missing
+- **THEN** nice is allowed
+
+### Requirement: URL normalization for comparison
+The system SHALL normalize URLs before comparison.
+
+#### Scenario: Strip query parameters
+- **WHEN** Referer is "https://dev.to/post?utm=twitter" AND stored URL is "https://dev.to/post"
+- **THEN** URLs are considered matching
+
+#### Scenario: Strip trailing slash
+- **WHEN** Referer is "https://dev.to/post/" AND stored URL is "https://dev.to/post"
+- **THEN** URLs are considered matching
+
+#### Scenario: Case insensitive hostname
+- **WHEN** Referer is "https://DEV.TO/post" AND stored URL is "https://dev.to/post"
+- **THEN** URLs are considered matching
+
+#### Scenario: Path is case sensitive
+- **WHEN** Referer is "https://dev.to/POST" AND stored URL is "https://dev.to/post"
+- **THEN** URLs are NOT considered matching

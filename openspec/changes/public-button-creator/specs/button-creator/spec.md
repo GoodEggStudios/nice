@@ -40,6 +40,21 @@ The system SHALL provide a size selector with options: xs, sm, md, lg, xl.
 - **WHEN** user does not select a size
 - **THEN** "md" is used as default
 
+### Requirement: Restriction selector
+The system SHALL provide a restriction selector with options: url, domain, global.
+
+#### Scenario: Restriction options available
+- **WHEN** user views restriction selector
+- **THEN** three options are displayed: "This URL only", "This domain", "Global (any site)"
+
+#### Scenario: Default restriction
+- **WHEN** user does not select a restriction
+- **THEN** "url" (This URL only) is used as default
+
+#### Scenario: Restriction explanations
+- **WHEN** user views restriction options
+- **THEN** each option shows explanatory text (e.g., "Only allow nices from readers of this exact page")
+
 ### Requirement: Creation result display
 The system SHALL display public ID, private ID, and embed snippet after successful creation.
 

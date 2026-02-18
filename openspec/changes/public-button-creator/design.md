@@ -207,23 +207,47 @@ Your snippet:
 - v1 continues working unchanged
 - KV data is backwards compatible
 
-## Known Limitations
+### 7. Referrer Verification
 
-### Button embed copying
-Anyone can copy an embed snippet and place it on another site, potentially inflating counts.
+**Decision:** Three restriction modes, defaulting to URL-level verification
 
-**Current mitigations:**
-- IP deduplication (1 nice per IP per day)
-- Rate limiting on nice endpoint
+| Mode | Allows | Use Case |
+|------|--------|----------|
+| `url` (default) | Only exact URL match | Most secure, recommended |
+| `domain` | Any page on same domain | Cross-page buttons |
+| `global` | Any site | Intentional sharing |
 
-**Accepted for MVP:** Nice counts aren't financial — inflated counts are annoying but not catastrophic.
+**Verification logic:**
+```
+1. On nice request, check Referer header
+2. If mode = global → allow
+3. If mode = domain → extract domain from Referer, compare to stored URL domain
+4. If mode = url → normalize both URLs (strip query params, trailing slash), compare
+5. No match → reject with 403
+6. No Referer header → reject (secure default)
+```
 
-**Future enhancement (with accounts):** Placement control
-- Account holder enables "require approval for new sites"
-- First embed from new domain → pending in console
-- Owner approves/rejects placements
-- Rejected domains can't record nices
-- Similar to OAuth app approvals or ad network controls
+**URL normalization:**
+- Strip query parameters (`?utm_source=...`)
+- Strip fragments (`#section`)
+- Strip trailing slash
+- Lowercase hostname
+
+**Rationale:**
+- URL mode prevents button copying to other pages
+- Domain mode allows flexibility for multi-page sites
+- Global mode for intentional cross-site usage
+- Default to strictest (URL) for security
+
+**Storage:**
+```json
+{
+  "id": "n_xxx",
+  "url": "https://dev.to/alice/my-post",
+  "restriction": "url",  // "url" | "domain" | "global"
+  ...
+}
+```
 
 ## Open Questions
 
