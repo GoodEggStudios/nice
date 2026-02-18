@@ -122,19 +122,23 @@
     }
     
     .restriction-options {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.375rem;
     }
     
     .restriction-option {
-      padding: 0.75rem 1rem;
+      justify-content: center;
     }
     
-    .restriction-option .option-desc {
+    .restriction-desc {
       font-size: 0.75rem;
-      color: #666;
-      margin-top: 0.25rem;
+      color: #888;
+      margin-top: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: #1a1a1a;
+      border-radius: 6px;
+      text-align: center;
     }
     
     .btn-create {
@@ -365,30 +369,22 @@
       </div>
       
       <div class="form-group">
-        <label>Restriction <span class="label-hint">(who can nice this button)</span></label>
+        <label>Restriction</label>
         <div class="restriction-options" id="restrictionOptions">
           <label class="option restriction-option selected">
             <input type="radio" name="restriction" value="url" checked>
-            <div>
-              <span class="option-label">This URL only</span>
-              <div class="option-desc">Only allow nices from readers of this exact page (recommended)</div>
-            </div>
+            <span class="option-label">URL</span>
           </label>
           <label class="option restriction-option">
             <input type="radio" name="restriction" value="domain">
-            <div>
-              <span class="option-label">This domain</span>
-              <div class="option-desc">Allow nices from any page on the same domain</div>
-            </div>
+            <span class="option-label">Domain</span>
           </label>
           <label class="option restriction-option">
             <input type="radio" name="restriction" value="global">
-            <div>
-              <span class="option-label">Global</span>
-              <div class="option-desc">Allow nices from anywhere (embed on any site)</div>
-            </div>
+            <span class="option-label">Global</span>
           </label>
         </div>
+        <div class="restriction-desc" id="restrictionDesc">Only readers of this exact page can nice (recommended)</div>
       </div>
       
       <div class="form-group">
@@ -515,6 +511,19 @@
       xl: { w: 140, h: 52 }
     };
     
+    // Restriction descriptions
+    const restrictionDescs = {
+      url: 'Only readers of this exact page can nice (recommended)',
+      domain: 'Anyone on this domain can nice this button',
+      global: 'Anyone anywhere can nice this button'
+    };
+    const restrictionDescEl = document.getElementById('restrictionDesc');
+    
+    function updateRestrictionDesc() {
+      const restriction = document.querySelector('input[name="restriction"]:checked').value;
+      restrictionDescEl.textContent = restrictionDescs[restriction];
+    }
+    
     // Handle option selection
     document.querySelectorAll('.option').forEach(option => {
       option.addEventListener('click', () => {
@@ -523,6 +532,7 @@
         option.classList.add('selected');
         option.querySelector('input').checked = true;
         updatePreview();
+        updateRestrictionDesc();
       });
     });
     
