@@ -15,12 +15,21 @@ docs {
   
   Returns the current nice count for a button. No authentication required.
   
+  Also returns whether the current visitor (by IP) has already niced.
+  
   ## Response
   
   ```json
   {
     "count": 42,
-    "button_id": "btn_abc123"
+    "button_id": "btn_abc123",
+    "has_niced": true
   }
   ```
+  
+  | Field | Description |
+  |-------|-------------|
+  | count | Total nice count |
+  | button_id | The button ID |
+  | has_niced | Whether current visitor has already niced |
 }
