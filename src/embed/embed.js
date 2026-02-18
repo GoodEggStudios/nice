@@ -17,7 +17,9 @@
   // Default iframe sizes per size variant
   const SIZES = {
     xs: { w: 70, h: 28 },
+    sm: { w: 85, h: 32 },
     md: { w: 100, h: 36 },
+    lg: { w: 120, h: 44 },
     xl: { w: 140, h: 52 }
   };
 

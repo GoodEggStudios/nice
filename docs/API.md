@@ -263,15 +263,23 @@ GET /api/v1/nice/{button_id}/count
 | Size | Font | Padding | Default Iframe |
 |------|------|---------|----------------|
 | `xs` | 10px | 4px 8px | 70×28 |
+| `sm` | 11px | 5px 10px | 85×32 |
 | `md` | 12px | 6px 12px | 100×36 |
+| `lg` | 14px | 7px 14px | 120×44 |
 | `xl` | 16px | 8px 16px | 140×52 |
 
 ```html
 <!-- Extra Small -->
 <script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-size="xs" async></script>
 
+<!-- Small -->
+<script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-size="sm" async></script>
+
 <!-- Medium (default) -->
 <script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-size="md" async></script>
+
+<!-- Large -->
+<script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-size="lg" async></script>
 
 <!-- Extra Large -->
 <script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-size="xl" async></script>
