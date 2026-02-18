@@ -1,14 +1,4 @@
-/**
- * Stats Page - Button management via private ID
- *
- * GET /stats/:private_id - Serve the stats/management page
- */
-
-import type { Env, ButtonV2 } from "../types";
-import { sha256, isValidPrivateId } from "../lib";
-
-// Stats page HTML template
-const STATS_HTML = `<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -52,6 +42,12 @@ const STATS_HTML = `<!DOCTYPE html>
       font-size: 2rem;
       margin-bottom: 0.5rem;
       color: #fff;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #888;
     }
     
     .stat-card {
@@ -289,6 +285,8 @@ const STATS_HTML = `<!DOCTYPE html>
       background: #ef4444;
       color: #fff;
     }
+
+    .hidden { display: none; }
     
     @media (max-width: 480px) {
       body { padding: 1rem; }
@@ -304,59 +302,58 @@ const STATS_HTML = `<!DOCTYPE html>
       <a href="/" class="logo">NICE</a>
     </header>
     
-    {{CONTENT}}
-  </div>
-  
-  {{SCRIPTS}}
-</body>
-</html>`;
-
-// Content for found button
-const STATS_CONTENT = `
-    <h1>BUTTON STATS</h1>
+    <div id="loading" class="loading">Loading...</div>
     
-    <div class="stat-card">
-      <div class="stat-row">
-        <span class="stat-label">Nice Count</span>
-        <span class="stat-value large">{{COUNT}}</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Content URL</span>
-        <span class="stat-value"><a href="{{URL}}" target="_blank" rel="noopener">{{URL_DISPLAY}}</a></span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Restriction</span>
-        <span class="stat-value">{{RESTRICTION}}</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Public ID</span>
-        <span class="stat-value">{{PUBLIC_ID}}</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Created</span>
-        <span class="stat-value">{{CREATED}}</span>
-      </div>
-    </div>
-    
-    <div class="section-title">Embed Snippet</div>
-    <div class="stat-card">
-      <div class="snippet-container">
-        <pre class="snippet">{{SNIPPET}}</pre>
-        <button type="button" class="btn-copy" id="copyBtn">Copy</button>
+    <div id="content" class="hidden">
+      <h1>BUTTON STATS</h1>
+      
+      <div class="stat-card">
+        <div class="stat-row">
+          <span class="stat-label">Nice Count</span>
+          <span class="stat-value large" id="count">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Content URL</span>
+          <span class="stat-value"><a id="urlLink" href="#" target="_blank" rel="noopener"></a></span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Restriction</span>
+          <span class="stat-value" id="restriction"></span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Public ID</span>
+          <span class="stat-value" id="publicId"></span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Created</span>
+          <span class="stat-value" id="created"></span>
+        </div>
       </div>
       
-      <div class="preview-container">
-        {{PREVIEW}}
+      <div class="section-title">Embed Snippet</div>
+      <div class="stat-card">
+        <div class="snippet-container">
+          <pre class="snippet" id="snippet"></pre>
+          <button type="button" class="btn-copy" id="copyBtn">Copy</button>
+        </div>
+        
+        <div class="preview-container" id="preview"></div>
+      </div>
+      
+      <div class="claim-section">
+        <div class="claim-title">Claim This Button</div>
+        <div class="claim-text">Coming soon — link this button to your account for easier management.</div>
+      </div>
+      
+      <div class="stat-card">
+        <button type="button" class="btn-delete" id="deleteBtn">Delete Button</button>
       </div>
     </div>
     
-    <div class="claim-section">
-      <div class="claim-title">Claim This Button</div>
-      <div class="claim-text">Coming soon — link this button to your account for easier management.</div>
-    </div>
-    
-    <div class="stat-card">
-      <button type="button" class="btn-delete" id="deleteBtn">Delete Button</button>
+    <div id="error" class="error-page hidden">
+      <h1>BUTTON NOT FOUND</h1>
+      <p>This button doesn't exist or the private ID is invalid.</p>
+      <a href="/create.html" class="btn-home">Create a Button</a>
     </div>
     
     <div class="modal" id="deleteModal">
@@ -368,15 +365,118 @@ const STATS_CONTENT = `
           <button class="modal-btn confirm" id="confirmDelete">Delete</button>
         </div>
       </div>
-    </div>`;
-
-const STATS_SCRIPTS = `
+    </div>
+  </div>
+  
   <script>
-    const PRIVATE_ID = '{{PRIVATE_ID}}';
+    const API_BASE = 'https://api.nice.sbs';
+    
+    // Size dimensions
+    const SIZES = {
+      xs: { w: 70, h: 28 },
+      sm: { w: 85, h: 32 },
+      md: { w: 100, h: 36 },
+      lg: { w: 120, h: 44 },
+      xl: { w: 140, h: 52 }
+    };
+    
+    // Get private ID from URL path or query
+    function getPrivateId() {
+      // Try path: /stats/ns_xxx or /stats.html?id=ns_xxx
+      const pathMatch = window.location.pathname.match(/\/stats\/([^/]+)/);
+      if (pathMatch) return pathMatch[1];
+      
+      const params = new URLSearchParams(window.location.search);
+      return params.get('id');
+    }
+    
+    // Format restriction for display
+    function formatRestriction(mode) {
+      switch (mode) {
+        case 'url': return 'This URL only';
+        case 'domain': return 'This domain';
+        case 'global': return 'Global (any site)';
+        default: return mode;
+      }
+    }
+    
+    // Format date
+    function formatDate(iso) {
+      return new Date(iso).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+    }
+    
+    // Truncate URL
+    function truncateUrl(url, max = 50) {
+      return url.length <= max ? url : url.substring(0, max - 3) + '...';
+    }
+    
+    // Load stats
+    async function loadStats() {
+      const privateId = getPrivateId();
+      
+      if (!privateId || !privateId.startsWith('ns_')) {
+        showError();
+        return;
+      }
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/v2/buttons/stats/${privateId}`);
+        
+        if (!res.ok) {
+          showError();
+          return;
+        }
+        
+        const data = await res.json();
+        showStats(data, privateId);
+        
+      } catch (e) {
+        console.error('Failed to load stats:', e);
+        showError();
+      }
+    }
+    
+    // Show stats
+    function showStats(data, privateId) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('content').classList.remove('hidden');
+      
+      document.getElementById('count').textContent = data.count;
+      
+      const urlLink = document.getElementById('urlLink');
+      urlLink.href = data.url;
+      urlLink.textContent = truncateUrl(data.url);
+      
+      document.getElementById('restriction').textContent = formatRestriction(data.restriction);
+      document.getElementById('publicId').textContent = data.id;
+      document.getElementById('created').textContent = formatDate(data.created_at);
+      
+      // Embed snippet
+      const theme = data.theme || 'light';
+      const size = data.size || 'md';
+      const dims = SIZES[size] || SIZES.md;
+      const embedUrl = `${API_BASE}/e/${data.id}?theme=${theme}&size=${size}`;
+      const snippet = `<iframe src="${embedUrl}" style="border:none;width:${dims.w}px;height:${dims.h}px;" title="Nice button"></iframe>`;
+      
+      document.getElementById('snippet').textContent = snippet;
+      document.getElementById('preview').innerHTML = `<iframe src="${embedUrl}" style="border:none;width:${dims.w}px;height:${dims.h}px;" title="Nice button"></iframe>`;
+      
+      // Store private ID for delete
+      window.PRIVATE_ID = privateId;
+    }
+    
+    // Show error
+    function showError() {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('error').classList.remove('hidden');
+    }
     
     // Copy button
     document.getElementById('copyBtn').addEventListener('click', () => {
-      const snippet = document.querySelector('.snippet').textContent;
+      const snippet = document.getElementById('snippet').textContent;
       navigator.clipboard.writeText(snippet).then(() => {
         const btn = document.getElementById('copyBtn');
         btn.textContent = 'Copied!';
@@ -398,7 +498,9 @@ const STATS_SCRIPTS = `
     });
     document.getElementById('confirmDelete').addEventListener('click', async () => {
       try {
-        const res = await fetch('/api/v2/buttons/' + PRIVATE_ID, { method: 'DELETE' });
+        const res = await fetch(`${API_BASE}/api/v2/buttons/${window.PRIVATE_ID}`, { 
+          method: 'DELETE' 
+        });
         if (res.ok) {
           window.location.href = '/?deleted=1';
         } else {
@@ -408,169 +510,9 @@ const STATS_SCRIPTS = `
         alert('Failed to delete button');
       }
     });
-  </script>`;
-
-// Content for not found
-const NOT_FOUND_CONTENT = `
-    <div class="error-page">
-      <h1>BUTTON NOT FOUND</h1>
-      <p>This button doesn't exist or the private ID is invalid.</p>
-      <a href="/create" class="btn-home">Create a Button</a>
-    </div>`;
-
-// Size dimensions
-const SIZES: Record<string, { w: number; h: number }> = {
-  xs: { w: 70, h: 28 },
-  sm: { w: 85, h: 32 },
-  md: { w: 100, h: 36 },
-  lg: { w: 120, h: 44 },
-  xl: { w: 140, h: 52 },
-};
-
-/**
- * Escape HTML to prevent XSS
- */
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-/**
- * Truncate URL for display
- */
-function truncateUrl(url: string, maxLen = 50): string {
-  if (url.length <= maxLen) return url;
-  return url.substring(0, maxLen - 3) + "...";
-}
-
-/**
- * Format date for display
- */
-function formatDate(isoString: string): string {
-  const date = new Date(isoString);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-/**
- * Format restriction mode for display
- */
-function formatRestriction(mode: string): string {
-  switch (mode) {
-    case "url":
-      return "This URL only";
-    case "domain":
-      return "This domain";
-    case "global":
-      return "Global (any site)";
-    default:
-      return mode;
-  }
-}
-
-/**
- * GET /stats/:private_id - Serve the stats page
- */
-export async function serveStatsPage(
-  request: Request,
-  privateId: string,
-  env: Env
-): Promise<Response> {
-  // Validate private ID format
-  if (!isValidPrivateId(privateId)) {
-    const html = STATS_HTML
-      .replace("{{CONTENT}}", NOT_FOUND_CONTENT)
-      .replace("{{SCRIPTS}}", "");
-
-    return new Response(html, {
-      status: 404,
-      headers: {
-        "Content-Type": "text/html; charset=utf-8",
-        "Referrer-Policy": "no-referrer",
-      },
-    });
-  }
-
-  // Look up button by private ID
-  const secretHash = await sha256(privateId);
-  const publicId = await env.NICE_KV.get(`secret:${secretHash}`);
-
-  if (!publicId) {
-    const html = STATS_HTML
-      .replace("{{CONTENT}}", NOT_FOUND_CONTENT)
-      .replace("{{SCRIPTS}}", "");
-
-    return new Response(html, {
-      status: 404,
-      headers: {
-        "Content-Type": "text/html; charset=utf-8",
-        "Referrer-Policy": "no-referrer",
-      },
-    });
-  }
-
-  // Get button data
-  const buttonData = await env.NICE_KV.get(`btn:${publicId}`);
-  if (!buttonData) {
-    const html = STATS_HTML
-      .replace("{{CONTENT}}", NOT_FOUND_CONTENT)
-      .replace("{{SCRIPTS}}", "");
-
-    return new Response(html, {
-      status: 404,
-      headers: {
-        "Content-Type": "text/html; charset=utf-8",
-        "Referrer-Policy": "no-referrer",
-      },
-    });
-  }
-
-  const button: ButtonV2 = JSON.parse(buttonData);
-  const theme = button.theme || "light";
-  const size = button.size || "md";
-  const dims = SIZES[size] || SIZES.md;
-
-  // Build embed snippet
-  const url = new URL(request.url);
-  const baseUrl = `${url.protocol}//${url.host}`;
-  const embedUrl = `${baseUrl}/e/${publicId}?theme=${theme}&size=${size}`;
-  const snippet = `<iframe src="${embedUrl}" style="border:none;width:${dims.w}px;height:${dims.h}px;" title="Nice button"></iframe>`;
-
-  // Build preview iframe
-  const preview = `<iframe src="${embedUrl}" style="border:none;width:${dims.w}px;height:${dims.h}px;" title="Nice button"></iframe>`;
-
-  // Build content
-  const content = STATS_CONTENT
-    .replace("{{COUNT}}", button.count.toString())
-    .replace("{{URL}}", escapeHtml(button.url))
-    .replace("{{URL_DISPLAY}}", escapeHtml(truncateUrl(button.url)))
-    .replace("{{RESTRICTION}}", formatRestriction(button.restriction))
-    .replace("{{PUBLIC_ID}}", escapeHtml(publicId))
-    .replace("{{CREATED}}", formatDate(button.createdAt))
-    .replace("{{SNIPPET}}", escapeHtml(snippet))
-    .replace("{{PREVIEW}}", preview);
-
-  const scripts = STATS_SCRIPTS.replace("{{PRIVATE_ID}}", escapeHtml(privateId));
-
-  const html = STATS_HTML
-    .replace("{{CONTENT}}", content)
-    .replace("{{SCRIPTS}}", scripts);
-
-  return new Response(html, {
-    status: 200,
-    headers: {
-      "Content-Type": "text/html; charset=utf-8",
-      "Referrer-Policy": "no-referrer",
-      "Cache-Control": "no-store",
-    },
-  });
-}
+    
+    // Load on page ready
+    loadStats();
+  </script>
+</body>
+</html>
