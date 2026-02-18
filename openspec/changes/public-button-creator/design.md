@@ -207,6 +207,24 @@ Your snippet:
 - v1 continues working unchanged
 - KV data is backwards compatible
 
+## Known Limitations
+
+### Button embed copying
+Anyone can copy an embed snippet and place it on another site, potentially inflating counts.
+
+**Current mitigations:**
+- IP deduplication (1 nice per IP per day)
+- Rate limiting on nice endpoint
+
+**Accepted for MVP:** Nice counts aren't financial — inflated counts are annoying but not catastrophic.
+
+**Future enhancement (with accounts):** Placement control
+- Account holder enables "require approval for new sites"
+- First embed from new domain → pending in console
+- Owner approves/rejects placements
+- Rejected domains can't record nices
+- Similar to OAuth app approvals or ad network controls
+
 ## Open Questions
 
 1. **Captcha provider**: hCaptcha vs Cloudflare Turnstile?
