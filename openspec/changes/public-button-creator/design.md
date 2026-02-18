@@ -148,10 +148,20 @@ https://api.nice.sbs/embed/btn_xxx
 **Decision:** Separate `/create` page, not on homepage
 
 **Routes:**
-- Homepage (`/`) — unchanged, marketing/landing
-- Button creator (`/create`) — new form page
-- "Get Started" button on homepage → links to `/create`
-- Docs (`/docs`) — updated to v2 API
+| Path | Purpose |
+|------|---------|
+| `/` | Homepage (unchanged, marketing/landing) |
+| `/create` | Button creator form |
+| `/stats/:private_id` | Button management page |
+| `/docs` | Updated to v2 API |
+| `/e/:public_id` | Embed (short URL) |
+
+**Stats/Management page features:**
+- Nice count, URL, created date, restriction mode
+- Public ID display
+- Embed snippet with copy button
+- Delete button (with confirmation)
+- "Claim to account" placeholder (coming soon)
 
 **Soft launch:** No public marketing of `/create` yet. Discoverable via "Get Started" but not promoted.
 

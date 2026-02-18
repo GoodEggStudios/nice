@@ -12,11 +12,29 @@ The system SHALL serve a stats page at `/stats/:private_id`.
 - **THEN** page displays "Button not found" error
 
 ### Requirement: Stats page content
-The system SHALL display count, URL, and creation date on the stats page.
+The system SHALL display count, URL, creation date, and restriction mode on the stats page.
 
 #### Scenario: Stats displayed
 - **WHEN** user visits stats page with valid private ID
-- **THEN** page shows nice count, original URL, and created date
+- **THEN** page shows nice count, original URL, created date, and restriction mode
+
+### Requirement: Embed snippet display
+The system SHALL display the embed snippet with copy button on the stats page.
+
+#### Scenario: Snippet visible
+- **WHEN** user visits stats page with valid private ID
+- **THEN** page shows iframe snippet with copy button
+
+#### Scenario: Copy snippet
+- **WHEN** user clicks copy button
+- **THEN** snippet is copied to clipboard and button shows "Copied!" feedback
+
+### Requirement: Public ID display
+The system SHALL display the public ID (for reference) on the stats page.
+
+#### Scenario: Public ID visible
+- **WHEN** user visits stats page with valid private ID
+- **THEN** page shows the public ID (n_xxx format)
 
 ### Requirement: Referrer policy
 The system SHALL set `Referrer-Policy: no-referrer` on stats pages to prevent private ID leakage.
