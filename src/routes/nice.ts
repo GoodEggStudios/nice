@@ -33,6 +33,7 @@ const DEDUPE_TTL_SECONDS = 24 * 60 * 60;
 
 interface NiceRequest {
   fingerprint?: string;
+  referrer?: string;
   pow_solution?: {
     challenge: string;
     nonce: string;
@@ -52,21 +53,26 @@ interface CountResponse {
 
 /**
  * Check referrer against button restriction mode
+ * 
+ * For iframe embeds, document.referrer (passed in body) gives the parent page URL,
+ * while the Referer header gives the iframe's URL. We prefer the body referrer.
  */
 function checkReferrer(
   request: Request,
   buttonUrl: string,
-  restriction: RestrictionMode
+  restriction: RestrictionMode,
+  bodyReferrer?: string
 ): { allowed: boolean; error?: string } {
   // Global mode allows any referrer
   if (restriction === "global") {
     return { allowed: true };
   }
 
-  // Get referrer header
-  const referrer = request.headers.get("Referer");
+  // Prefer body referrer (from embed's document.referrer) over header
+  // Body referrer gives us the parent page URL for iframe embeds
+  const referrer = bodyReferrer || request.headers.get("Referer");
   if (!referrer) {
-    return { allowed: false, error: "Referer header required" };
+    return { allowed: false, error: "Referrer required" };
   }
 
   if (restriction === "url") {
@@ -141,9 +147,20 @@ export async function recordNice(
       return jsonError("Invalid button ID format", "INVALID_BUTTON_ID", 400);
     }
 
+    // Parse request body early - needed for referrer check and PoW
+    let bodyReferrer: string | undefined;
+    let powSolution: NiceRequest["pow_solution"] | undefined;
+    try {
+      const body = (await request.json()) as NiceRequest;
+      bodyReferrer = body.referrer;
+      powSolution = body.pow_solution;
+    } catch {
+      // No body or invalid JSON is fine
+    }
+
     // Check referrer restriction (v2 buttons only, v1 defaults to global)
     if (isV2) {
-      const referrerCheck = checkReferrer(request, buttonUrl, restriction);
+      const referrerCheck = checkReferrer(request, buttonUrl, restriction, bodyReferrer);
       if (!referrerCheck.allowed) {
         return new Response(
           JSON.stringify({ error: referrerCheck.error, code: "REFERRER_DENIED" }),
@@ -163,15 +180,6 @@ export async function recordNice(
         ip = "unknown";
         console.warn("No IP headers present - using 'unknown' for deduplication");
       }
-    }
-
-    // Parse request body for PoW solution
-    let powSolution: NiceRequest["pow_solution"] | undefined;
-    try {
-      const body = (await request.json()) as NiceRequest;
-      powSolution = body.pow_solution;
-    } catch {
-      // No body or invalid JSON is fine
     }
 
     // Check rate limits
