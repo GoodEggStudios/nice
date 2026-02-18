@@ -142,6 +142,57 @@
     /* Count */
     .nice-count {
       font-variant-numeric: tabular-nums;
+      min-width: 1em;
+    }
+
+    /* Loading dots animation */
+    @keyframes blink {
+      0%, 20% { opacity: 0; }
+      40%, 100% { opacity: 1; }
+    }
+
+    .loading-dots {
+      display: inline-flex;
+      gap: 2px;
+    }
+
+    .loading-dots span {
+      width: 4px;
+      height: 4px;
+      background: currentColor;
+      border-radius: 50%;
+      animation: blink 1.4s infinite;
+    }
+
+    .loading-dots span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .loading-dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    /* Smooth state transitions */
+    .nice-button {
+      transition: all 0.3s ease;
+    }
+
+    .nice-button.loading {
+      opacity: 0.7;
+    }
+
+    .nice-count {
+      transition: opacity 0.2s ease;
+    }
+
+    /* Fade in animation for initial load */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .nice-button.ready {
+      animation: fadeIn 0.3s ease;
     }
 
     /* Animations */
@@ -177,14 +228,14 @@
   </style>
 </head>
 <body class="theme-light">
-  <button class="nice-button" id="niceBtn">
+  <button class="nice-button loading" id="niceBtn">
     <span class="nice-icon">
       <!-- Thumbs up icon -->
       <svg viewBox="0 0 24 24">
         <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
       </svg>
     </span>
-    <span class="nice-count" id="niceCount">0</span>
+    <span class="nice-count" id="niceCount"><span class="loading-dots"><span></span><span></span><span></span></span></span>
   </button>
 
   <script>
@@ -216,12 +267,29 @@
       }
 
       // Update display
-      function updateDisplay() {
+      function updateDisplay(animate = false) {
         countEl.textContent = formatCount(count);
         if (hasNiced) {
-          btn.classList.add('niced');
+          if (animate) {
+            // Smooth transition to niced state
+            btn.classList.add('animating');
+            setTimeout(() => {
+              btn.classList.add('niced');
+              btn.classList.remove('animating');
+            }, 150);
+          } else {
+            btn.classList.add('niced');
+          }
         }
         notifyResize();
+      }
+      
+      // Show ready state (after loading)
+      function showReady() {
+        btn.classList.remove('loading');
+        btn.classList.add('ready');
+        updateDisplay(false);
+        setTimeout(() => btn.classList.remove('ready'), 300);
       }
 
       // Notify parent of size change
@@ -260,10 +328,15 @@
           if (res.ok) {
             const data = await res.json();
             count = data.count || 0;
-            updateDisplay();
+            showReady();
+          } else {
+            count = 0;
+            showReady();
           }
         } catch (e) {
           console.error('Nice: Failed to fetch count', e);
+          count = 0;
+          showReady();
         }
       }
 
@@ -284,7 +357,7 @@
         count++;
         hasNiced = true;
         btn.classList.add('animating');
-        updateDisplay();
+        updateDisplay(true); // animate into niced state
 
         setTimeout(() => btn.classList.remove('animating'), 300);
 
