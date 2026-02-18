@@ -237,7 +237,8 @@ if(!niced){count++;niced=true;btn.classList.add('niced','animating');textEl.text
 // - v1 (legacy): btn_ followed by 16 base64url characters
 // - v2 (new): n_ followed by 8 base62 characters
 const BUTTON_ID_V1_REGEX = /^btn_[A-Za-z0-9_-]{16}$/;
-const BUTTON_ID_V2_REGEX = /^n_[A-Za-z0-9]{8}$/;
+// Accept both 8-char (legacy) and 12-char (new) v2 IDs
+const BUTTON_ID_V2_REGEX = /^n_[A-Za-z0-9]{8,12}$/;
 
 function isValidButtonIdFormat(id: string): boolean {
   return BUTTON_ID_V1_REGEX.test(id) || BUTTON_ID_V2_REGEX.test(id);
