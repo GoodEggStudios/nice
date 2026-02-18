@@ -49,9 +49,9 @@
 ## 6. Embed Updates
 
 - [x] 6.1 Add /e/:id short route (alias to /embed/:id)
-- [ ] 6.2 Support n_xxx ID format in embed routes
-- [ ] 6.3 Validate ID format before KV lookup (n_ or btn_ prefix)
-- [ ] 6.4 Load v2 button data for n_ prefixed IDs
+- [x] 6.2 Support n_xxx ID format in embed routes
+- [x] 6.3 Validate ID format before KV lookup (n_ or btn_ prefix)
+- [x] 6.4 Load v2 button data for n_ prefixed IDs
 
 ## 7. Create Page UI
 
