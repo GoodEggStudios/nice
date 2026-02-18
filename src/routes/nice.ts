@@ -148,12 +148,14 @@ export async function recordNice(
       return jsonError("Invalid button ID format", "INVALID_BUTTON_ID", 400);
     }
 
-    // Parse request body early - needed for referrer check and PoW
+    // Parse request body early - needed for referrer check, fingerprint, and PoW
     let bodyReferrer: string | undefined;
+    let fingerprint: string | undefined;
     let powSolution: NiceRequest["pow_solution"] | undefined;
     try {
       const body = (await request.json()) as NiceRequest;
       bodyReferrer = body.referrer;
+      fingerprint = body.fingerprint;
       powSolution = body.pow_solution;
     } catch {
       // No body or invalid JSON is fine
@@ -200,9 +202,9 @@ export async function recordNice(
       }
     }
 
-    // Compute visitor hash for deduplication
+    // Compute visitor hash for deduplication (IP + fingerprint = unique device)
     const dailySalt = await getDailySalt(env.NICE_KV);
-    const visitorHash = await computeVisitorHash(ip, "", buttonId, dailySalt);
+    const visitorHash = await computeVisitorHash(ip, fingerprint || "", buttonId, dailySalt);
 
     // Check if already niced
     const niceKey = `${NICE_PREFIX}${buttonId}:${visitorHash}`;
@@ -292,6 +294,10 @@ export async function getNiceCount(
     const count = buttonExists ? await getCount(env, buttonId) : 0;
 
     // Check if visitor has already niced (using same logic as recordNice)
+    // Get fingerprint from query param for device-specific check
+    const url = new URL(request.url);
+    const fingerprint = url.searchParams.get("fp") || "";
+    
     let hasNiced = false;
     if (buttonExists) {
       let ip = request.headers.get("CF-Connecting-IP");
@@ -304,7 +310,7 @@ export async function getNiceCount(
       
       if (ip) {
         const dailySalt = await getDailySalt(env.NICE_KV);
-        const visitorHash = await computeVisitorHash(ip, "", buttonId, dailySalt);
+        const visitorHash = await computeVisitorHash(ip, fingerprint, buttonId, dailySalt);
         const niceKey = `${NICE_PREFIX}${buttonId}:${visitorHash}`;
         const existingNice = await env.NICE_KV.get(niceKey);
         hasNiced = !!existingNice;
