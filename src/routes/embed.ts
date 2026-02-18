@@ -56,6 +56,16 @@ body{font-family:'Bungee',cursive;background:transparent;display:flex;align-item
 .theme-minimal .nice-button:hover{opacity:1}
 .theme-minimal .nice-button.niced{opacity:1;border-color:#fbbf24;color:#fbbf24}
 
+/* Theme: Mono Dark (white on black, inverts when niced) */
+.theme-mono-dark .nice-button{background:#000;color:#fff;border:1px solid #333}
+.theme-mono-dark .nice-button:hover{background:#111}
+.theme-mono-dark .nice-button.niced{background:#fff;color:#000;border-color:#fff}
+
+/* Theme: Mono Light (black on white, inverts when niced) */
+.theme-mono-light .nice-button{background:#fff;color:#000;border:1px solid #ddd}
+.theme-mono-light .nice-button:hover{background:#f5f5f5}
+.theme-mono-light .nice-button.niced{background:#000;color:#fff;border-color:#000}
+
 .nice-text{transition:all .15s ease}
 .nice-count{opacity:0.8}
 
@@ -181,6 +191,12 @@ body{font-family:'Bungee',cursive;background:transparent;display:flex;align-item
 .theme-light .nice-button{background:#f3f4f6;color:#374151}
 .theme-light .nice-button:hover{background:#e5e7eb}
 .theme-light .nice-button.niced{background:#fef3c7;color:#92400e}
+.theme-mono-dark .nice-button{background:#000;color:#fff;border:1px solid #333}
+.theme-mono-dark .nice-button:hover{background:#111}
+.theme-mono-dark .nice-button.niced{background:#fff;color:#000;border-color:#fff}
+.theme-mono-light .nice-button{background:#fff;color:#000;border:1px solid #ddd}
+.theme-mono-light .nice-button:hover{background:#f5f5f5}
+.theme-mono-light .nice-button.niced{background:#000;color:#fff;border-color:#000}
 .nice-count{opacity:0.8}
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
 .nice-button.animating{animation:pulse .3s ease}
@@ -218,7 +234,7 @@ export async function serveEmbedPage(
   const size = url.searchParams.get("size") || "md";
   
   // Validate theme
-  const validThemes = ["light", "dark", "minimal"];
+  const validThemes = ["light", "dark", "minimal", "mono-dark", "mono-light"];
   const safeTheme = validThemes.includes(theme) ? theme : "light";
 
   // Validate size
