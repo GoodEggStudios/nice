@@ -1,0 +1,54 @@
+meta {
+  name: Update Button
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/api/v2/buttons/{{privateId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "restriction": "global"
+  }
+}
+
+docs {
+  # Update Button (v2)
+  
+  Update button settings using the private ID.
+  
+  ## Path Parameters
+  
+  | Parameter | Description |
+  |-----------|-------------|
+  | privateId | Private ID (ns_xxx format) |
+  
+  ## Request Body
+  
+  All fields are optional. Only provided fields will be updated.
+  
+  | Field | Type | Values |
+  |-------|------|--------|
+  | restriction | string | `url`, `domain`, `global` |
+  | theme | string | `light`, `dark`, `minimal`, `mono-dark`, `mono-light` |
+  | size | string | `xs`, `sm`, `md`, `lg`, `xl` |
+  
+  ## Response
+  
+  ```json
+  {
+    "id": "n_xxx",
+    "url": "https://example.com",
+    "restriction": "global",
+    "count": 42,
+    "theme": "light",
+    "size": "md",
+    "created_at": "...",
+    "embed": { ... }
+  }
+  ```
+}

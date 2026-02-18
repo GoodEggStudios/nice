@@ -100,6 +100,43 @@ Get button statistics. Requires the private ID.
 
 ---
 
+### Update Button
+
+```http
+PATCH /api/v2/buttons/:private_id
+Content-Type: application/json
+
+{
+  "restriction": "global"
+}
+```
+
+Update button settings. Requires the private ID.
+
+**Parameters:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `restriction` | string | No | `url`, `domain`, `global` |
+| `theme` | string | No | `light`, `dark`, `minimal`, `mono-dark`, `mono-light` |
+| `size` | string | No | `xs`, `sm`, `md`, `lg`, `xl` |
+
+**Response (200 OK):**
+```json
+{
+  "id": "n_x7Kf9mQ2Ab3Z",
+  "url": "https://example.com/my-article",
+  "restriction": "global",
+  "count": 42,
+  "theme": "light",
+  "size": "md",
+  "created_at": "2026-02-18T10:00:00Z",
+  "embed": { ... }
+}
+```
+
+---
+
 ### Delete Button
 
 ```http
