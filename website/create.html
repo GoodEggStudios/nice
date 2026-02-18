@@ -87,15 +87,16 @@
     
     .options-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 0.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 0.375rem;
     }
     
     .option {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 0.75rem;
+      justify-content: center;
+      gap: 0.25rem;
+      padding: 0.375rem 0.5rem;
       background: #1a1a1a;
       border: 2px solid #333;
       border-radius: 6px;
@@ -117,7 +118,7 @@
     }
     
     .option-label {
-      font-size: 0.875rem;
+      font-size: 0.75rem;
     }
     
     .restriction-options {
@@ -365,14 +366,41 @@
       </div>
       
       <div class="form-group">
+        <label>Restriction <span class="label-hint">(who can nice this button)</span></label>
+        <div class="restriction-options" id="restrictionOptions">
+          <label class="option restriction-option selected">
+            <input type="radio" name="restriction" value="url" checked>
+            <div>
+              <span class="option-label">This URL only</span>
+              <div class="option-desc">Only allow nices from readers of this exact page (recommended)</div>
+            </div>
+          </label>
+          <label class="option restriction-option">
+            <input type="radio" name="restriction" value="domain">
+            <div>
+              <span class="option-label">This domain</span>
+              <div class="option-desc">Allow nices from any page on the same domain</div>
+            </div>
+          </label>
+          <label class="option restriction-option">
+            <input type="radio" name="restriction" value="global">
+            <div>
+              <span class="option-label">Global</span>
+              <div class="option-desc">Allow nices from anywhere (embed on any site)</div>
+            </div>
+          </label>
+        </div>
+      </div>
+      
+      <div class="form-group">
         <label>Theme</label>
         <div class="options-grid" id="themeOptions">
-          <label class="option selected">
-            <input type="radio" name="theme" value="light" checked>
+          <label class="option">
+            <input type="radio" name="theme" value="light">
             <span class="option-label">Light</span>
           </label>
-          <label class="option">
-            <input type="radio" name="theme" value="dark">
+          <label class="option selected">
+            <input type="radio" name="theme" value="dark" checked>
             <span class="option-label">Dark</span>
           </label>
           <label class="option">
@@ -381,11 +409,11 @@
           </label>
           <label class="option">
             <input type="radio" name="theme" value="mono-dark">
-            <span class="option-label">Mono Dark</span>
+            <span class="option-label">Mono Dk</span>
           </label>
           <label class="option">
             <input type="radio" name="theme" value="mono-light">
-            <span class="option-label">Mono Light</span>
+            <span class="option-label">Mono Lt</span>
           </label>
         </div>
       </div>
@@ -416,37 +444,10 @@
         </div>
       </div>
       
-      <div class="form-group">
-        <label>Restriction <span class="label-hint">(who can nice this button)</span></label>
-        <div class="restriction-options" id="restrictionOptions">
-          <label class="option restriction-option selected">
-            <input type="radio" name="restriction" value="url" checked>
-            <div>
-              <span class="option-label">This URL only</span>
-              <div class="option-desc">Only allow nices from readers of this exact page (recommended)</div>
-            </div>
-          </label>
-          <label class="option restriction-option">
-            <input type="radio" name="restriction" value="domain">
-            <div>
-              <span class="option-label">This domain</span>
-              <div class="option-desc">Allow nices from any page on the same domain</div>
-            </div>
-          </label>
-          <label class="option restriction-option">
-            <input type="radio" name="restriction" value="global">
-            <div>
-              <span class="option-label">Global</span>
-              <div class="option-desc">Allow nices from anywhere (embed on any site)</div>
-            </div>
-          </label>
-        </div>
-      </div>
-      
       <div class="preview-section">
         <div class="preview-label">Preview</div>
         <div class="preview-container" id="previewContainer">
-          <iframe id="previewFrame" src="https://api.nice.sbs/embed/demo?theme=light&size=md" style="border:none;width:100px;height:36px;" title="Preview"></iframe>
+          <iframe id="previewFrame" src="https://api.nice.sbs/embed/demo?theme=dark&size=md" style="border:none;width:100px;height:36px;" title="Preview"></iframe>
         </div>
       </div>
       
