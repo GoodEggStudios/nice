@@ -28,12 +28,12 @@
 
 ## 4. Referrer Verification
 
-- [ ] 4.1 Add referrer extraction from request headers
-- [ ] 4.2 Implement URL normalization for comparison
-- [ ] 4.3 Implement domain extraction for domain mode
-- [ ] 4.4 Add restriction check to nice endpoint (POST /api/v1/nice/:id)
-- [ ] 4.5 Return 403 for referrer mismatch with appropriate error message
-- [ ] 4.6 Handle missing referrer header (reject for url/domain, allow for global)
+- [x] 4.1 Add referrer extraction from request headers
+- [x] 4.2 Implement URL normalization for comparison
+- [x] 4.3 Implement domain extraction for domain mode
+- [x] 4.4 Add restriction check to nice endpoint (POST /api/v1/nice/:id)
+- [x] 4.5 Return 403 for referrer mismatch with appropriate error message
+- [x] 4.6 Handle missing referrer header (reject for url/domain, allow for global)
 
 ## 5. Rate Limiting for Creation
 
