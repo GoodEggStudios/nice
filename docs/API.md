@@ -1,177 +1,145 @@
 # Nice API Documentation
 
-**Base URL:** `https://nice.sbs`
+**Base URL:** `https://api.nice.sbs`
 
 ## Overview
 
-Nice is a simple button service that lets you add anonymous "nice" buttons to any website. No user accounts required for visitors - just click to nice!
+Nice is a simple button service that lets you add anonymous "nice" buttons to any website. No signup required — create buttons instantly via API.
 
 ---
 
-## Authentication
+## Quick Start
 
-Site management endpoints require a Bearer token:
+Create a button with a single API call:
 
-```
-Authorization: Bearer nice_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-```
-
-Tokens are returned when you register a site.
-
----
-
-## Endpoints
-
-### Sites
-
-#### Register a Site
-
-```http
-POST /api/v1/sites
-Content-Type: application/json
-
-{
-  "domain": "example.com"
-}
+```bash
+curl -X POST https://api.nice.sbs/api/v2/buttons \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com/my-article"}'
 ```
 
-**Response (201 Created):**
+Response:
 ```json
 {
-  "site": {
-    "id": "site_abc123",
-    "domain": "example.com",
-    "verified": false,
-    "createdAt": "2026-02-17T21:00:00Z"
-  },
-  "token": "nice_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-  "verification": {
-    "type": "dns_txt",
-    "record": "_nice-verify.example.com",
-    "value": "nice-verify-abc123def456...",
-    "instructions": "Add a TXT record to your DNS..."
-  }
-}
-```
-
-⚠️ **Save your token!** It's only shown once.
-
-#### Verify Domain
-
-After adding the DNS TXT record:
-
-```http
-POST /api/v1/sites/{site_id}/verify
-```
-
-**Response (200 OK):**
-```json
-{
-  "verified": true,
-  "message": "Domain verified successfully!"
-}
-```
-
-#### Regenerate Token
-
-```http
-POST /api/v1/sites/{site_id}/token/regenerate
-Authorization: Bearer nice_xxx
-```
-
-**Response (200 OK):**
-```json
-{
-  "token": "nice_new_token_here",
-  "message": "Token regenerated. Your old token is now invalid."
-}
-```
-
----
-
-### Buttons
-
-All button endpoints require authentication.
-
-#### Create Button
-
-```http
-POST /api/v1/buttons
-Authorization: Bearer nice_xxx
-Content-Type: application/json
-
-{
-  "name": "My Blog Post",
-  "url": "https://example.com/blog/post-1"
-}
-```
-
-**Response (201 Created):**
-```json
-{
-  "button_id": "btn_abc123",
-  "name": "My Blog Post",
-  "url": "https://example.com/blog/post-1",
-  "count": 0,
-  "created_at": "2026-02-17T21:00:00Z",
+  "public_id": "n_x7Kf9mQ2",
+  "private_id": "ns_4vK9mPq8wL2nRt5xYz7bC",
+  "url": "https://example.com/my-article",
   "embed": {
-    "script": "<script src=\"https://nice.sbs/embed.js\" data-button=\"btn_abc123\" async></script>",
-    "iframe": "<iframe src=\"https://nice.sbs/embed/btn_abc123\" style=\"border:none;width:100px;height:40px;\"></iframe>",
-    "button_id": "btn_abc123"
+    "iframe": "<iframe src=\"...\" ...></iframe>"
   }
 }
 ```
 
-#### List Buttons
+⚠️ **Save your `private_id`!** It's only shown once and is needed to manage your button.
+
+---
+
+## API v2 Endpoints
+
+### Create Button
 
 ```http
-GET /api/v1/buttons
-Authorization: Bearer nice_xxx
-```
+POST /api/v2/buttons
+Content-Type: application/json
 
-Query params:
-- `limit` - Max results (default: 50, max: 100)
-- `cursor` - Pagination cursor
-
-**Response (200 OK):**
-```json
 {
-  "buttons": [...],
-  "has_more": true,
-  "cursor": "btn_xyz789"
+  "url": "https://example.com/my-article",
+  "theme": "light",
+  "size": "md",
+  "restriction": "url"
 }
 ```
 
-#### Get Button
+**Parameters:**
 
-```http
-GET /api/v1/buttons/{button_id}
-Authorization: Bearer nice_xxx
-```
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` | string | Yes | Content URL where the button will be embedded |
+| `theme` | string | No | `light` (default), `dark`, `minimal`, `mono-dark`, `mono-light` |
+| `size` | string | No | `xs`, `sm`, `md` (default), `lg`, `xl` |
+| `restriction` | string | No | `url` (default), `domain`, `global` |
 
-#### Delete Button
+**Restriction Modes:**
 
-```http
-DELETE /api/v1/buttons/{button_id}
-Authorization: Bearer nice_xxx
+| Mode | Description |
+|------|-------------|
+| `url` | Only allow nices from the exact URL (recommended) |
+| `domain` | Allow nices from any page on the same domain |
+| `global` | Allow nices from any site |
+
+**Response (201 Created):**
+```json
+{
+  "public_id": "n_x7Kf9mQ2",
+  "private_id": "ns_4vK9mPq8wL2nRt5xYz7bC",
+  "url": "https://example.com/my-article",
+  "restriction": "url",
+  "theme": "light",
+  "size": "md",
+  "count": 0,
+  "created_at": "2026-02-18T10:00:00Z",
+  "embed": {
+    "iframe": "<iframe src=\"https://api.nice.sbs/e/n_x7Kf9mQ2?theme=light&size=md\" style=\"border:none;width:100px;height:36px;\" title=\"Nice button\"></iframe>",
+    "script": "<script src=\"https://api.nice.sbs/embed.js\" data-button=\"n_x7Kf9mQ2\" data-theme=\"light\" data-size=\"md\" async></script>"
+  }
+}
 ```
 
 ---
 
-### Nice (Public)
+### Get Stats
+
+```http
+GET /api/v2/buttons/stats/:private_id
+```
+
+Get button statistics. Requires the private ID.
+
+**Response (200 OK):**
+```json
+{
+  "id": "n_x7Kf9mQ2",
+  "url": "https://example.com/my-article",
+  "restriction": "url",
+  "count": 42,
+  "theme": "light",
+  "size": "md",
+  "created_at": "2026-02-18T10:00:00Z",
+  "embed": { ... }
+}
+```
+
+---
+
+### Delete Button
+
+```http
+DELETE /api/v2/buttons/:private_id
+```
+
+Delete a button. Requires the private ID. **This action cannot be undone.**
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Button deleted"
+}
+```
+
+---
+
+## Nice Endpoints (Public)
 
 These endpoints don't require authentication.
 
-#### Record a Nice
+### Record a Nice
 
 ```http
-POST /api/v1/nice/{button_id}
-Content-Type: application/json
-
-{
-  "fingerprint": "optional-client-hash"
-}
+POST /api/v1/nice/:public_id
 ```
+
+Record a "nice" on a button.
 
 **Response (200 OK) - Success:**
 ```json
@@ -190,38 +158,17 @@ Content-Type: application/json
 }
 ```
 
-**Response (429) - Rate limited:**
-```json
-{
-  "error": "Rate limit exceeded",
-  "code": "IP_LIMIT"
-}
-```
-
-**Response (429) - PoW required:**
-```json
-{
-  "error": "Proof of work required",
-  "code": "POW_REQUIRED",
-  "pow_challenge": {
-    "challenge": "random_base64_string",
-    "difficulty": 16,
-    "expires_at": "2026-02-17T21:01:00Z"
-  }
-}
-```
-
-#### Get Nice Count
+### Get Nice Count
 
 ```http
-GET /api/v1/nice/{button_id}/count
+GET /api/v1/nice/:public_id/count
 ```
 
 **Response (200 OK):**
 ```json
 {
   "count": 43,
-  "button_id": "btn_abc123"
+  "button_id": "n_x7Kf9mQ2"
 }
 ```
 
@@ -229,81 +176,52 @@ GET /api/v1/nice/{button_id}/count
 
 ## Embed
 
-### Script Tag (Recommended)
+### iframe (Recommended)
 
 ```html
-<script 
-  src="https://nice.sbs/embed.js" 
-  data-button="btn_abc123"
-  async>
-</script>
+<iframe 
+  src="https://api.nice.sbs/e/:public_id?theme=light&size=md"
+  style="border:none;width:100px;height:36px;"
+  title="Nice button">
+</iframe>
 ```
 
 ### Themes
 
-```html
-<!-- Light (default) -->
-<script src="https://nice.sbs/embed.js" data-button="btn_abc123" async></script>
-
-<!-- Dark -->
-<script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-theme="dark" async></script>
-
-<!-- Minimal (transparent) -->
-<script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-theme="minimal" async></script>
-
-<!-- Mono Dark (white on black, inverts when clicked) -->
-<script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-theme="mono-dark" async></script>
-
-<!-- Mono Light (black on white, inverts when clicked) -->
-<script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-theme="mono-light" async></script>
-```
+| Theme | Description |
+|-------|-------------|
+| `light` | Light gray background (default) |
+| `dark` | Dark gray background |
+| `minimal` | Transparent with border |
+| `mono-dark` | Black background, inverts when clicked |
+| `mono-light` | White background, inverts when clicked |
 
 ### Sizes
 
-| Size | Font | Padding | Default Iframe |
-|------|------|---------|----------------|
-| `xs` | 10px | 4px 8px | 70×28 |
-| `sm` | 11px | 5px 10px | 85×32 |
-| `md` | 12px | 6px 12px | 100×36 |
-| `lg` | 14px | 7px 14px | 120×44 |
-| `xl` | 16px | 8px 16px | 140×52 |
+| Size | Dimensions |
+|------|------------|
+| `xs` | 70 × 28px |
+| `sm` | 85 × 32px |
+| `md` | 100 × 36px (default) |
+| `lg` | 120 × 44px |
+| `xl` | 140 × 52px |
 
-```html
-<!-- Extra Small -->
-<script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-size="xs" async></script>
+---
 
-<!-- Small -->
-<script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-size="sm" async></script>
+## Error Codes
 
-<!-- Medium (default) -->
-<script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-size="md" async></script>
-
-<!-- Large -->
-<script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-size="lg" async></script>
-
-<!-- Extra Large -->
-<script src="https://nice.sbs/embed.js" data-button="btn_abc123" data-size="xl" async></script>
-```
-
-### Manual iframe
-
-```html
-<!-- Medium (default) -->
-<iframe 
-  src="https://nice.sbs/embed/btn_abc123?theme=light&size=md"
-  style="border:none; width:100px; height:36px;"
-  scrolling="no"
-  frameborder="0">
-</iframe>
-
-<!-- Extra Large, Dark theme -->
-<iframe 
-  src="https://nice.sbs/embed/btn_abc123?theme=dark&size=xl"
-  style="border:none; width:140px; height:52px;"
-  scrolling="no"
-  frameborder="0">
-</iframe>
-```
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `INVALID_JSON` | 400 | Request body is not valid JSON |
+| `MISSING_URL` | 400 | URL field required |
+| `INVALID_URL` | 400 | URL format invalid |
+| `INVALID_THEME` | 400 | Invalid theme value |
+| `INVALID_SIZE` | 400 | Invalid size value |
+| `INVALID_RESTRICTION` | 400 | Invalid restriction mode |
+| `NOT_FOUND` | 404 | Button not found |
+| `REFERRER_DENIED` | 403 | Nice not allowed from this referrer |
+| `IP_LIMIT` | 429 | Rate limit exceeded |
+| `BUTTON_LIMIT` | 429 | Button rate limit exceeded |
 
 ---
 
@@ -311,36 +229,11 @@ GET /api/v1/nice/{button_id}/count
 
 | Scope | Limit | Window |
 |-------|-------|--------|
-| Per IP | 20 requests | 1 minute |
-| Per Button | 100 requests | 1 minute |
-| Burst threshold | 500 requests | Triggers PoW |
+| Per IP (nice) | 20 requests | 1 minute |
+| Per Button (nice) | 100 requests | 1 minute |
 
 ---
 
-## Errors
+## Legacy API (v1)
 
-All errors return JSON:
-
-```json
-{
-  "error": "Human-readable message",
-  "code": "ERROR_CODE"
-}
-```
-
-| Code | HTTP Status | Description |
-|------|-------------|-------------|
-| `INVALID_JSON` | 400 | Request body is not valid JSON |
-| `MISSING_DOMAIN` | 400 | Domain field required |
-| `INVALID_DOMAIN` | 400 | Domain format invalid |
-| `DOMAIN_MISMATCH` | 400 | URL doesn't match site domain |
-| `UNAUTHORIZED` | 401 | Missing or invalid token |
-| `FORBIDDEN` | 403 | Not allowed to access resource |
-| `SITE_NOT_VERIFIED` | 403 | Complete DNS verification first |
-| `NOT_FOUND` | 404 | Resource doesn't exist |
-| `DOMAIN_EXISTS` | 409 | Domain already registered |
-| `DUPLICATE_URL` | 409 | Button already exists for URL |
-| `IP_LIMIT` | 429 | IP rate limit exceeded |
-| `BUTTON_LIMIT` | 429 | Button rate limit exceeded |
-| `POW_REQUIRED` | 429 | Proof of work required |
-| `INTERNAL_ERROR` | 500 | Server error |
+The v1 API with DNS verification is still supported for existing integrations but is deprecated for new users. See the v1 documentation for details.
