@@ -9,16 +9,21 @@
 
 import { sha256 } from "./hash";
 
-// Rate limit configuration
+// Rate limit configuration - Nice requests
 const IP_LIMIT_PER_MINUTE = 20;
 const BUTTON_LIMIT_PER_MINUTE = 100;
 const BURST_THRESHOLD = 500;
 const POW_EXIT_THRESHOLD = 100;
 const POW_COOLDOWN_MINUTES = 5;
 
+// Rate limit configuration - Button creation
+const CREATE_LIMIT_PER_HOUR = 10;
+const CREATE_LIMIT_PER_DAY = 50;
+
 // KV key prefixes
 const RATE_IP_PREFIX = "rate:ip:";
 const RATE_BUTTON_PREFIX = "rate:button:";
+const RATE_CREATE_PREFIX = "rate:create:";
 const POW_PREFIX = "pow:";
 const ABUSE_PREFIX = "abuse:";
 
@@ -155,10 +160,118 @@ export async function validatePowSolution(
   return { valid: true };
 }
 
+interface CreateRateLimitResult {
+  allowed: boolean;
+  reason?: "hourly_limit" | "daily_limit";
+  retryAfter?: number;
+  hourlyRemaining?: number;
+  dailyRemaining?: number;
+}
+
+/**
+ * Check rate limits for button creation
+ * 
+ * Limits: 10/hour, 50/day per IP
+ */
+export async function checkCreateRateLimit(
+  kv: KVNamespace,
+  ip: string
+): Promise<CreateRateLimitResult> {
+  const ipHash = await sha256(ip);
+  const hour = getCurrentHour();
+  const day = getCurrentDay();
+
+  // Check hourly limit
+  const hourlyKey = `${RATE_CREATE_PREFIX}${ipHash}:hour:${hour}`;
+  const hourlyCount = await getCounter(kv, hourlyKey);
+
+  if (hourlyCount >= CREATE_LIMIT_PER_HOUR) {
+    return {
+      allowed: false,
+      reason: "hourly_limit",
+      retryAfter: 3600 - (Math.floor(Date.now() / 1000) % 3600),
+      hourlyRemaining: 0,
+      dailyRemaining: Math.max(0, CREATE_LIMIT_PER_DAY - await getCounter(kv, `${RATE_CREATE_PREFIX}${ipHash}:day:${day}`)),
+    };
+  }
+
+  // Check daily limit
+  const dailyKey = `${RATE_CREATE_PREFIX}${ipHash}:day:${day}`;
+  const dailyCount = await getCounter(kv, dailyKey);
+
+  if (dailyCount >= CREATE_LIMIT_PER_DAY) {
+    return {
+      allowed: false,
+      reason: "daily_limit",
+      retryAfter: getSecondsUntilMidnightUTC(),
+      hourlyRemaining: Math.max(0, CREATE_LIMIT_PER_HOUR - hourlyCount),
+      dailyRemaining: 0,
+    };
+  }
+
+  // Increment both counters
+  await incrementCounter(kv, hourlyKey, 3600); // 1 hour TTL
+  await incrementCounter(kv, dailyKey, 86400); // 24 hour TTL
+
+  return {
+    allowed: true,
+    hourlyRemaining: CREATE_LIMIT_PER_HOUR - hourlyCount - 1,
+    dailyRemaining: CREATE_LIMIT_PER_DAY - dailyCount - 1,
+  };
+}
+
+/**
+ * Format creation rate limit error response
+ */
+export function createRateLimitResponse(result: CreateRateLimitResult): Response {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  if (result.retryAfter) {
+    headers["Retry-After"] = Math.ceil(result.retryAfter).toString();
+  }
+
+  return new Response(
+    JSON.stringify({
+      error: result.reason === "hourly_limit" 
+        ? "Hourly button creation limit exceeded" 
+        : "Daily button creation limit exceeded",
+      code: result.reason?.toUpperCase() || "RATE_LIMITED",
+      retry_after: result.retryAfter,
+      limits: {
+        hourly: { limit: CREATE_LIMIT_PER_HOUR, remaining: result.hourlyRemaining },
+        daily: { limit: CREATE_LIMIT_PER_DAY, remaining: result.dailyRemaining },
+      },
+    }),
+    { status: 429, headers }
+  );
+}
+
 // Helper functions
 
 function getCurrentMinute(): string {
   return Math.floor(Date.now() / 60000).toString();
+}
+
+function getCurrentHour(): string {
+  return Math.floor(Date.now() / 3600000).toString();
+}
+
+function getCurrentDay(): string {
+  return new Date().toISOString().split("T")[0];
+}
+
+function getSecondsUntilMidnightUTC(): number {
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setUTCHours(24, 0, 0, 0);
+  return Math.floor((midnight.getTime() - now.getTime()) / 1000);
+}
+
+async function getCounter(kv: KVNamespace, key: string): Promise<number> {
+  const current = await kv.get(key);
+  return parseInt(current || "0", 10) || 0;
 }
 
 async function incrementCounter(

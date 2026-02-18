@@ -13,6 +13,8 @@ import {
   isValidPrivateId,
   isValidHttpUrl,
   sha256,
+  checkCreateRateLimit,
+  createRateLimitResponse,
 } from "../lib";
 
 // Valid themes and sizes
@@ -118,7 +120,13 @@ export async function createButtonV2(
     );
   }
 
-  // TODO: Rate limit check (Phase 5)
+  // Rate limit check
+  const clientIp = getClientIp(request);
+  const rateLimit = await checkCreateRateLimit(env.NICE_KV, clientIp);
+
+  if (!rateLimit.allowed) {
+    return createRateLimitResponse(rateLimit);
+  }
 
   // Generate IDs
   const publicId = generatePublicId();
