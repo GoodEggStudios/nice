@@ -55,34 +55,34 @@
 
 ## 7. Create Page UI
 
-- [ ] 7.1 Create /create page route
-- [ ] 7.2 Build form HTML (URL input, theme/size/restriction selectors)
-- [ ] 7.3 Add theme options (light, dark, minimal, mono-dark, mono-light)
-- [ ] 7.4 Add size options (xs, sm, md, lg, xl)
-- [ ] 7.5 Add restriction options with descriptions (URL, Domain, Global)
-- [ ] 7.6 Implement form submission to API
-- [ ] 7.7 Display success state with public ID, private ID, warning
-- [ ] 7.8 Add copy button for embed snippet
-- [ ] 7.9 Add live preview with selected theme/size
-- [ ] 7.10 Add client-side URL validation
-- [ ] 7.11 Handle and display API errors
+- [x] 7.1 Create /create page route
+- [x] 7.2 Build form HTML (URL input, theme/size/restriction selectors)
+- [x] 7.3 Add theme options (light, dark, minimal, mono-dark, mono-light)
+- [x] 7.4 Add size options (xs, sm, md, lg, xl)
+- [x] 7.5 Add restriction options with descriptions (URL, Domain, Global)
+- [x] 7.6 Implement form submission to API
+- [x] 7.7 Display success state with public ID, private ID, warning
+- [x] 7.8 Add copy button for embed snippet
+- [x] 7.9 Add live preview with selected theme/size
+- [x] 7.10 Add client-side URL validation
+- [x] 7.11 Handle and display API errors
 
 ## 8. Stats Page UI
 
-- [ ] 8.1 Create /stats/:private_id page route
-- [ ] 8.2 Set Referrer-Policy: no-referrer header
-- [ ] 8.3 Fetch and display button data (count, URL, created date, restriction)
-- [ ] 8.4 Display public ID
-- [ ] 8.5 Display embed snippet with copy button
-- [ ] 8.6 Add delete button with confirmation dialog
-- [ ] 8.7 Implement delete flow (API call, redirect to homepage)
-- [ ] 8.8 Add "Claim to account" placeholder section
-- [ ] 8.9 Add Nice branding and homepage link
-- [ ] 8.10 Handle invalid private ID (404 page)
+- [x] 8.1 Create /stats/:private_id page route
+- [x] 8.2 Set Referrer-Policy: no-referrer header
+- [x] 8.3 Fetch and display button data (count, URL, created date, restriction)
+- [x] 8.4 Display public ID
+- [x] 8.5 Display embed snippet with copy button
+- [x] 8.6 Add delete button with confirmation dialog
+- [x] 8.7 Implement delete flow (API call, redirect to homepage)
+- [x] 8.8 Add "Claim to account" placeholder section
+- [x] 8.9 Add Nice branding and homepage link
+- [x] 8.10 Handle invalid private ID (404 page)
 
 ## 9. Homepage Update
 
-- [ ] 9.1 Update "Get Started" button to link to /create
+- [x] 9.1 Update "Get Started" button to link to /create
 
 ## 10. Docs Update
 

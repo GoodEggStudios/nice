@@ -10,6 +10,8 @@ import { createButton, listButtons, getButton, deleteButton } from "./routes/but
 import { createButtonV2, getButtonStatsV2, deleteButtonV2 } from "./routes/buttons-v2";
 import { recordNice, getNiceCount } from "./routes/nice";
 import { serveEmbedScript, serveEmbedPage } from "./routes/embed";
+import { serveCreatePage } from "./pages/create";
+import { serveStatsPage } from "./pages/stats";
 import { hashToken, isValidTokenFormat } from "./lib";
 
 // KV key prefix for token lookups
@@ -108,6 +110,17 @@ export default {
     if (method === "GET" && path.match(/^\/e\/[^/]+$/)) {
       const buttonId = path.split("/")[2];
       return serveEmbedPage(request, buttonId);
+    }
+
+    // Create page
+    if (method === "GET" && path === "/create") {
+      return serveCreatePage();
+    }
+
+    // Stats page
+    if (method === "GET" && path.match(/^\/stats\/[^/]+$/)) {
+      const privateId = path.split("/")[2];
+      return serveStatsPage(request, privateId, env);
     }
 
     // Route matching
