@@ -5,9 +5,13 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/v1/nice/{{buttonId}}/count
+  url: {{baseUrl}}/api/v1/nice/{{buttonId}}/count?fp={{fingerprint}}
   body: none
   auth: none
+}
+
+params:query {
+  fp: {{fingerprint}}
 }
 
 docs {
@@ -15,12 +19,27 @@ docs {
   
   Returns the current nice count for a button. No authentication required.
   
+  Also returns whether the current visitor (by IP + fingerprint) has already niced.
+  
+  ## Query Parameters
+  
+  | Param | Required | Description |
+  |-------|----------|-------------|
+  | fp | No | Device fingerprint for accurate has_niced check |
+  
   ## Response
   
   ```json
   {
     "count": 42,
-    "button_id": "btn_abc123"
+    "button_id": "btn_abc123",
+    "has_niced": true
   }
   ```
+  
+  | Field | Description |
+  |-------|-------------|
+  | count | Total nice count |
+  | button_id | The button ID |
+  | has_niced | Whether current visitor (IP + fingerprint) has already niced |
 }

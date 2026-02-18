@@ -49,6 +49,7 @@ interface NiceResponse {
 interface CountResponse {
   count: number;
   button_id: string;
+  has_niced?: boolean;
 }
 
 /**
@@ -147,12 +148,14 @@ export async function recordNice(
       return jsonError("Invalid button ID format", "INVALID_BUTTON_ID", 400);
     }
 
-    // Parse request body early - needed for referrer check and PoW
+    // Parse request body early - needed for referrer check, fingerprint, and PoW
     let bodyReferrer: string | undefined;
+    let fingerprint: string | undefined;
     let powSolution: NiceRequest["pow_solution"] | undefined;
     try {
       const body = (await request.json()) as NiceRequest;
       bodyReferrer = body.referrer;
+      fingerprint = body.fingerprint;
       powSolution = body.pow_solution;
     } catch {
       // No body or invalid JSON is fine
@@ -199,9 +202,9 @@ export async function recordNice(
       }
     }
 
-    // Compute visitor hash for deduplication
+    // Compute visitor hash for deduplication (IP + fingerprint = unique device)
     const dailySalt = await getDailySalt(env.NICE_KV);
-    const visitorHash = await computeVisitorHash(ip, "", buttonId, dailySalt);
+    const visitorHash = await computeVisitorHash(ip, fingerprint || "", buttonId, dailySalt);
 
     // Check if already niced
     const niceKey = `${NICE_PREFIX}${buttonId}:${visitorHash}`;
@@ -264,6 +267,8 @@ export async function recordNice(
  * Returns 200 with count: 0 for non-existent buttons to prevent enumeration.
  * Attackers cannot determine which button IDs are valid.
  * 
+ * Also checks if the current visitor has already niced (using IP hash).
+ * 
  * Supports both v1 (btn_xxx) and v2 (n_xxx) button formats.
  */
 export async function getNiceCount(
@@ -288,9 +293,34 @@ export async function getNiceCount(
     // Return 0 for non-existent buttons (enumeration protection)
     const count = buttonExists ? await getCount(env, buttonId) : 0;
 
+    // Check if visitor has already niced (using same logic as recordNice)
+    // Get fingerprint from query param for device-specific check
+    const url = new URL(request.url);
+    const fingerprint = url.searchParams.get("fp") || "";
+    
+    let hasNiced = false;
+    if (buttonExists) {
+      let ip = request.headers.get("CF-Connecting-IP");
+      if (!ip) {
+        const xff = request.headers.get("X-Forwarded-For");
+        if (xff) {
+          ip = xff.split(",")[0].trim();
+        }
+      }
+      
+      if (ip) {
+        const dailySalt = await getDailySalt(env.NICE_KV);
+        const visitorHash = await computeVisitorHash(ip, fingerprint, buttonId, dailySalt);
+        const niceKey = `${NICE_PREFIX}${buttonId}:${visitorHash}`;
+        const existingNice = await env.NICE_KV.get(niceKey);
+        hasNiced = !!existingNice;
+      }
+    }
+
     const response: CountResponse = {
       count,
       button_id: buttonId,
+      has_niced: hasNiced,
     };
 
     return new Response(JSON.stringify(response), {

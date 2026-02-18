@@ -127,8 +127,15 @@ return hash.toString(36);
 }
 async function fetchCount(){
 try{
-const res=await fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID+'/count');
-if(res.ok){const data=await res.json();count=data.count||0;updateDisplay();}
+const fp=encodeURIComponent(getFingerprint());
+const res=await fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID+'/count?fp='+fp);
+if(res.ok){
+const data=await res.json();
+count=data.count||0;
+// Sync has_niced state from server (handles same IP, different device)
+if(data.has_niced&&!hasNiced){hasNiced=true;try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}
+updateDisplay();
+}
 }catch(e){console.error('Nice: Failed to fetch count',e);}
 }
 async function recordNice(){
