@@ -138,7 +138,7 @@ isLoading=true;
 count++;hasNiced=true;btn.classList.add('animating');updateDisplay();
 setTimeout(()=>btn.classList.remove('animating'),300);
 try{
-const res=await fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fingerprint:getFingerprint()})});
+const res=await fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fingerprint:getFingerprint(),referrer:document.referrer||''})});
 const data=await res.json();
 if(res.ok){count=data.count;if(data.success||data.reason==='already_niced'){hasNiced=true;try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}}
 else if(res.status===429){count--;hasNiced=false;btn.classList.remove('niced');}
