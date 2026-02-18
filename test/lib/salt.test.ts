@@ -65,13 +65,12 @@ describe("salt utilities", () => {
       expect(salt1).not.toBe(salt2);
     });
 
-    it("should store salt in KV", async () => {
-      const salt = await getDailySalt(env.NICE_KV);
-      const stored = await env.NICE_KV.get("config:daily_salt", "json") as { salt: string; date: string };
+    it("should store master secret in KV", async () => {
+      await getDailySalt(env.NICE_KV);
+      const masterSecret = await env.NICE_KV.get("config:master_secret");
 
-      expect(stored).toBeTruthy();
-      expect(stored.salt).toBe(salt);
-      expect(stored.date).toBe("2025-02-15");
+      expect(masterSecret).toBeTruthy();
+      expect(masterSecret!.length).toBe(64); // 32 bytes as hex
     });
   });
 
