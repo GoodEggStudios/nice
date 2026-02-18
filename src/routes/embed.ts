@@ -127,11 +127,12 @@ return hash.toString(36);
 }
 async function fetchCount(){
 try{
-const res=await fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID+'/count');
+const fp=encodeURIComponent(getFingerprint());
+const res=await fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID+'/count?fp='+fp);
 if(res.ok){
 const data=await res.json();
 count=data.count||0;
-// Sync has_niced state from server (handles same IP, different device)
+// Sync has_niced state from server (handles same IP+fingerprint)
 if(data.has_niced&&!hasNiced){hasNiced=true;try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}
 updateDisplay();
 }

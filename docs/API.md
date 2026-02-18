@@ -213,8 +213,14 @@ Record a "nice" on a button.
 ### Get Nice Count
 
 ```http
-GET /api/v1/nice/:public_id/count
+GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 ```
+
+**Query Parameters:**
+
+| Param | Required | Description |
+|-------|----------|-------------|
+| `fp` | No | Device fingerprint for accurate `has_niced` check |
 
 **Response (200 OK):**
 ```json
@@ -229,7 +235,7 @@ GET /api/v1/nice/:public_id/count
 |-------|-------------|
 | `count` | Total nice count |
 | `button_id` | The button ID |
-| `has_niced` | Whether the current visitor (by IP) has already niced |
+| `has_niced` | Whether the current visitor (by IP + fingerprint) has already niced |
 
 ---
 

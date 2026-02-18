@@ -10,12 +10,22 @@ get {
   auth: none
 }
 
+params:query {
+  ~fp: {{fingerprint}}
+}
+
 docs {
   # Get nice count
   
   Returns the current nice count for a button. No authentication required.
   
-  Also returns whether the current visitor (by IP) has already niced.
+  Also returns whether the current visitor (by IP + fingerprint) has already niced.
+  
+  ## Query Parameters
+  
+  | Param | Required | Description |
+  |-------|----------|-------------|
+  | fp | No | Device fingerprint for accurate has_niced check |
   
   ## Response
   
@@ -31,5 +41,5 @@ docs {
   |-------|-------------|
   | count | Total nice count |
   | button_id | The button ID |
-  | has_niced | Whether current visitor has already niced |
+  | has_niced | Whether current visitor (IP + fingerprint) has already niced |
 }
