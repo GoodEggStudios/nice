@@ -275,3 +275,57 @@ export async function deleteButtonV2(
     message: "Button deleted",
   });
 }
+
+/**
+ * POST /api/v2/buttons/:private_id/nice - Record a nice (authenticated)
+ * 
+ * This endpoint allows the button owner to record nices via API.
+ * No referrer check, no IP deduplication - full control for the owner.
+ */
+export async function recordNiceV2(
+  request: Request,
+  privateId: string,
+  env: Env
+): Promise<Response> {
+  // Validate private ID format
+  if (!isValidPrivateId(privateId)) {
+    return Response.json(
+      { error: "Button not found", code: "NOT_FOUND" },
+      { status: 404 }
+    );
+  }
+
+  // Hash the private ID to look up the public ID
+  const secretHash = await sha256(privateId);
+  const publicId = await env.NICE_KV.get(`secret:${secretHash}`);
+
+  if (!publicId) {
+    return Response.json(
+      { error: "Button not found", code: "NOT_FOUND" },
+      { status: 404 }
+    );
+  }
+
+  // Get button data
+  const buttonData = await env.NICE_KV.get(`btn:${publicId}`);
+  if (!buttonData) {
+    return Response.json(
+      { error: "Button not found", code: "NOT_FOUND" },
+      { status: 404 }
+    );
+  }
+
+  const button: ButtonV2 = JSON.parse(buttonData);
+
+  // Increment count
+  button.count += 1;
+
+  // Save updated button
+  await env.NICE_KV.put(`btn:${publicId}`, JSON.stringify(button));
+
+  return Response.json({
+    success: true,
+    count: button.count,
+    public_id: publicId,
+  });
+}
