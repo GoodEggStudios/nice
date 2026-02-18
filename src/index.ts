@@ -7,7 +7,7 @@
 import type { Env, Site } from "./types";
 import { registerSite, verifySite, regenerateToken } from "./routes/sites";
 import { createButton, listButtons, getButton, deleteButton } from "./routes/buttons";
-import { createButtonV2, getButtonStatsV2, deleteButtonV2 } from "./routes/buttons-v2";
+import { createButtonV2, getButtonStatsV2, deleteButtonV2, recordNiceV2 } from "./routes/buttons-v2";
 import { recordNice, getNiceCount } from "./routes/nice";
 import { serveEmbedScript, serveEmbedPage } from "./routes/embed";
 import { hashToken, isValidTokenFormat } from "./lib";
@@ -210,6 +210,11 @@ export default {
       else if (method === "DELETE" && path.match(/^\/api\/v2\/buttons\/[^/]+$/)) {
         const privateId = path.split("/")[4];
         response = await deleteButtonV2(request, privateId, env);
+      }
+      // POST /api/v2/buttons/:private_id/nice - Record nice (authenticated)
+      else if (method === "POST" && path.match(/^\/api\/v2\/buttons\/[^/]+\/nice$/)) {
+        const privateId = path.split("/")[4];
+        response = await recordNiceV2(request, privateId, env);
       }
       // 404 - Not found
       else {

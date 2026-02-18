@@ -1,0 +1,41 @@
+meta {
+  name: Record Nice (Authenticated)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v2/buttons/{{privateId}}/nice
+  body: none
+  auth: none
+}
+
+docs {
+  # Record Nice (Authenticated)
+  
+  Record a "nice" on your button using the private ID.
+  
+  Unlike the public nice endpoint, this:
+  - Requires the private ID (owner only)
+  - No referrer check
+  - No IP deduplication
+  - No rate limiting
+  
+  Use this for programmatic nice recording.
+  
+  ## Path Parameters
+  
+  | Parameter | Description |
+  |-----------|-------------|
+  | privateId | Private ID (ns_xxx format) |
+  
+  ## Response
+  
+  ```json
+  {
+    "success": true,
+    "count": 43,
+    "public_id": "n_x7Kf9mQ2Ab3Z"
+  }
+  ```
+}

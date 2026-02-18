@@ -278,7 +278,25 @@
   "message": "Button deleted"
 }</code></pre>
     
-    <h2 id="nice">Record Nice</h2>
+    <h2 id="nice-auth">Record Nice (Authenticated)</h2>
+    
+    <div class="endpoint">
+      <span class="method post">POST</span>
+      <span class="path">/api/v2/buttons/<span class="param">:private_id</span>/nice</span>
+    </div>
+    
+    <p>Record a "nice" using the private ID. <strong>Owner only</strong> — no restrictions.</p>
+    
+    <p>Unlike the public endpoint: no referrer check, no IP deduplication, no rate limiting.</p>
+    
+    <h3>Response</h3>
+    <pre><code>{
+  "success": true,
+  "count": 43,
+  "public_id": "n_x7Kf9mQ2Ab3Z"
+}</code></pre>
+    
+    <h2 id="nice">Record Nice (Public)</h2>
     
     <div class="endpoint">
       <span class="method post">POST</span>
