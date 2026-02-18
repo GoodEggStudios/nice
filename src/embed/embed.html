@@ -36,6 +36,32 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    /* Size: XS */
+    .size-xs .nice-button {
+      font-size: 11px;
+      padding: 4px 8px;
+      gap: 4px;
+      border-radius: 14px;
+    }
+
+    .size-xs .nice-icon {
+      width: 12px;
+      height: 12px;
+    }
+
+    /* Size: XL */
+    .size-xl .nice-button {
+      font-size: 18px;
+      padding: 10px 18px;
+      gap: 8px;
+      border-radius: 24px;
+    }
+
+    .size-xl .nice-icon {
+      width: 22px;
+      height: 22px;
+    }
+
     .nice-button:hover {
       transform: scale(1.02);
     }
@@ -168,6 +194,7 @@
       const API_BASE = '{{API_BASE}}';
       const BUTTON_ID = '{{BUTTON_ID}}';
       const THEME = '{{THEME}}';
+      const SIZE = '{{SIZE}}';
 
       const btn = document.getElementById('niceBtn');
       const countEl = document.getElementById('niceCount');
@@ -176,8 +203,9 @@
       let hasNiced = false;
       let isLoading = false;
 
-      // Set theme
-      document.body.className = 'theme-' + THEME;
+      // Set theme and size
+      const sizeClass = SIZE && SIZE !== 'md' ? 'size-' + SIZE : '';
+      document.body.className = 'theme-' + THEME + (sizeClass ? ' ' + sizeClass : '');
 
       // Format count for display
       function formatCount(n) {

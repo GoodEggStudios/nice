@@ -6,12 +6,20 @@
  * 
  * Options (data attributes):
  * - data-button: Button ID (required)
- * - data-theme: "light" | "dark" | "minimal" (default: "light")
+ * - data-theme: "light" | "dark" | "minimal" | "mono-dark" | "mono-light" (default: "light")
+ * - data-size: "xs" | "md" | "xl" (default: "md")
  */
 (function() {
   'use strict';
 
   const EMBED_BASE = 'https://nice.sbs';
+  
+  // Default iframe sizes per size variant
+  const SIZES = {
+    xs: { w: 70, h: 28 },
+    md: { w: 100, h: 36 },
+    xl: { w: 140, h: 52 }
+  };
 
   // Find all nice embed scripts
   function init() {
@@ -24,6 +32,8 @@
     if (!buttonId) return;
 
     const theme = script.getAttribute('data-theme') || 'light';
+    const size = script.getAttribute('data-size') || 'md';
+    const dims = SIZES[size] || SIZES.md;
 
     // Create container
     const container = document.createElement('div');
@@ -32,8 +42,8 @@
 
     // Create iframe
     const iframe = document.createElement('iframe');
-    iframe.src = `${EMBED_BASE}/embed/${buttonId}?theme=${encodeURIComponent(theme)}`;
-    iframe.style.cssText = 'border:none;overflow:hidden;width:100px;height:36px;';
+    iframe.src = `${EMBED_BASE}/embed/${buttonId}?theme=${encodeURIComponent(theme)}&size=${encodeURIComponent(size)}`;
+    iframe.style.cssText = `border:none;overflow:hidden;width:${dims.w}px;height:${dims.h}px;`;
     iframe.setAttribute('scrolling', 'no');
     iframe.setAttribute('frameborder', '0');
     iframe.setAttribute('allowtransparency', 'true');
