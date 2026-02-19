@@ -1,5 +1,5 @@
 import { generateBadge, normalizeStyle, normalizeColor } from '../lib/badge';
-import type { Env } from '../types';
+import type { Env, ButtonV2 } from '../types';
 
 /**
  * GET /badge/:publicId.svg
@@ -15,16 +15,15 @@ export async function serveBadge(
   const color = normalizeColor(url.searchParams.get('color') ?? undefined);
   const label = url.searchParams.get('label') || 'nice';
 
-  // Look up button by publicId
+  // Look up button by publicId in KV
   let count: number | null = null;
   
   try {
-    const result = await env.DB.prepare(
-      'SELECT nice_count FROM buttons WHERE public_id = ?'
-    ).bind(publicId).first<{ nice_count: number }>();
+    const buttonData = await env.NICE_KV.get(`btn:${publicId}`);
     
-    if (result) {
-      count = result.nice_count;
+    if (buttonData) {
+      const button: ButtonV2 = JSON.parse(buttonData);
+      count = button.count;
     }
   } catch {
     // On error, show "?" - don't break the badge
