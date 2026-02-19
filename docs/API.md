@@ -299,6 +299,61 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 
 ---
 
+## Badges (GitHub/Markdown)
+
+SVG badges for displaying Nice counts in GitHub READMEs and other markdown contexts that don't support iframes.
+
+### Badge URL
+
+```
+https://api.nice.sbs/badge/:public_id.svg
+```
+
+### Parameters
+
+| Param | Default | Description |
+|-------|---------|-------------|
+| `style` | `flat` | Badge style: `flat`, `flat-square`, `plastic`, `for-the-badge` |
+| `color` | `fbbf24` | Right side color (hex without #) |
+| `label` | `nice` | Left side label text |
+
+### Examples
+
+**Basic badge:**
+```markdown
+![Nice](https://api.nice.sbs/badge/n_abc123.svg)
+```
+
+**Clickable badge (links to button page):**
+```markdown
+[![Nice](https://api.nice.sbs/badge/n_abc123.svg)](https://nice.sbs/b/n_abc123)
+```
+
+**Custom style:**
+```markdown
+![Nice](https://api.nice.sbs/badge/n_abc123.svg?style=for-the-badge)
+```
+
+**Custom color:**
+```markdown
+![Nice](https://api.nice.sbs/badge/n_abc123.svg?color=22c55e)
+```
+
+### Badge Styles
+
+| Style | Description |
+|-------|-------------|
+| `flat` | Flat colors, slight border radius (default) |
+| `flat-square` | Flat colors, square corners |
+| `plastic` | Subtle gradient for 3D effect |
+| `for-the-badge` | Larger (28px), uppercase label |
+
+### Caching
+
+Badges are cached for 60 seconds (browser) / 5 minutes (CDN). Counts are snapshots, not real-time.
+
+---
+
 ## Legacy API (v1)
 
 The v1 API with DNS verification is still supported for existing integrations but is deprecated for new users. See the v1 documentation for details.
