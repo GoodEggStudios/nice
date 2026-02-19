@@ -265,6 +265,15 @@
       border-radius: 8px;
     }
     
+    .badge-preview {
+      display: flex;
+      justify-content: center;
+      padding: 0.75rem;
+      background: #0f0f0f;
+      border-radius: 6px;
+      margin-bottom: 0.75rem;
+    }
+    
     /* Result section */
     .result {
       display: none;
@@ -563,6 +572,15 @@
         </div>
       </div>
       
+      <div class="result-row">
+        <div class="result-label">Markdown Badge</div>
+        <div class="badge-preview" id="badgePreview"></div>
+        <div class="snippet-container">
+          <pre class="snippet" id="badgeSnippet"></pre>
+          <button type="button" class="btn-copy" id="copyBadgeBtn">Copy</button>
+        </div>
+      </div>
+      
       <div class="preview-section" style="margin-top:1rem;">
         <div class="preview-label">Your Button</div>
         <div class="preview-container" id="resultPreview"></div>
@@ -731,6 +749,13 @@
         document.getElementById('privateId').textContent = data.private_id;
         document.getElementById('snippet').textContent = data.embed.iframe;
         
+        // Badge snippet
+        const badgeUrl = 'https://api.nice.sbs/badge/' + data.public_id + '.svg';
+        const buttonPageUrl = 'https://nice.sbs/button?id=' + data.public_id;
+        const badgeSnippet = '[![Nice](' + badgeUrl + ')](' + buttonPageUrl + ')';
+        document.getElementById('badgeSnippet').textContent = badgeSnippet;
+        document.getElementById('badgePreview').innerHTML = '<a href="' + buttonPageUrl + '" target="_blank"><img src="' + badgeUrl + '" alt="Nice badge"></a>';
+        
         // Show preview of actual button
         const dims = SIZES[size];
         document.getElementById('resultPreview').innerHTML = 
@@ -765,6 +790,20 @@
       const snippet = document.getElementById('snippet').textContent;
       navigator.clipboard.writeText(snippet).then(() => {
         const btn = document.getElementById('copyBtn');
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    });
+    
+    // Copy badge button
+    document.getElementById('copyBadgeBtn').addEventListener('click', () => {
+      const snippet = document.getElementById('badgeSnippet').textContent;
+      navigator.clipboard.writeText(snippet).then(() => {
+        const btn = document.getElementById('copyBadgeBtn');
         btn.textContent = 'Copied!';
         btn.classList.add('copied');
         setTimeout(() => {

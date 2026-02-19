@@ -55,7 +55,9 @@ export function generateBadge(count: number | null, options: BadgeOptions = {}):
   
   const height = 20;
   const fontSize = 11;
-  const logoWidth = 18; // N logo section width
+  const logoPadding = 5; // Padding around the N logo
+  const logoSize = 14; // Logo visual size
+  const logoWidth = logoSize + logoPadding * 2; // Total logo section width
   const labelPadding = 6;
   const countPadding = 8;
   
@@ -94,7 +96,7 @@ export function generateBadge(count: number | null, options: BadgeOptions = {}):
     <rect x="${leftWidth}" width="${rightWidth}" height="${height}" fill="${rightBg}"/>
     <rect width="${totalWidth}" height="${height}" fill="url(#g)"/>
   </g>
-  <g transform="translate(3, 1)">
+  <g transform="translate(${logoPadding}, 3) scale(0.78)">
     <path d="${N_LOGO_PATH}" fill="#fbbf24"/>
   </g>
   <g fill="${leftText}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="${fontSize}">

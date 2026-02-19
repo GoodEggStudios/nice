@@ -299,7 +299,7 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 
 ---
 
-## Badges (GitHub/Markdown)
+## Markdown Badges
 
 SVG badges for displaying Nice counts in GitHub READMEs and other markdown contexts that don't support iframes. Shields.io-style design with Nice N logo.
 

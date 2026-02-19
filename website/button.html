@@ -6,7 +6,7 @@
     <title>Nice Button</title>
     <meta name="description" content="Click nice on this button!">
     
-    <!-- Open Graph (will be updated by JS if button has URL) -->
+    <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://nice.sbs/">
     <meta property="og:title" content="Nice Button">
@@ -80,22 +80,6 @@
             margin-top: -8px;
         }
 
-        .source-url {
-            margin-top: 32px;
-            max-width: 500px;
-        }
-
-        .source-url a {
-            color: #9ca3af;
-            text-decoration: none;
-            font-size: 14px;
-            word-break: break-all;
-        }
-
-        .source-url a:hover {
-            color: #fbbf24;
-        }
-
         .loading {
             color: #666;
             font-size: 16px;
@@ -104,53 +88,6 @@
         .error {
             color: #ef4444;
             font-size: 16px;
-        }
-
-        .badge-section {
-            margin-top: 48px;
-            padding-top: 32px;
-            border-top: 1px solid #333;
-            width: 100%;
-            max-width: 500px;
-        }
-
-        .badge-section h3 {
-            font-family: 'Bungee', cursive;
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 16px;
-        }
-
-        .badge-preview {
-            margin-bottom: 16px;
-        }
-
-        .badge-code {
-            background: #111;
-            border: 1px solid #333;
-            border-radius: 8px;
-            padding: 12px 16px;
-            font-family: monospace;
-            font-size: 12px;
-            color: #9ca3af;
-            word-break: break-all;
-            text-align: left;
-            cursor: pointer;
-            transition: border-color 0.15s;
-        }
-
-        .badge-code:hover {
-            border-color: #fbbf24;
-        }
-
-        .badge-code.copied {
-            border-color: #22c55e;
-        }
-
-        .copy-hint {
-            font-size: 11px;
-            color: #555;
-            margin-top: 8px;
         }
 
         .footer {
@@ -223,11 +160,6 @@
                 const data = await res.json();
                 const count = data.count || 0;
 
-                // Build the page
-                const badgeUrl = `${API_BASE}/badge/${id}.svg`;
-                const buttonPageUrl = `https://nice.sbs/button?id=${id}`;
-                const badgeMarkdown = `[![Nice](${badgeUrl})](${buttonPageUrl})`;
-
                 content.innerHTML = `
                     <div class="button-frame">
                         <iframe 
@@ -240,17 +172,6 @@
                     </div>
                     <div class="count">${formatCount(count)}</div>
                     <p class="count-label">nice${count === 1 ? '' : 's'}</p>
-                    
-                    <div class="badge-section">
-                        <h3>GitHub Badge</h3>
-                        <div class="badge-preview">
-                            <img src="${badgeUrl}" alt="Nice badge">
-                        </div>
-                        <div class="badge-code" onclick="copyBadge(this)" title="Click to copy">
-                            ${escapeHtml(badgeMarkdown)}
-                        </div>
-                        <p class="copy-hint">Click to copy markdown</p>
-                    </div>
                 `;
 
                 // Update page title
@@ -269,20 +190,6 @@
             }
             const m = n / 1000000;
             return m >= 10 ? Math.floor(m) + 'M' : m.toFixed(1).replace(/\.0$/, '') + 'M';
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function copyBadge(el) {
-            const text = el.textContent.trim();
-            navigator.clipboard.writeText(text).then(() => {
-                el.classList.add('copied');
-                setTimeout(() => el.classList.remove('copied'), 1500);
-            });
         }
     </script>
 </body>
