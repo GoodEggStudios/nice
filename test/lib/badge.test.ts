@@ -23,6 +23,14 @@ describe('formatCount', () => {
     expect(formatCount(10000000)).toBe('10M');
     expect(formatCount(12345678)).toBe('12M');
   });
+
+  it('handles edge cases', () => {
+    expect(formatCount(1500)).toBe('1.5k');
+    expect(formatCount(1050)).toBe('1.1k');
+    expect(formatCount(1001)).toBe('1k'); // rounds to 1.0k -> 1k
+    expect(formatCount(999999)).toBe('999k');
+    expect(formatCount(1500000)).toBe('1.5M');
+  });
 });
 
 describe('normalizeTheme', () => {
@@ -88,6 +96,58 @@ describe('generateBadge', () => {
     it('dark theme has black left background', () => {
       const svg = generateBadge(42, { theme: 'dark' });
       expect(svg).toContain('fill="#000"');
+    });
+  });
+
+  describe('SVG structure', () => {
+    it('has width and height attributes', () => {
+      const svg = generateBadge(42);
+      expect(svg).toMatch(/width="\d+"/);
+      expect(svg).toMatch(/height="20"/);
+    });
+
+    it('has rounded corners via clipPath', () => {
+      const svg = generateBadge(42);
+      expect(svg).toContain('clipPath');
+      expect(svg).toContain('rx="3"');
+    });
+
+    it('has gradient overlay', () => {
+      const svg = generateBadge(42);
+      expect(svg).toContain('linearGradient');
+      expect(svg).toContain('fill="url(#g)"');
+    });
+
+    it('has text shadow for label', () => {
+      const svg = generateBadge(42);
+      expect(svg).toContain('fill-opacity=".3"');
+    });
+
+    it('uses Verdana font family', () => {
+      const svg = generateBadge(42);
+      expect(svg).toContain('font-family="Verdana');
+    });
+  });
+
+  describe('count variations', () => {
+    it('handles zero', () => {
+      const svg = generateBadge(0);
+      expect(svg).toContain('>0<');
+    });
+
+    it('handles large numbers', () => {
+      const svg = generateBadge(999999999);
+      expect(svg).toContain('999M');
+    });
+
+    it('adjusts width for longer counts', () => {
+      const svgSmall = generateBadge(1);
+      const svgLarge = generateBadge(999999);
+      
+      const widthSmall = svgSmall.match(/width="(\d+)"/)?.[1];
+      const widthLarge = svgLarge.match(/width="(\d+)"/)?.[1];
+      
+      expect(Number(widthLarge)).toBeGreaterThan(Number(widthSmall));
     });
   });
 });
