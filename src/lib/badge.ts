@@ -1,21 +1,13 @@
 /**
  * SVG Badge Generator
- * Generates shields.io-compatible badges for Nice buttons
+ * Generates Nice-branded badges with Bungee font
  */
 
-export type BadgeStyle = 'flat' | 'flat-square' | 'plastic' | 'for-the-badge';
+export type BadgeTheme = 'gold' | 'light' | 'dark';
 
 export interface BadgeOptions {
-  style?: BadgeStyle;
-  color?: string;
-  label?: string;
+  theme?: BadgeTheme;
 }
-
-const DEFAULT_OPTIONS: Required<BadgeOptions> = {
-  style: 'flat',
-  color: 'fbbf24',
-  label: 'nice',
-};
 
 /**
  * Format large numbers for display
@@ -36,103 +28,86 @@ export function formatCount(count: number): string {
 }
 
 /**
- * Calculate text width (approximate for Verdana 11px)
+ * Calculate text width for Bungee font (approximate)
  */
-function textWidth(text: string, fontSize: number = 11): number {
-  // Approximate character widths for Verdana
-  const avgCharWidth = fontSize * 0.6;
+function textWidth(text: string, fontSize: number): number {
+  // Bungee is wider than typical fonts
+  const avgCharWidth = fontSize * 0.75;
   return text.length * avgCharWidth;
 }
 
 /**
- * Validate and normalize hex color
+ * Validate badge theme
  */
-export function normalizeColor(color: string | undefined): string {
-  if (!color) return DEFAULT_OPTIONS.color;
-  
-  // Remove # if present
-  const hex = color.replace(/^#/, '');
-  
-  // Validate: must be 3 or 6 hex characters
-  if (/^[0-9a-fA-F]{3}$/.test(hex)) {
-    // Expand 3-char to 6-char
-    return hex.split('').map(c => c + c).join('').toLowerCase();
+export function normalizeTheme(theme: string | undefined): BadgeTheme {
+  const validThemes: BadgeTheme[] = ['gold', 'light', 'dark'];
+  if (theme && validThemes.includes(theme as BadgeTheme)) {
+    return theme as BadgeTheme;
   }
-  if (/^[0-9a-fA-F]{6}$/.test(hex)) {
-    return hex.toLowerCase();
-  }
-  
-  return DEFAULT_OPTIONS.color;
+  return 'gold';
 }
 
 /**
- * Validate badge style
+ * Get colors for theme
  */
-export function normalizeStyle(style: string | undefined): BadgeStyle {
-  const validStyles: BadgeStyle[] = ['flat', 'flat-square', 'plastic', 'for-the-badge'];
-  if (style && validStyles.includes(style as BadgeStyle)) {
-    return style as BadgeStyle;
+function getThemeColors(theme: BadgeTheme): { bg: string; text: string; accent: string } {
+  switch (theme) {
+    case 'gold':
+      return { bg: '#fbbf24', text: '#000000', accent: '#000000' };
+    case 'light':
+      return { bg: '#ffffff', text: '#000000', accent: '#fbbf24' };
+    case 'dark':
+      return { bg: '#000000', text: '#fbbf24', accent: '#fbbf24' };
   }
-  return DEFAULT_OPTIONS.style;
 }
 
 /**
  * Generate SVG badge
  */
 export function generateBadge(count: number | null, options: BadgeOptions = {}): string {
-  const style = normalizeStyle(options.style);
-  const color = normalizeColor(options.color);
-  const label = options.label || DEFAULT_OPTIONS.label;
+  const theme = normalizeTheme(options.theme);
+  const colors = getThemeColors(theme);
   const countText = count === null ? '?' : formatCount(count);
   
-  const isForTheBadge = style === 'for-the-badge';
-  const fontSize = isForTheBadge ? 10 : 11;
-  const height = isForTheBadge ? 28 : 20;
-  const padding = isForTheBadge ? 14 : 10;
-  const displayLabel = isForTheBadge ? label.toUpperCase() : label;
-  const displayCount = isForTheBadge ? countText.toUpperCase() : countText;
+  const fontSize = 14;
+  const height = 28;
+  const paddingX = 12;
+  const gap = 6;
   
-  const labelWidth = Math.round(textWidth(displayLabel, fontSize) + padding * 2);
-  const countWidth = Math.round(textWidth(displayCount, fontSize) + padding * 2);
-  const totalWidth = labelWidth + countWidth;
+  const labelText = 'NICE';
+  const labelWidth = textWidth(labelText, fontSize);
+  const countWidth = textWidth(countText, fontSize);
+  const totalWidth = Math.round(paddingX + labelWidth + gap + countWidth + paddingX);
   
-  const labelX = labelWidth / 2;
-  const countX = labelWidth + countWidth / 2;
-  const textY = isForTheBadge ? 18 : 14;
-  const shadowY = textY + 1;
+  const labelX = paddingX + labelWidth / 2;
+  const countX = paddingX + labelWidth + gap + countWidth / 2;
+  const textY = 19;
   
-  const rx = style === 'flat-square' ? 0 : 3;
-  
-  // Gradient for plastic style
-  const gradient = style === 'plastic' 
-    ? `<linearGradient id="g" x2="0" y2="100%">
-        <stop offset="0" stop-color="#fff" stop-opacity=".7"/>
-        <stop offset=".1" stop-color="#aaa" stop-opacity=".1"/>
-        <stop offset=".9" stop-opacity=".3"/>
-        <stop offset="1" stop-opacity=".5"/>
-      </linearGradient>`
-    : `<linearGradient id="g" x2="0" y2="100%">
-        <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
-        <stop offset="1" stop-opacity=".1"/>
-      </linearGradient>`;
-  
+  // Border for light theme
+  const border = theme === 'light' 
+    ? `<rect x="0.5" y="0.5" width="${totalWidth - 1}" height="${height - 1}" rx="3.5" fill="none" stroke="#e5e7eb"/>`
+    : '';
+
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${height}">
-  ${gradient}
-  <clipPath id="c">
-    <rect width="${totalWidth}" height="${height}" rx="${rx}" fill="#fff"/>
-  </clipPath>
-  <g clip-path="url(#c)">
-    <rect width="${labelWidth}" height="${height}" fill="#333"/>
-    <rect x="${labelWidth}" width="${countWidth}" height="${height}" fill="#${color}"/>
-    <rect width="${totalWidth}" height="${height}" fill="url(#g)"/>
-  </g>
-  <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="${fontSize}"${isForTheBadge ? ' font-weight="bold"' : ''}>
-    <text x="${labelX}" y="${shadowY}" fill="#010101" fill-opacity=".3">${escapeXml(displayLabel)}</text>
-    <text x="${labelX}" y="${textY}">${escapeXml(displayLabel)}</text>
-    <text x="${countX}" y="${shadowY}" fill="#010101" fill-opacity=".3">${escapeXml(displayCount)}</text>
-    <text x="${countX}" y="${textY}">${escapeXml(displayCount)}</text>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bungee&amp;display=block');
+  </style>
+  <rect width="${totalWidth}" height="${height}" rx="4" fill="${colors.bg}"/>
+  ${border}
+  <g font-family="Bungee, Impact, sans-serif" font-size="${fontSize}" text-anchor="middle">
+    <text x="${labelX}" y="${textY}" fill="${colors.text}">${escapeXml(labelText)}</text>
+    <text x="${countX}" y="${textY}" fill="${colors.accent}">${escapeXml(countText)}</text>
   </g>
 </svg>`;
+}
+
+// Legacy exports for backwards compatibility
+export function normalizeColor(color: string | undefined): string {
+  return 'fbbf24';
+}
+
+export function normalizeStyle(style: string | undefined): string {
+  return 'flat';
 }
 
 /**
