@@ -254,8 +254,8 @@
       let hasNiced = false;
       let isLoading = false;
       
-      // Get parent origin for secure postMessage (avoid wildcard)
-      let parentOrigin = '*';
+      // Get parent origin for secure postMessage (no referrer = no message)
+      let parentOrigin = null;
       try { if (document.referrer) { parentOrigin = new URL(document.referrer).origin; } } catch(e) {}
 
       // Set theme and size
@@ -296,8 +296,9 @@
         setTimeout(() => btn.classList.remove('ready'), 300);
       }
 
-      // Notify parent of size change
+      // Notify parent of size change (only if we know the parent origin)
       function notifyResize() {
+        if (!parentOrigin) return;
         const rect = btn.getBoundingClientRect();
         parent.postMessage({
           type: 'nice-resize',

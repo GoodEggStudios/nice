@@ -99,8 +99,8 @@ const btn=document.getElementById('niceBtn');
 const textEl=document.getElementById('niceText');
 const countEl=document.getElementById('niceCount');
 let count=0,hasNiced=false,isLoading=false;
-// Get parent origin for secure postMessage (avoid wildcard)
-let parentOrigin='*';
+// Get parent origin for secure postMessage (no referrer = no message)
+let parentOrigin=null;
 try{if(document.referrer){parentOrigin=new URL(document.referrer).origin;}}catch(e){}
 try{hasNiced=localStorage.getItem(STORAGE_KEY)==='1';}catch(e){}
 function formatCount(n){
@@ -120,6 +120,7 @@ textEl.textContent='Nice';
 notifyResize();
 }
 function notifyResize(){
+if(!parentOrigin)return;
 const rect=btn.getBoundingClientRect();
 parent.postMessage({type:'nice-resize',buttonId:BUTTON_ID,width:Math.ceil(rect.width)+8,height:Math.ceil(rect.height)+8},parentOrigin);
 }
