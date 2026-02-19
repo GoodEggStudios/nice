@@ -72,6 +72,18 @@ function checkReferrer(
   // Prefer body referrer (from embed's document.referrer) over header
   // Body referrer gives us the parent page URL for iframe embeds
   const referrer = bodyReferrer || request.headers.get("Referer");
+
+  // nice.sbs is always allowed (home domain for button pages)
+  if (referrer) {
+    try {
+      const referrerHost = new URL(referrer).hostname;
+      if (referrerHost === "nice.sbs" || referrerHost === "www.nice.sbs") {
+        return { allowed: true };
+      }
+    } catch {
+      // Invalid referrer URL, continue with normal checks
+    }
+  }
   if (!referrer) {
     return { allowed: false, error: "Referrer required" };
   }

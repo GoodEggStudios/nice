@@ -10,6 +10,7 @@ import { createButton, listButtons, getButton, deleteButton } from "./routes/but
 import { createButtonV2, getButtonStatsV2, updateButtonV2, deleteButtonV2, recordNiceV2 } from "./routes/buttons-v2";
 import { recordNice, getNiceCount } from "./routes/nice";
 import { serveEmbedScript, serveEmbedPage } from "./routes/embed";
+import { serveBadge } from "./routes/badge";
 import { hashToken, isValidTokenFormat } from "./lib";
 
 // KV key prefix for token lookups
@@ -109,6 +110,12 @@ export default {
     if (method === "GET" && path.match(/^\/e\/[^/]+$/)) {
       const buttonId = path.split("/")[2];
       return serveEmbedPage(request, buttonId);
+    }
+
+    // Badge route /badge/:publicId.svg
+    if (method === "GET" && path.match(/^\/badge\/[^/]+\.svg$/)) {
+      const publicId = path.split("/")[2].replace(/\.svg$/, '');
+      return serveBadge(request, env, publicId);
     }
 
     // Route matching
