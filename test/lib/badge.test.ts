@@ -26,20 +26,18 @@ describe('formatCount', () => {
 });
 
 describe('normalizeTheme', () => {
-  it('returns gold for undefined', () => {
-    expect(normalizeTheme(undefined)).toBe('gold');
+  it('returns default for undefined', () => {
+    expect(normalizeTheme(undefined)).toBe('default');
   });
 
-  it('accepts valid themes', () => {
-    expect(normalizeTheme('gold')).toBe('gold');
-    expect(normalizeTheme('light')).toBe('light');
+  it('accepts dark theme', () => {
     expect(normalizeTheme('dark')).toBe('dark');
   });
 
-  it('returns gold for invalid themes', () => {
-    expect(normalizeTheme('invalid')).toBe('gold');
-    expect(normalizeTheme('')).toBe('gold');
-    expect(normalizeTheme('flat')).toBe('gold');
+  it('returns default for invalid themes', () => {
+    expect(normalizeTheme('invalid')).toBe('default');
+    expect(normalizeTheme('')).toBe('default');
+    expect(normalizeTheme('light')).toBe('default');
   });
 });
 
@@ -48,7 +46,7 @@ describe('generateBadge', () => {
     const svg = generateBadge(42);
     expect(svg).toContain('<svg');
     expect(svg).toContain('</svg>');
-    expect(svg).toContain('NICE');
+    expect(svg).toContain('nice');
     expect(svg).toContain('42');
   });
 
@@ -62,38 +60,34 @@ describe('generateBadge', () => {
     expect(svg).toContain('1.2k');
   });
 
-  it('uses Bungee font', () => {
+  it('includes Nice N logo', () => {
     const svg = generateBadge(42);
-    expect(svg).toContain('Bungee');
+    // Check for the N logo path
+    expect(svg).toContain('<path d="M4.53');
+    expect(svg).toContain('fill="#fbbf24"'); // Gold N logo
+  });
+
+  it('has shields.io style two-tone design', () => {
+    const svg = generateBadge(42);
+    // Left section (dark) and right section (gold)
+    expect(svg).toContain('fill="#333"'); // dark left bg
+    expect(svg).toContain('fill="#fbbf24"'); // gold right bg
+  });
+
+  it('count section has black text', () => {
+    const svg = generateBadge(42);
+    expect(svg).toContain('fill="#000"');
   });
 
   describe('themes', () => {
-    it('gold theme has yellow background and black text', () => {
-      const svg = generateBadge(42, { theme: 'gold' });
-      expect(svg).toContain('fill="#fbbf24"'); // yellow bg
-      expect(svg).toContain('fill="#000000"'); // black text
+    it('default theme has #333 left background', () => {
+      const svg = generateBadge(42);
+      expect(svg).toContain('fill="#333"');
     });
 
-    it('light theme has white background and black text', () => {
-      const svg = generateBadge(42, { theme: 'light' });
-      expect(svg).toContain('fill="#ffffff"'); // white bg
-      expect(svg).toContain('fill="#000000"'); // black text
-    });
-
-    it('dark theme has black background and yellow text', () => {
+    it('dark theme has black left background', () => {
       const svg = generateBadge(42, { theme: 'dark' });
-      expect(svg).toContain('fill="#000000"'); // black bg
-      expect(svg).toContain('fill="#fbbf24"'); // yellow text
-    });
-
-    it('light theme has border', () => {
-      const svg = generateBadge(42, { theme: 'light' });
-      expect(svg).toContain('stroke="#e5e7eb"');
-    });
-
-    it('gold theme has no border', () => {
-      const svg = generateBadge(42, { theme: 'gold' });
-      expect(svg).not.toContain('stroke=');
+      expect(svg).toContain('fill="#000"');
     });
   });
 });

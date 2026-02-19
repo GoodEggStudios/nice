@@ -301,7 +301,7 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 
 ## Badges (GitHub/Markdown)
 
-SVG badges for displaying Nice counts in GitHub READMEs and other markdown contexts that don't support iframes. Uses the Bungee font to match Nice branding.
+SVG badges for displaying Nice counts in GitHub READMEs and other markdown contexts that don't support iframes. Shields.io-style design with Nice N logo.
 
 ### Badge URL
 
@@ -313,19 +313,23 @@ https://api.nice.sbs/badge/:public_id.svg
 
 | Param | Default | Description |
 |-------|---------|-------------|
-| `theme` | `gold` | Badge theme: `gold`, `light`, `dark` |
+| `theme` | `default` | Badge theme: `default` or `dark` |
 
-### Themes
+### Design
 
-| Theme | Description |
-|-------|-------------|
-| `gold` | Yellow background, black text (default) |
-| `light` | White background, black text |
-| `dark` | Black background, yellow text |
+```
+┌─────────────┬────────┐
+│  N  nice    │   42   │
+│  (dark bg)  │ (gold) │
+└─────────────┴────────┘
+```
+
+- Left: Nice N logo + "nice" label (dark gray or black background)
+- Right: Count (gold background, black text)
 
 ### Examples
 
-**Basic badge (gold):**
+**Basic badge:**
 ```markdown
 ![Nice](https://api.nice.sbs/badge/n_abc123.svg)
 ```
@@ -335,14 +339,9 @@ https://api.nice.sbs/badge/:public_id.svg
 [![Nice](https://api.nice.sbs/badge/n_abc123.svg)](https://nice.sbs/button?id=n_abc123)
 ```
 
-**Dark theme:**
+**Dark theme (black left side):**
 ```markdown
 ![Nice](https://api.nice.sbs/badge/n_abc123.svg?theme=dark)
-```
-
-**Light theme:**
-```markdown
-![Nice](https://api.nice.sbs/badge/n_abc123.svg?theme=light)
 ```
 
 ### Caching

@@ -1,9 +1,9 @@
 /**
  * SVG Badge Generator
- * Generates Nice-branded badges with Bungee font
+ * Generates shields.io-style badges with Nice branding
  */
 
-export type BadgeTheme = 'gold' | 'light' | 'dark';
+export type BadgeTheme = 'default' | 'dark';
 
 export interface BadgeOptions {
   theme?: BadgeTheme;
@@ -28,11 +28,10 @@ export function formatCount(count: number): string {
 }
 
 /**
- * Calculate text width for Bungee font (approximate)
+ * Calculate text width (approximate for Verdana 11px)
  */
-function textWidth(text: string, fontSize: number): number {
-  // Bungee is wider than typical fonts
-  const avgCharWidth = fontSize * 0.75;
+function textWidth(text: string, fontSize: number = 11): number {
+  const avgCharWidth = fontSize * 0.62;
   return text.length * avgCharWidth;
 }
 
@@ -40,63 +39,70 @@ function textWidth(text: string, fontSize: number): number {
  * Validate badge theme
  */
 export function normalizeTheme(theme: string | undefined): BadgeTheme {
-  const validThemes: BadgeTheme[] = ['gold', 'light', 'dark'];
-  if (theme && validThemes.includes(theme as BadgeTheme)) {
-    return theme as BadgeTheme;
-  }
-  return 'gold';
+  if (theme === 'dark') return 'dark';
+  return 'default';
 }
 
-/**
- * Get colors for theme
- */
-function getThemeColors(theme: BadgeTheme): { bg: string; text: string; accent: string } {
-  switch (theme) {
-    case 'gold':
-      return { bg: '#fbbf24', text: '#000000', accent: '#000000' };
-    case 'light':
-      return { bg: '#ffffff', text: '#000000', accent: '#fbbf24' };
-    case 'dark':
-      return { bg: '#000000', text: '#fbbf24', accent: '#fbbf24' };
-  }
-}
+// Nice "N" logo path (scaled for badge height)
+const N_LOGO_PATH = 'M4.53 17.55l-3.65 0q-0.88 0-0.88-0.88l0-15.79q0-0.88 0.88-0.88l2.53 0q0.88 0 1.44 0.66l4.73 5.41l0-5.19q0-0.88 0.88-0.88l3.65 0q0.88 0 0.88 0.88l0 15.79q0 0.88-0.88 0.88l-3.65 0q-0.88 0-0.88-0.88l0-3l-4.17-5.05l0 8.03q0 0.88-0.88 0.88z';
 
 /**
  * Generate SVG badge
  */
 export function generateBadge(count: number | null, options: BadgeOptions = {}): string {
   const theme = normalizeTheme(options.theme);
-  const colors = getThemeColors(theme);
   const countText = count === null ? '?' : formatCount(count);
   
-  const fontSize = 14;
-  const height = 28;
-  const paddingX = 12;
-  const gap = 6;
+  const height = 20;
+  const fontSize = 11;
+  const logoWidth = 18; // N logo section width
+  const labelPadding = 6;
+  const countPadding = 8;
   
-  const labelText = 'NICE';
-  const labelWidth = textWidth(labelText, fontSize);
-  const countWidth = textWidth(countText, fontSize);
-  const totalWidth = Math.round(paddingX + labelWidth + gap + countWidth + paddingX);
+  const labelText = 'nice';
+  const labelTextWidth = textWidth(labelText, fontSize);
+  const countTextWidth = textWidth(countText, fontSize);
   
-  const labelX = paddingX + labelWidth / 2;
-  const countX = paddingX + labelWidth + gap + countWidth / 2;
-  const textY = 19;
+  // Left section: logo + "nice" text
+  const leftWidth = logoWidth + labelTextWidth + labelPadding * 2;
+  // Right section: count
+  const rightWidth = countTextWidth + countPadding * 2;
+  const totalWidth = Math.round(leftWidth + rightWidth);
   
-  // Border for light theme
-  const border = theme === 'light' 
-    ? `<rect x="0.5" y="0.5" width="${totalWidth - 1}" height="${height - 1}" rx="3.5" fill="none" stroke="#e5e7eb"/>`
-    : '';
+  // Text positions
+  const labelX = logoWidth + labelPadding + labelTextWidth / 2;
+  const countX = leftWidth + rightWidth / 2;
+  const textY = 14;
+  const shadowY = 15;
+  
+  // Colors based on theme
+  const leftBg = theme === 'dark' ? '#000' : '#333';
+  const leftText = '#fff';
+  const rightBg = '#fbbf24';
+  const rightText = '#000';
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${height}">
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Bungee&amp;display=block');
-  </style>
-  <rect width="${totalWidth}" height="${height}" rx="4" fill="${colors.bg}"/>
-  ${border}
-  <g font-family="Bungee, Impact, sans-serif" font-size="${fontSize}" text-anchor="middle">
-    <text x="${labelX}" y="${textY}" fill="${colors.text}">${escapeXml(labelText)}</text>
-    <text x="${countX}" y="${textY}" fill="${colors.accent}">${escapeXml(countText)}</text>
+  <linearGradient id="g" x2="0" y2="100%">
+    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+    <stop offset="1" stop-opacity=".1"/>
+  </linearGradient>
+  <clipPath id="c">
+    <rect width="${totalWidth}" height="${height}" rx="3" fill="#fff"/>
+  </clipPath>
+  <g clip-path="url(#c)">
+    <rect width="${leftWidth}" height="${height}" fill="${leftBg}"/>
+    <rect x="${leftWidth}" width="${rightWidth}" height="${height}" fill="${rightBg}"/>
+    <rect width="${totalWidth}" height="${height}" fill="url(#g)"/>
+  </g>
+  <g transform="translate(3, 1)">
+    <path d="${N_LOGO_PATH}" fill="#fbbf24"/>
+  </g>
+  <g fill="${leftText}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="${fontSize}">
+    <text x="${labelX}" y="${shadowY}" fill="#010101" fill-opacity=".3">${escapeXml(labelText)}</text>
+    <text x="${labelX}" y="${textY}">${escapeXml(labelText)}</text>
+  </g>
+  <g fill="${rightText}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="${fontSize}" font-weight="bold">
+    <text x="${countX}" y="${textY}">${escapeXml(countText)}</text>
   </g>
 </svg>`;
 }
