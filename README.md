@@ -1,5 +1,7 @@
 # Nice 👍
 
+[![Nice](https://api.nice.sbs/badge/n_iSoPXADYGp0Q.svg)](https://nice.sbs/button?id=n_iSoPXADYGp0Q)
+
 > The anonymous nice button — no sign-in required
 
 **[nice.sbs](https://nice.sbs)** — *Simple Button Service*
