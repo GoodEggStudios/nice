@@ -1,5 +1,2 @@
 # Pretty URL for stats page (legacy - now using /stats?id=xxx)
 /stats/*  /stats.html?id=:splat  200
-
-# Button page: /b/:publicId -> button.html (reads ID from path)
-/b/*  /button.html  200

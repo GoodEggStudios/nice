@@ -200,9 +200,8 @@
     <script>
         const API_BASE = 'https://api.nice.sbs';
         
-        // Get button ID from URL path: /b/:publicId
-        const pathMatch = window.location.pathname.match(/^\/b\/([^\/]+)/);
-        const buttonId = pathMatch ? pathMatch[1] : new URLSearchParams(window.location.search).get('id');
+        // Get button ID from query param: /button?id=xxx
+        const buttonId = new URLSearchParams(window.location.search).get('id');
         
         const content = document.getElementById('content');
 
@@ -226,7 +225,7 @@
 
                 // Build the page
                 const badgeUrl = `${API_BASE}/badge/${id}.svg`;
-                const buttonPageUrl = `https://nice.sbs/b/${id}`;
+                const buttonPageUrl = `https://nice.sbs/button?id=${id}`;
                 const badgeMarkdown = `[![Nice](${badgeUrl})](${buttonPageUrl})`;
 
                 content.innerHTML = `

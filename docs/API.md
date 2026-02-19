@@ -326,7 +326,7 @@ https://api.nice.sbs/badge/:public_id.svg
 
 **Clickable badge (links to button page):**
 ```markdown
-[![Nice](https://api.nice.sbs/badge/n_abc123.svg)](https://nice.sbs/b/n_abc123)
+[![Nice](https://api.nice.sbs/badge/n_abc123.svg)](https://nice.sbs/button?id=n_abc123)
 ```
 
 **Custom style:**
