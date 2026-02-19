@@ -189,6 +189,17 @@ localStorage.getItem('nice:' + buttonId)
 
 This is bypassable (incognito mode, clearing storage). Server-side deduplication via IP hash is the authoritative protection.
 
+### URL/Domain Restrictions
+
+v2 buttons support `url`, `domain`, and `global` restriction modes to limit where a button can be "niced" from. These rely on the `Referer` header sent from the embed iframe.
+
+**Limitations:**
+- Restrictions apply to embed context only — direct API calls can forge the referrer
+- Parent pages with `Referrer-Policy: no-referrer` will fail restriction checks
+- This is a best-effort feature, not a security boundary
+
+**Mitigation**: If strict restriction enforcement is critical, use the private ID endpoint (`POST /api/v2/buttons/:private_id/nice`) which bypasses referrer checks but requires knowledge of the secret private ID.
+
 ## Security Headers
 
 All responses include appropriate headers:

@@ -8,7 +8,7 @@
 import type { Env } from "../types";
 
 // Embed script (minified inline)
-const EMBED_SCRIPT = `(function(){'use strict';const EMBED_BASE='https://nice.sbs';const SIZES={xs:{w:70,h:28},sm:{w:85,h:32},md:{w:100,h:36},lg:{w:120,h:44},xl:{w:140,h:52}};function init(){document.querySelectorAll('script[data-button]').forEach(createEmbed)}function createEmbed(script){const buttonId=script.getAttribute('data-button');if(!buttonId)return;const theme=script.getAttribute('data-theme')||'light';const size=script.getAttribute('data-size')||'md';const dims=SIZES[size]||SIZES.md;const container=document.createElement('div');container.className='nice-embed';container.style.cssText='display:inline-block;vertical-align:middle;';const iframe=document.createElement('iframe');iframe.src=EMBED_BASE+'/embed/'+buttonId+'?theme='+encodeURIComponent(theme)+'&size='+encodeURIComponent(size);iframe.style.cssText='border:none;overflow:hidden;width:'+dims.w+'px;height:'+dims.h+'px;';iframe.setAttribute('scrolling','no');iframe.setAttribute('frameborder','0');iframe.setAttribute('allowtransparency','true');iframe.setAttribute('sandbox','allow-scripts allow-same-origin allow-popups');iframe.setAttribute('title','Nice button');container.appendChild(iframe);script.parentNode.insertBefore(container,script.nextSibling);window.addEventListener('message',function(event){if(event.origin!==EMBED_BASE)return;try{const data=event.data;if(data.type==='nice-resize'&&data.buttonId===buttonId){iframe.style.width=data.width+'px';iframe.style.height=data.height+'px'}}catch(e){}})}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}})();`;
+const EMBED_SCRIPT = `(function(){'use strict';const EMBED_BASE='https://nice.sbs';const SIZES={xs:{w:70,h:28},sm:{w:85,h:32},md:{w:100,h:36},lg:{w:120,h:44},xl:{w:140,h:52}};function init(){document.querySelectorAll('script[data-button]').forEach(createEmbed)}function createEmbed(script){const buttonId=script.getAttribute('data-button');if(!buttonId)return;const theme=script.getAttribute('data-theme')||'light';const size=script.getAttribute('data-size')||'md';const dims=SIZES[size]||SIZES.md;const container=document.createElement('div');container.className='nice-embed';container.style.cssText='display:inline-block;vertical-align:middle;';const iframe=document.createElement('iframe');iframe.src=EMBED_BASE+'/embed/'+buttonId+'?theme='+encodeURIComponent(theme)+'&size='+encodeURIComponent(size);iframe.style.cssText='border:none;overflow:hidden;width:'+dims.w+'px;height:'+dims.h+'px;';iframe.setAttribute('scrolling','no');iframe.setAttribute('frameborder','0');iframe.setAttribute('allowtransparency','true');iframe.setAttribute('sandbox','allow-scripts allow-same-origin');iframe.setAttribute('title','Nice button');container.appendChild(iframe);script.parentNode.insertBefore(container,script.nextSibling);window.addEventListener('message',function(event){if(event.origin!==EMBED_BASE)return;try{const data=event.data;if(data.type==='nice-resize'&&data.buttonId===buttonId){iframe.style.width=data.width+'px';iframe.style.height=data.height+'px'}}catch(e){}})}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}})();`;
 
 // Embed HTML template - Bungee font design with size variants
 const EMBED_HTML = `<!DOCTYPE html>
@@ -290,6 +290,8 @@ export async function serveEmbedPage(
         "Cache-Control": "public, max-age=3600",
         "X-Frame-Options": "ALLOWALL",
         "Content-Security-Policy": "frame-ancestors *",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
       },
     });
   }
@@ -322,6 +324,8 @@ export async function serveEmbedPage(
       "Cache-Control": "no-cache", // Don't cache - count should be fresh
       "X-Frame-Options": "ALLOWALL", // Allow embedding
       "Content-Security-Policy": "frame-ancestors *",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
     },
   });
 }
