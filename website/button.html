@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nice Button</title>
+    <meta name="description" content="Click nice on this button!">
+    
+    <!-- Open Graph (will be updated by JS if button has URL) -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://nice.sbs/">
+    <meta property="og:title" content="Nice Button">
+    <meta property="og:description" content="Click nice on this button!">
+    <meta property="og:image" content="https://nice.sbs/og-image.png">
+    
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bungee&display=block" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            background-color: #000;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .logo {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            font-family: 'Bungee', cursive;
+            font-size: 24px;
+            color: #fbbf24;
+            text-decoration: none;
+        }
+
+        .logo:hover {
+            color: #f59e0b;
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .button-frame {
+            transform: scale(2);
+            transform-origin: center;
+        }
+
+        .count {
+            font-family: 'Bungee', cursive;
+            font-size: 48px;
+            color: #fbbf24;
+            margin-top: 24px;
+        }
+
+        .count-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: -8px;
+        }
+
+        .source-url {
+            margin-top: 32px;
+            max-width: 500px;
+        }
+
+        .source-url a {
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: 14px;
+            word-break: break-all;
+        }
+
+        .source-url a:hover {
+            color: #fbbf24;
+        }
+
+        .loading {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .error {
+            color: #ef4444;
+            font-size: 16px;
+        }
+
+        .badge-section {
+            margin-top: 48px;
+            padding-top: 32px;
+            border-top: 1px solid #333;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .badge-section h3 {
+            font-family: 'Bungee', cursive;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 16px;
+        }
+
+        .badge-preview {
+            margin-bottom: 16px;
+        }
+
+        .badge-code {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #9ca3af;
+            word-break: break-all;
+            text-align: left;
+            cursor: pointer;
+            transition: border-color 0.15s;
+        }
+
+        .badge-code:hover {
+            border-color: #fbbf24;
+        }
+
+        .badge-code.copied {
+            border-color: #22c55e;
+        }
+
+        .copy-hint {
+            font-size: 11px;
+            color: #555;
+            margin-top: 8px;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 16px;
+            font-size: 12px;
+            color: #555;
+        }
+
+        .footer a {
+            color: #888;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            color: #fbbf24;
+        }
+
+        @media (max-width: 600px) {
+            .logo {
+                font-size: 20px;
+                top: 16px;
+                left: 16px;
+            }
+            .button-frame {
+                transform: scale(1.5);
+            }
+            .count {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="logo">NICE</a>
+
+    <div class="button-container">
+        <div id="content">
+            <p class="loading">Loading...</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <a href="/create">Create your own</a> · <a href="/docs">API Docs</a>
+    </div>
+
+    <script>
+        const API_BASE = 'https://api.nice.sbs';
+        
+        // Get button ID from URL path: /b/:publicId
+        const pathMatch = window.location.pathname.match(/^\/b\/([^\/]+)/);
+        const buttonId = pathMatch ? pathMatch[1] : new URLSearchParams(window.location.search).get('id');
+        
+        const content = document.getElementById('content');
+
+        if (!buttonId) {
+            content.innerHTML = '<p class="error">No button ID provided</p>';
+        } else {
+            loadButton(buttonId);
+        }
+
+        async function loadButton(id) {
+            try {
+                // Fetch count to verify button exists
+                const res = await fetch(`${API_BASE}/api/v1/nice/${id}/count`);
+                
+                if (!res.ok) {
+                    throw new Error('Button not found');
+                }
+
+                const data = await res.json();
+                const count = data.count || 0;
+
+                // Build the page
+                const badgeUrl = `${API_BASE}/badge/${id}.svg`;
+                const buttonPageUrl = `https://nice.sbs/b/${id}`;
+                const badgeMarkdown = `[![Nice](${badgeUrl})](${buttonPageUrl})`;
+
+                content.innerHTML = `
+                    <div class="button-frame">
+                        <iframe 
+                            src="${API_BASE}/e/${id}?theme=dark&size=lg"
+                            style="border:none; width:120px; height:44px;"
+                            scrolling="no"
+                            frameborder="0"
+                            title="Nice this">
+                        </iframe>
+                    </div>
+                    <div class="count">${formatCount(count)}</div>
+                    <p class="count-label">nice${count === 1 ? '' : 's'}</p>
+                    
+                    <div class="badge-section">
+                        <h3>GitHub Badge</h3>
+                        <div class="badge-preview">
+                            <img src="${badgeUrl}" alt="Nice badge">
+                        </div>
+                        <div class="badge-code" onclick="copyBadge(this)" title="Click to copy">
+                            ${escapeHtml(badgeMarkdown)}
+                        </div>
+                        <p class="copy-hint">Click to copy markdown</p>
+                    </div>
+                `;
+
+                // Update page title
+                document.title = `Nice (${formatCount(count)})`;
+
+            } catch (err) {
+                content.innerHTML = `<p class="error">Button not found</p>`;
+            }
+        }
+
+        function formatCount(n) {
+            if (n < 1000) return n.toString();
+            if (n < 1000000) {
+                const k = n / 1000;
+                return k >= 10 ? Math.floor(k) + 'k' : k.toFixed(1).replace(/\.0$/, '') + 'k';
+            }
+            const m = n / 1000000;
+            return m >= 10 ? Math.floor(m) + 'M' : m.toFixed(1).replace(/\.0$/, '') + 'M';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function copyBadge(el) {
+            const text = el.textContent.trim();
+            navigator.clipboard.writeText(text).then(() => {
+                el.classList.add('copied');
+                setTimeout(() => el.classList.remove('copied'), 1500);
+            });
+        }
+    </script>
+</body>
+</html>
