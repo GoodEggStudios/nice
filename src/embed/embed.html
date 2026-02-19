@@ -253,6 +253,10 @@
       let count = 0;
       let hasNiced = false;
       let isLoading = false;
+      
+      // Get parent origin for secure postMessage (avoid wildcard)
+      let parentOrigin = '*';
+      try { if (document.referrer) { parentOrigin = new URL(document.referrer).origin; } } catch(e) {}
 
       // Set theme and size
       const sizeClass = SIZE && SIZE !== 'md' ? 'size-' + SIZE : '';
@@ -300,7 +304,7 @@
           buttonId: BUTTON_ID,
           width: Math.ceil(rect.width) + 8,
           height: Math.ceil(rect.height) + 8
-        }, '*');
+        }, parentOrigin);
       }
 
       // Generate lightweight fingerprint
