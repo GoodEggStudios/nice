@@ -301,7 +301,7 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 
 ## Badges (GitHub/Markdown)
 
-SVG badges for displaying Nice counts in GitHub READMEs and other markdown contexts that don't support iframes.
+SVG badges for displaying Nice counts in GitHub READMEs and other markdown contexts that don't support iframes. Uses the Bungee font to match Nice branding.
 
 ### Badge URL
 
@@ -313,13 +313,19 @@ https://api.nice.sbs/badge/:public_id.svg
 
 | Param | Default | Description |
 |-------|---------|-------------|
-| `style` | `flat` | Badge style: `flat`, `flat-square`, `plastic`, `for-the-badge` |
-| `color` | `fbbf24` | Right side color (hex without #) |
-| `label` | `nice` | Left side label text |
+| `theme` | `gold` | Badge theme: `gold`, `light`, `dark` |
+
+### Themes
+
+| Theme | Description |
+|-------|-------------|
+| `gold` | Yellow background, black text (default) |
+| `light` | White background, black text |
+| `dark` | Black background, yellow text |
 
 ### Examples
 
-**Basic badge:**
+**Basic badge (gold):**
 ```markdown
 ![Nice](https://api.nice.sbs/badge/n_abc123.svg)
 ```
@@ -329,24 +335,15 @@ https://api.nice.sbs/badge/:public_id.svg
 [![Nice](https://api.nice.sbs/badge/n_abc123.svg)](https://nice.sbs/button?id=n_abc123)
 ```
 
-**Custom style:**
+**Dark theme:**
 ```markdown
-![Nice](https://api.nice.sbs/badge/n_abc123.svg?style=for-the-badge)
+![Nice](https://api.nice.sbs/badge/n_abc123.svg?theme=dark)
 ```
 
-**Custom color:**
+**Light theme:**
 ```markdown
-![Nice](https://api.nice.sbs/badge/n_abc123.svg?color=22c55e)
+![Nice](https://api.nice.sbs/badge/n_abc123.svg?theme=light)
 ```
-
-### Badge Styles
-
-| Style | Description |
-|-------|-------------|
-| `flat` | Flat colors, slight border radius (default) |
-| `flat-square` | Flat colors, square corners |
-| `plastic` | Subtle gradient for 3D effect |
-| `for-the-badge` | Larger (28px), uppercase label |
 
 ### Caching
 

@@ -1,4 +1,4 @@
-import { generateBadge, normalizeStyle, normalizeColor } from '../lib/badge';
+import { generateBadge, normalizeTheme } from '../lib/badge';
 import type { Env, ButtonV2 } from '../types';
 
 /**
@@ -11,9 +11,7 @@ export async function serveBadge(
   publicId: string
 ): Promise<Response> {
   const url = new URL(request.url);
-  const style = normalizeStyle(url.searchParams.get('style') ?? undefined);
-  const color = normalizeColor(url.searchParams.get('color') ?? undefined);
-  const label = url.searchParams.get('label') || 'nice';
+  const theme = normalizeTheme(url.searchParams.get('theme') ?? undefined);
 
   // Look up button by publicId in KV
   let count: number | null = null;
@@ -29,7 +27,7 @@ export async function serveBadge(
     // On error, show "?" - don't break the badge
   }
 
-  const svg = generateBadge(count, { style, color, label });
+  const svg = generateBadge(count, { theme });
 
   return new Response(svg, {
     status: 200,

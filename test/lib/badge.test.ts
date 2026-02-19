@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatCount, normalizeColor, normalizeStyle, generateBadge } from '../../src/lib/badge';
+import { formatCount, normalizeTheme, generateBadge } from '../../src/lib/badge';
 
 describe('formatCount', () => {
   it('returns numbers under 1000 as-is', () => {
@@ -25,49 +25,21 @@ describe('formatCount', () => {
   });
 });
 
-describe('normalizeColor', () => {
-  it('returns default for undefined', () => {
-    expect(normalizeColor(undefined)).toBe('fbbf24');
+describe('normalizeTheme', () => {
+  it('returns gold for undefined', () => {
+    expect(normalizeTheme(undefined)).toBe('gold');
   });
 
-  it('accepts valid 6-char hex', () => {
-    expect(normalizeColor('22c55e')).toBe('22c55e');
-    expect(normalizeColor('AABBCC')).toBe('aabbcc');
+  it('accepts valid themes', () => {
+    expect(normalizeTheme('gold')).toBe('gold');
+    expect(normalizeTheme('light')).toBe('light');
+    expect(normalizeTheme('dark')).toBe('dark');
   });
 
-  it('expands 3-char hex to 6-char', () => {
-    expect(normalizeColor('abc')).toBe('aabbcc');
-    expect(normalizeColor('FFF')).toBe('ffffff');
-  });
-
-  it('strips leading #', () => {
-    expect(normalizeColor('#22c55e')).toBe('22c55e');
-    expect(normalizeColor('#abc')).toBe('aabbcc');
-  });
-
-  it('returns default for invalid colors', () => {
-    expect(normalizeColor('invalid')).toBe('fbbf24');
-    expect(normalizeColor('gggggg')).toBe('fbbf24');
-    expect(normalizeColor('12345')).toBe('fbbf24');
-    expect(normalizeColor('')).toBe('fbbf24');
-  });
-});
-
-describe('normalizeStyle', () => {
-  it('returns default for undefined', () => {
-    expect(normalizeStyle(undefined)).toBe('flat');
-  });
-
-  it('accepts valid styles', () => {
-    expect(normalizeStyle('flat')).toBe('flat');
-    expect(normalizeStyle('flat-square')).toBe('flat-square');
-    expect(normalizeStyle('plastic')).toBe('plastic');
-    expect(normalizeStyle('for-the-badge')).toBe('for-the-badge');
-  });
-
-  it('returns default for invalid styles', () => {
-    expect(normalizeStyle('invalid')).toBe('flat');
-    expect(normalizeStyle('')).toBe('flat');
+  it('returns gold for invalid themes', () => {
+    expect(normalizeTheme('invalid')).toBe('gold');
+    expect(normalizeTheme('')).toBe('gold');
+    expect(normalizeTheme('flat')).toBe('gold');
   });
 });
 
@@ -76,7 +48,7 @@ describe('generateBadge', () => {
     const svg = generateBadge(42);
     expect(svg).toContain('<svg');
     expect(svg).toContain('</svg>');
-    expect(svg).toContain('nice');
+    expect(svg).toContain('NICE');
     expect(svg).toContain('42');
   });
 
@@ -90,24 +62,38 @@ describe('generateBadge', () => {
     expect(svg).toContain('1.2k');
   });
 
-  it('uses custom color', () => {
-    const svg = generateBadge(42, { color: '22c55e' });
-    expect(svg).toContain('#22c55e');
+  it('uses Bungee font', () => {
+    const svg = generateBadge(42);
+    expect(svg).toContain('Bungee');
   });
 
-  it('uses custom label', () => {
-    const svg = generateBadge(42, { label: 'likes' });
-    expect(svg).toContain('likes');
-  });
+  describe('themes', () => {
+    it('gold theme has yellow background and black text', () => {
+      const svg = generateBadge(42, { theme: 'gold' });
+      expect(svg).toContain('fill="#fbbf24"'); // yellow bg
+      expect(svg).toContain('fill="#000000"'); // black text
+    });
 
-  it('uppercases for-the-badge style', () => {
-    const svg = generateBadge(42, { style: 'for-the-badge' });
-    expect(svg).toContain('NICE');
-    expect(svg).toContain('42');
-  });
+    it('light theme has white background and black text', () => {
+      const svg = generateBadge(42, { theme: 'light' });
+      expect(svg).toContain('fill="#ffffff"'); // white bg
+      expect(svg).toContain('fill="#000000"'); // black text
+    });
 
-  it('has no border radius for flat-square', () => {
-    const svg = generateBadge(42, { style: 'flat-square' });
-    expect(svg).toContain('rx="0"');
+    it('dark theme has black background and yellow text', () => {
+      const svg = generateBadge(42, { theme: 'dark' });
+      expect(svg).toContain('fill="#000000"'); // black bg
+      expect(svg).toContain('fill="#fbbf24"'); // yellow text
+    });
+
+    it('light theme has border', () => {
+      const svg = generateBadge(42, { theme: 'light' });
+      expect(svg).toContain('stroke="#e5e7eb"');
+    });
+
+    it('gold theme has no border', () => {
+      const svg = generateBadge(42, { theme: 'gold' });
+      expect(svg).not.toContain('stroke=');
+    });
   });
 });
