@@ -33,7 +33,7 @@ wrangler kv namespace create NICE_KV --preview
 Copy the example config and fill in your IDs:
 
 ```bash
-cp wrangler.toml.example wrangler.toml
+# Edit wrangler.toml with your KV namespace IDs
 ```
 
 Edit `wrangler.toml` with the namespace IDs from above.
