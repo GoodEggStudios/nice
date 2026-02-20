@@ -1,0 +1,19 @@
+# Nice - Simple Button Service
+#
+# Copy this to wrangler.toml and fill in your KV namespace IDs:
+#   cp wrangler.toml.example wrangler.toml
+#   wrangler kv namespace create NICE_KV
+#   wrangler kv namespace create NICE_KV --preview
+
+name = "nice"
+main = "src/index.ts"
+compatibility_date = "2025-02-01"
+
+[[kv_namespaces]]
+binding = "NICE_KV"
+id = "your-kv-namespace-id"
+preview_id = "your-preview-kv-namespace-id"
+
+[dev]
+port = 8787
+local_protocol = "http"

@@ -30,14 +30,13 @@ wrangler kv namespace create NICE_KV
 wrangler kv namespace create NICE_KV --preview
 ```
 
-Copy the IDs into `wrangler.toml`:
+Copy the example config and fill in your IDs:
 
-```toml
-[[kv_namespaces]]
-binding = "NICE_KV"
-id = "your-production-id"
-preview_id = "your-preview-id"
+```bash
+cp wrangler.toml.example wrangler.toml
 ```
+
+Edit `wrangler.toml` with the namespace IDs from above.
 
 ### 4. Deploy
 

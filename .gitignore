@@ -10,6 +10,10 @@ dist/
 .env.local
 .dev.vars
 
+# Wrangler config (contains KV namespace IDs)
+# Copy wrangler.toml.example to wrangler.toml for your own setup
+wrangler.toml
+
 # IDE
 .idea/
 .vscode/

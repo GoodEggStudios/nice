@@ -1,6 +1,6 @@
 {
   "name": "nice",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Nice - The Anonymous Nice Button Service",
   "type": "module",
   "scripts": {
@@ -18,5 +18,11 @@
     "typescript": "^5.7.3",
     "vitest": "^3.0.4",
     "wrangler": "^4.0.0"
-  }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GoodEggStudios/nice.git"
+  },
+  "homepage": "https://nice.sbs"
 }
