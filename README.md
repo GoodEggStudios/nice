@@ -1,8 +1,14 @@
-# Nice 👍
+<p align="center">
+  <img src="website/nice-logo.svg" alt="NICE" width="300">
+</p>
 
-[![Nice](https://api.nice.sbs/badge/n_iSoPXADYGp0Q.svg)](https://nice.sbs/button?id=n_iSoPXADYGp0Q)
+<p align="center">
+  <a href="https://nice.sbs/button?id=n_iSoPXADYGp0Q"><img src="https://api.nice.sbs/badge/n_iSoPXADYGp0Q.svg" alt="Nice"></a>
+</p>
 
-> The anonymous nice button — no sign-in required
+<p align="center">
+  <em>The anonymous nice button — no sign-in required</em>
+</p>
 
 **[nice.sbs](https://nice.sbs)** — *Simple Button Service*
 
