@@ -8,6 +8,8 @@
     "predeploy": "npm run typecheck && npm test -- --run",
     "deploy": "wrangler deploy",
     "test": "vitest",
+    "test:unit": "vitest --run test/lib",
+    "test:e2e": "vitest --run test/e2e",
     "test:coverage": "vitest --coverage",
     "typecheck": "tsc --noEmit"
   },

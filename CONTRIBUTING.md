@@ -30,6 +30,8 @@ This starts a local Wrangler dev server at `http://localhost:8787`.
 ```bash
 npm test              # Watch mode
 npm test -- --run     # Single run
+npm run test:unit     # Unit tests only
+npm run test:e2e      # E2E tests only
 npm run test:coverage # With coverage report
 npm run typecheck     # TypeScript check
 ```
