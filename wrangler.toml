@@ -3,24 +3,27 @@ name = "nice"
 main = "src/index.ts"
 compatibility_date = "2025-02-01"
 
-# Production KV namespace
+# Top-level KV binding (used by `wrangler dev` for local development)
 [[kv_namespaces]]
 binding = "NICE_KV"
-id = "a56ec277eb20435190aca39bbcaff401"
+id = "aae1e02bdb4341b4b15db9c277d7bb84"
 preview_id = "aae1e02bdb4341b4b15db9c277d7bb84"
 
-# Development settings
+# Local development settings
 [dev]
 port = 8787
 local_protocol = "http"
 
-# Environment-specific overrides
+# Preview environment (PRs, staging)
+# Deploy: wrangler deploy --env preview
 [env.preview]
 name = "nice-preview"
 [[env.preview.kv_namespaces]]
 binding = "NICE_KV"
 id = "aae1e02bdb4341b4b15db9c277d7bb84"
 
+# Production environment (releases only)
+# Deploy: wrangler deploy --env production
 [env.production]
 name = "nice"
 [[env.production.kv_namespaces]]
