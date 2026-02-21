@@ -8,7 +8,7 @@
  * POST /api/v1/buttons/:private_id/nice - Record nice (owner)
  */
 
-import type { Env, ButtonV2, RestrictionMode } from "../types";
+import type { Env, Button, RestrictionMode } from "../types";
 import {
   generatePublicId,
   generatePrivateId,
@@ -61,7 +61,7 @@ function generateEmbedSnippets(
 /**
  * POST /api/v1/buttons - Create a new button
  */
-export async function createButtonV2(
+export async function createButton(
   request: Request,
   env: Env
 ): Promise<Response> {
@@ -139,7 +139,7 @@ export async function createButtonV2(
   const creatorIpHash = await sha256(getClientIp(request));
 
   // Create button data
-  const button: ButtonV2 = {
+  const button: Button = {
     id: publicId,
     secretHash,
     url: body.url,
@@ -182,7 +182,7 @@ export async function createButtonV2(
 /**
  * GET /api/v1/buttons/stats/:private_id - Get button stats
  */
-export async function getButtonStatsV2(
+export async function getButtonStats(
   request: Request,
   privateId: string,
   env: Env
@@ -215,7 +215,7 @@ export async function getButtonStatsV2(
     );
   }
 
-  const button: ButtonV2 = JSON.parse(buttonData);
+  const button: Button = JSON.parse(buttonData);
 
   // Generate embed snippet for convenience
   const url = new URL(request.url);
@@ -242,7 +242,7 @@ export async function getButtonStatsV2(
 /**
  * PATCH /api/v1/buttons/:private_id - Update button settings
  */
-export async function updateButtonV2(
+export async function updateButton(
   request: Request,
   privateId: string,
   env: Env
@@ -291,7 +291,7 @@ export async function updateButtonV2(
     );
   }
 
-  const button: ButtonV2 = JSON.parse(buttonData);
+  const button: Button = JSON.parse(buttonData);
 
   // Update allowed fields
   if (body.restriction !== undefined) {
@@ -352,7 +352,7 @@ export async function updateButtonV2(
 /**
  * DELETE /api/v1/buttons/:private_id - Delete a button
  */
-export async function deleteButtonV2(
+export async function deleteButton(
   request: Request,
   privateId: string,
   env: Env
@@ -394,7 +394,7 @@ export async function deleteButtonV2(
  * This endpoint allows the button owner to record nices via API.
  * No referrer check, no IP deduplication - full control for the owner.
  */
-export async function recordNiceV2(
+export async function recordNiceOwner(
   request: Request,
   privateId: string,
   env: Env
@@ -427,7 +427,7 @@ export async function recordNiceV2(
     );
   }
 
-  const button: ButtonV2 = JSON.parse(buttonData);
+  const button: Button = JSON.parse(buttonData);
 
   // Increment the canonical count key (single source of truth)
   const countKey = `count:${publicId}`;

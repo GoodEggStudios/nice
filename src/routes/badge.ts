@@ -1,5 +1,5 @@
 import { generateBadge, normalizeTheme } from '../lib/badge';
-import type { Env, ButtonV2 } from '../types';
+import type { Env, Button } from '../types';
 
 /**
  * GET /badge/:publicId.svg
@@ -20,7 +20,7 @@ export async function serveBadge(
     const buttonData = await env.NICE_KV.get(`btn:${publicId}`);
     
     if (buttonData) {
-      const button: ButtonV2 = JSON.parse(buttonData);
+      const button: Button = JSON.parse(buttonData);
       count = button.count;
     }
   } catch {

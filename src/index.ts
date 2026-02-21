@@ -5,7 +5,7 @@
  */
 
 import type { Env } from "./types";
-import { createButtonV2, getButtonStatsV2, updateButtonV2, deleteButtonV2, recordNiceV2 } from "./routes/buttons";
+import { createButton, getButtonStats, updateButton, deleteButton, recordNiceOwner } from "./routes/buttons";
 import { recordNice, getNiceCount } from "./routes/nice";
 import { serveEmbedScript, serveEmbedPage } from "./routes/embed";
 import { serveBadge } from "./routes/badge";
@@ -88,27 +88,27 @@ export default {
     try {
       // POST /api/v1/buttons - Create button
       if (method === "POST" && path === "/api/v1/buttons") {
-        response = await createButtonV2(request, env);
+        response = await createButton(request, env);
       }
       // GET /api/v1/buttons/stats/:private_id - Get button stats
       else if (method === "GET" && path.match(/^\/api\/v1\/buttons\/stats\/[^/]+$/)) {
         const privateId = path.split("/")[5];
-        response = await getButtonStatsV2(request, privateId, env);
+        response = await getButtonStats(request, privateId, env);
       }
       // DELETE /api/v1/buttons/:private_id - Delete button
       else if (method === "DELETE" && path.match(/^\/api\/v1\/buttons\/[^/]+$/)) {
         const privateId = path.split("/")[4];
-        response = await deleteButtonV2(request, privateId, env);
+        response = await deleteButton(request, privateId, env);
       }
       // PATCH /api/v1/buttons/:private_id - Update button settings
       else if (method === "PATCH" && path.match(/^\/api\/v1\/buttons\/[^/]+$/)) {
         const privateId = path.split("/")[4];
-        response = await updateButtonV2(request, privateId, env);
+        response = await updateButton(request, privateId, env);
       }
       // POST /api/v1/buttons/:private_id/nice - Record nice (authenticated)
       else if (method === "POST" && path.match(/^\/api\/v1\/buttons\/[^/]+\/nice$/)) {
         const privateId = path.split("/")[4];
-        response = await recordNiceV2(request, privateId, env);
+        response = await recordNiceOwner(request, privateId, env);
       }
       // POST /api/v1/nice/:button_id - Record a nice (public)
       else if (method === "POST" && path.match(/^\/api\/v1\/nice\/[^/]+$/)) {

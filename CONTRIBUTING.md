@@ -54,7 +54,9 @@ src/
 
 website/              # Static site (nice.sbs)
 bruno/                # API collection (Bruno)
-test/                 # Test files
+test/
+├── lib/              # Unit tests for src/lib utilities
+└── e2e/              # End-to-end API route tests
 docs/                 # Documentation
 openspec/             # Technical specifications
 ```

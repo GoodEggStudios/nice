@@ -6,7 +6,7 @@
  * - GET /api/v1/nice/:button_id/count - Get nice count
  */
 
-import type { Env, ButtonV2, RestrictionMode } from "../types";
+import type { Env, Button, RestrictionMode } from "../types";
 import {
   computeVisitorHash,
   getDailySalt,
@@ -120,7 +120,7 @@ export async function recordNice(
     if (!buttonData) {
       return jsonError("Button not found", "BUTTON_NOT_FOUND", 404);
     }
-    const button: ButtonV2 = JSON.parse(buttonData);
+    const button: Button = JSON.parse(buttonData);
     const buttonUrl = button.url;
     const restriction = button.restriction;
 
