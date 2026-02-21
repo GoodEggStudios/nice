@@ -40,13 +40,27 @@ Edit `wrangler.toml` with the namespace IDs from above.
 
 ### 4. Deploy
 
-```bash
-# Deploy to production
-wrangler deploy
+Cloudflare handles PR previews and main branch deploys automatically via its Git integration.
 
-# Or deploy to preview
+Production releases are triggered manually via **Actions → Release → Run workflow**. Choose `minor` or `major`. This will:
+1. Run tests
+2. Bump version in `package.json` and `src/index.ts`
+3. Deploy to Cloudflare production
+4. Create a GitHub Release with changelog
+
+#### Manual deploy (if needed)
+
+```bash
+# Deploy to preview
 wrangler deploy --env preview
+
+# Deploy to production
+wrangler deploy --env production
 ```
+
+### 5. GitHub Secrets
+
+Add `CLOUDFLARE_API_TOKEN` to the repo's Actions secrets (Settings → Secrets → Actions).
 
 ## Custom Domain
 
@@ -134,6 +148,7 @@ The API includes CORS headers for all origins. If you see CORS errors:
 
 - [ ] KV namespaces created (prod + preview)
 - [ ] wrangler.toml configured with correct IDs
+- [ ] `CLOUDFLARE_API_TOKEN` added to GitHub repo secrets
 - [ ] Custom domain added and verified
 - [ ] Test button creation flow
 - [ ] Test embed on a real page
