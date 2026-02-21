@@ -141,8 +141,6 @@ npm run deploy   # Deploy to Cloudflare
 - 🔧 **Create**: [nice.sbs/create](https://nice.sbs/create)
 - 📖 **Docs**: [nice.sbs/docs](https://nice.sbs/docs)
 - 🔒 **Security**: [SECURITY.md](docs/SECURITY.md)
-- 📋 **Spec**: [openspec/specs/NICE.md](openspec/specs/NICE.md)
-
 ## License
 
-MIT
+Apache 2.0

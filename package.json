@@ -19,7 +19,7 @@
     "vitest": "^3.0.4",
     "wrangler": "^4.0.0"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/GoodEggStudios/nice.git"
