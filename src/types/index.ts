@@ -11,7 +11,7 @@ export type RestrictionMode = "url" | "domain" | "global";
 /**
  * Button data stored in KV
  */
-export interface ButtonV2 {
+export interface Button {
   id: string; // Public ID: n_xxx
   secretHash: string; // SHA256 of private ID
   url: string; // Content URL

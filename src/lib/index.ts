@@ -2,7 +2,7 @@
  * Core utility exports
  */
 
-export { sha256, computeVisitorHash, hashToken } from "./hash";
+export { sha256, computeVisitorHash } from "./hash";
 export { getDailySalt, getCurrentDateUTC, getDeterministicSalt } from "./salt";
 export { formatCount, formatCountLocale } from "./format";
 export {
