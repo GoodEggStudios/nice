@@ -18,7 +18,7 @@
 
 ## What is Nice?
 
-**[nice.sbs](https://nice.sbs)** is an embeddable "nice" button for any website. No accounts, no sign-ups, no cookies — visitors just click to say "nice" and move on.
+**[nice.sbs](https://nice.sbs)** is an embeddable "nice" button for any website. No accounts, no sign-ups, no cookies — visitors just click to say "nice".
 
 It's not liking. It's **nice'ing**.
 
