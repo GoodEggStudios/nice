@@ -40,12 +40,9 @@ Edit `wrangler.toml` with the namespace IDs from above.
 
 ### 4. Deploy
 
-Deployments are handled via GitHub Actions:
+Cloudflare handles PR previews and main branch deploys automatically via its Git integration.
 
-- **PRs and main**: Tests run automatically, preview deployed to `nice-preview`
-- **Production release**: Trigger manually via GitHub Actions → Release workflow
-
-To release, go to **Actions → Release → Run workflow** and choose `minor` or `major`. This will:
+Production releases are triggered manually via **Actions → Release → Run workflow**. Choose `minor` or `major`. This will:
 1. Run tests
 2. Bump version in `package.json` and `src/index.ts`
 3. Deploy to Cloudflare production
