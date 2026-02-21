@@ -18,6 +18,14 @@ describe("Worker", () => {
       expect(data.service).toBe("nice");
     });
 
+    it("should include version and service name", async () => {
+      const res = await SELF.fetch("https://api.nice.sbs/");
+      const data = await res.json() as { version: string; service: string };
+
+      expect(data.version).toBeTruthy();
+      expect(data.service).toBe("nice");
+    });
+
     it("GET /health should return ok", async () => {
       const res = await SELF.fetch("https://api.nice.sbs/health");
 
@@ -37,6 +45,14 @@ describe("Worker", () => {
       expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
       expect(res.headers.get("Access-Control-Allow-Methods")).toContain("POST");
       expect(res.headers.get("Access-Control-Allow-Methods")).toContain("DELETE");
+    });
+
+    it("should include max-age on preflight", async () => {
+      const res = await SELF.fetch("https://api.nice.sbs/api/v1/buttons", {
+        method: "OPTIONS",
+      });
+
+      expect(res.headers.get("Access-Control-Max-Age")).toBe("86400");
     });
 
     it("should add CORS headers to all responses", async () => {

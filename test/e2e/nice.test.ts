@@ -172,6 +172,46 @@ describe("Nice API", () => {
     });
   });
 
+  describe("Nice edge cases", () => {
+    it("should handle empty JSON body gracefully", async () => {
+      const button = await createButton("https://example.com/empty-body", "global");
+
+      const res = await SELF.fetch(
+        `https://api.nice.sbs/api/v1/nice/${button.public_id}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        }
+      );
+
+      expect(res.status).toBe(200);
+      const data = await res.json() as { success: boolean };
+      expect(data.success).toBe(true);
+    });
+
+    it("should match URL-restricted referrer with query params stripped", async () => {
+      const button = await createButton("https://example.com/page?utm=123", "url");
+
+      const res = await SELF.fetch(
+        `https://api.nice.sbs/api/v1/nice/${button.public_id}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fingerprint: "fp-qs",
+            referrer: "https://example.com/page?other=456",
+          }),
+        }
+      );
+
+      // Both URLs normalize to https://example.com/page (query stripped)
+      expect(res.status).toBe(200);
+      const data = await res.json() as { success: boolean };
+      expect(data.success).toBe(true);
+    });
+  });
+
   describe("Referrer restrictions", () => {
     it("should allow nice on url-restricted button from matching referrer", async () => {
       const button = await createButton("https://example.com/restricted", "url");

@@ -162,6 +162,29 @@ describe("Button API", () => {
       expect(res.status).toBe(404);
     });
 
+    it("should reflect count after public nices", async () => {
+      const button = await createButton("https://example.com/stats-count", {
+        restriction: "global",
+      });
+
+      // Nice it via public endpoint
+      await SELF.fetch(
+        `https://api.nice.sbs/api/v1/nice/${button.public_id}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fingerprint: "stats-fp" }),
+        }
+      );
+
+      const res = await SELF.fetch(
+        `https://api.nice.sbs/api/v1/buttons/stats/${button.private_id}`
+      );
+
+      const data = await res.json() as { count: number };
+      expect(data.count).toBe(1);
+    });
+
     it("should return 404 for invalid private ID format", async () => {
       const res = await SELF.fetch(
         "https://api.nice.sbs/api/v1/buttons/stats/invalid"
@@ -205,6 +228,30 @@ describe("Button API", () => {
       const data = await res.json() as { theme: string; size: string };
       expect(data.theme).toBe("mono-dark");
       expect(data.size).toBe("xl");
+    });
+
+    it("should preserve other fields when partially updating", async () => {
+      const button = await createButton("https://example.com/partial", {
+        theme: "dark",
+        size: "lg",
+        restriction: "domain",
+      });
+
+      // Update only theme
+      const res = await SELF.fetch(
+        `https://api.nice.sbs/api/v1/buttons/${button.private_id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ theme: "minimal" }),
+        }
+      );
+
+      expect(res.status).toBe(200);
+      const data = await res.json() as { theme: string; size: string; restriction: string };
+      expect(data.theme).toBe("minimal");
+      expect(data.size).toBe("lg"); // preserved
+      expect(data.restriction).toBe("domain"); // preserved
     });
 
     it("should reject invalid restriction", async () => {
