@@ -18,6 +18,9 @@ local_protocol = "http"
 # Deploy: wrangler deploy --env preview
 [env.preview]
 name = "nice-preview"
+routes = [
+  { pattern = "almost.nice.sbs/*", zone_name = "nice.sbs" }
+]
 [[env.preview.kv_namespaces]]
 binding = "NICE_KV"
 id = "aae1e02bdb4341b4b15db9c277d7bb84"
