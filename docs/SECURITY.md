@@ -8,21 +8,16 @@ Nice is designed with defense-in-depth, implementing multiple layers of protecti
 
 ## Authentication & Authorization
 
-### API Token Security
+### Button Management
 
-- **Token Format**: `nice_` prefix + 43 base64url characters (256 bits of entropy)
-- **Storage**: Tokens are hashed with SHA-256 before storage in KV
-- **Lookup**: Token hash → Site ID mapping enables O(1) validation
-- **Scope**: Each token is scoped to a single verified site
+Buttons are managed via private IDs (`ns_` prefix, 20 base62 characters):
 
-### Site Verification
+- **Private ID**: Shown once at creation, acts as the bearer secret
+- **Storage**: Private IDs are hashed with SHA-256 before storage in KV
+- **Lookup**: Secret hash → Public ID mapping enables O(1) validation
+- **Scope**: Each private ID is scoped to a single button
 
-Sites must complete DNS verification before creating buttons:
-
-1. Register site → receive verification token
-2. Add TXT record: `_nice-verify.domain.com TXT "nice-verify={token}"`
-3. Call verify endpoint → site marked as verified
-4. Only verified sites can create buttons
+No accounts, tokens, or registration required. The private ID is the sole credential.
 
 ## Anti-Spam & Rate Limiting
 
@@ -50,7 +45,7 @@ When a button receives high traffic (>500/min), PoW mode activates:
 
 Prevents the same visitor from voting multiple times per day:
 
-- **Hash**: `SHA256(IP + buttonId + dailySalt)`
+- **Hash**: `SHA256(IP + fingerprint + buttonId + dailySalt)`
 - **Storage**: Dedup key stored in KV with 24h TTL
 - **Daily Rotation**: Salt rotates at midnight UTC
 
@@ -61,7 +56,7 @@ Prevents the same visitor from voting multiple times per day:
 Button IDs are validated before use in HTML:
 
 ```
-Format: ^btn_[A-Za-z0-9_-]{16}$
+Format: ^n_[A-Za-z0-9]{8,12}$
 ```
 
 - Prevents HTML/JS injection via malformed IDs
@@ -72,39 +67,19 @@ Format: ^btn_[A-Za-z0-9_-]{16}$
 
 Embed parameters are validated against allowlists:
 
-- **Themes**: `light`, `dark`, `minimal`
-- **Sizes**: `sm`, `md`, `lg`
+- **Themes**: `light`, `dark`, `minimal`, `mono-dark`, `mono-light`
+- **Sizes**: `xs`, `sm`, `md`, `lg`, `xl`
 - Invalid values fall back to defaults (no errors exposed)
 
 ## CORS Policy
 
-### Public Endpoints (permissive)
+All endpoints use permissive CORS:
 
 ```
 Access-Control-Allow-Origin: *
 ```
 
-Applies to:
-- `GET /api/v1/nice/:button_id/count`
-- `POST /api/v1/nice/:button_id`
-- `GET /embed/:button_id`
-- `GET /embed.js`
-
-These must be accessible from any website for embeds to work.
-
-### Authenticated Endpoints (restricted)
-
-```
-Access-Control-Allow-Origin: {request Origin}
-```
-
-Applies to:
-- `POST /api/v1/buttons`
-- `GET /api/v1/buttons`
-- `DELETE /api/v1/buttons/:id`
-- `POST /api/v1/sites/:id/token/regenerate`
-
-Server-to-server calls (no Origin header) are allowed. Browser requests reflect the Origin, preventing cross-site token theft via XSS.
+This is intentional — Nice buttons must be embeddable on any website. Security is enforced via rate limiting, deduplication, and referrer restrictions rather than CORS.
 
 ## Information Disclosure Prevention
 
@@ -114,10 +89,10 @@ The count endpoint returns consistent responses regardless of button existence:
 
 ```json
 // Non-existent button
-GET /api/v1/nice/btn_invalid/count → 200 {"count": 0}
+GET /api/v1/nice/n_invalid/count → 200 {"count": 0}
 
 // Valid button
-GET /api/v1/nice/btn_valid/count → 200 {"count": 42}
+GET /api/v1/nice/n_valid/count → 200 {"count": 42}
 ```
 
 Attackers cannot enumerate valid button IDs.
@@ -126,11 +101,20 @@ Attackers cannot enumerate valid button IDs.
 
 Error responses use generic codes without leaking internal state:
 
-- `UNAUTHORIZED` - Invalid or missing token
 - `NOT_FOUND` - Resource not found
-- `RATE_LIMITED` - Rate limit exceeded
+- `REFERRER_DENIED` - Nice not allowed from this referrer
+- `IP_LIMIT` / `BUTTON_LIMIT` - Rate limit exceeded
 
-Sensitive details (like existing button IDs for duplicate URLs) are not exposed.
+## URL/Domain Restrictions
+
+Buttons support `url`, `domain`, and `global` restriction modes to limit where a button can be "niced" from. These rely on the `Referer` header sent from the embed iframe.
+
+**Limitations:**
+- Restrictions apply to embed context only — direct API calls can forge the referrer
+- Parent pages with `Referrer-Policy: no-referrer` will fail restriction checks
+- This is a best-effort feature, not a security boundary
+
+**Mitigation**: If strict restriction enforcement is critical, use the private ID endpoint (`POST /api/v1/buttons/:private_id/nice`) which bypasses referrer checks but requires knowledge of the secret private ID.
 
 ## Cryptographic Practices
 
@@ -145,14 +129,6 @@ dailySalt = SHA256(masterSecret + ":daily_salt:" + YYYY-MM-DD)
 - Master secret generated once and stored in KV
 - All edge locations derive the same salt for a given date
 - Prevents duplicate votes during salt rotation at midnight
-
-### Token Hashing
-
-```
-storedHash = SHA256(token)
-```
-
-Note: Plain SHA-256 is used. For high-security applications, consider HMAC with a server secret.
 
 ## Infrastructure Security
 
@@ -189,17 +165,6 @@ localStorage.getItem('nice:' + buttonId)
 
 This is bypassable (incognito mode, clearing storage). Server-side deduplication via IP hash is the authoritative protection.
 
-### URL/Domain Restrictions
-
-v2 buttons support `url`, `domain`, and `global` restriction modes to limit where a button can be "niced" from. These rely on the `Referer` header sent from the embed iframe.
-
-**Limitations:**
-- Restrictions apply to embed context only — direct API calls can forge the referrer
-- Parent pages with `Referrer-Policy: no-referrer` will fail restriction checks
-- This is a best-effort feature, not a security boundary
-
-**Mitigation**: If strict restriction enforcement is critical, use the private ID endpoint (`POST /api/v2/buttons/:private_id/nice`) which bypasses referrer checks but requires knowledge of the secret private ID.
-
 ## Security Headers
 
 All responses include appropriate headers:
@@ -218,14 +183,3 @@ If you discover a security vulnerability:
 1. **Do not** open a public GitHub issue
 2. Email security concerns to the maintainers
 3. Allow reasonable time for a fix before disclosure
-
-## Changelog
-
-| Date | Change |
-|------|--------|
-| 2026-02-17 | Initial security implementation |
-| 2026-02-17 | Added CORS restrictions for authenticated endpoints |
-| 2026-02-17 | Fixed button enumeration (404 → 200 with count: 0) |
-| 2026-02-17 | Deterministic daily salt generation |
-| 2026-02-17 | Removed client fingerprint from dedup hash |
-| 2026-02-17 | Added button ID validation for embed routes |

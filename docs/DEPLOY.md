@@ -85,28 +85,19 @@ The worker runs at `http://localhost:8787`
 
 ## Testing the API
 
-### Register a test site
-
-```bash
-curl -X POST http://localhost:8787/api/v1/sites \
-  -H "Content-Type: application/json" \
-  -d '{"domain": "test.localhost"}'
-```
-
-### Create a button (after verification)
+### Create a button
 
 ```bash
 curl -X POST http://localhost:8787/api/v1/buttons \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer nice_your_token" \
-  -d '{"name": "Test", "url": "http://test.localhost/page"}'
+  -d '{"url": "http://test.localhost/page"}'
 ```
 
 ### Test the embed
 
 Open in browser:
 ```
-http://localhost:8787/embed/btn_your_button_id
+http://localhost:8787/embed/n_your_button_id
 ```
 
 ## Environment Variables
@@ -133,12 +124,6 @@ Make sure the KV namespace IDs in `wrangler.toml` match your actual namespaces:
 wrangler kv namespace list
 ```
 
-### "Domain not verified"
-
-1. Check DNS TXT record is set correctly
-2. Wait a few minutes for DNS propagation
-3. Try verification again
-
 ### CORS errors
 
 The API includes CORS headers for all origins. If you see CORS errors:
@@ -150,7 +135,6 @@ The API includes CORS headers for all origins. If you see CORS errors:
 - [ ] KV namespaces created (prod + preview)
 - [ ] wrangler.toml configured with correct IDs
 - [ ] Custom domain added and verified
-- [ ] Test site registration flow
 - [ ] Test button creation flow
 - [ ] Test embed on a real page
 - [ ] Monitor logs for errors

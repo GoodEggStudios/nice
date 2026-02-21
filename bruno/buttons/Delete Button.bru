@@ -1,23 +1,32 @@
 meta {
   name: Delete Button
   type: http
-  seq: 4
+  seq: 3
 }
 
 delete {
-  url: {{baseUrl}}/api/v1/buttons/{{buttonId}}
+  url: {{baseUrl}}/api/v1/buttons/{{privateId}}
   body: none
-  auth: bearer
-}
-
-auth:bearer {
-  token: {{token}}
+  auth: none
 }
 
 docs {
-  # Delete a button
+  # Delete Button
   
-  Permanently deletes a button and all its nice count data.
+  Delete a button using the private ID. **This cannot be undone.**
   
-  The embed for this button will show as disabled.
+  ## Path Parameters
+  
+  | Parameter | Description |
+  |-----------|-------------|
+  | privateId | Private ID (ns_xxx format) |
+  
+  ## Response
+  
+  ```json
+  {
+    "success": true,
+    "message": "Button deleted"
+  }
+  ```
 }

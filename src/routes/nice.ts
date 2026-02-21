@@ -4,11 +4,9 @@
  * Public endpoints (no auth required):
  * - POST /api/v1/nice/:button_id - Record a nice
  * - GET /api/v1/nice/:button_id/count - Get nice count
- *
- * Supports both v1 (btn_xxx) and v2 (n_xxx) button formats.
  */
 
-import type { Env, Button, ButtonV2, Site, RestrictionMode } from "../types";
+import type { Env, ButtonV2, RestrictionMode } from "../types";
 import {
   computeVisitorHash,
   getDailySalt,
@@ -16,15 +14,12 @@ import {
   validatePowSolution,
   rateLimitResponse,
   isValidPublicId,
-  isLegacyButtonId,
   normalizeUrl,
   extractUrlDomain,
 } from "../lib";
 
 // KV key prefixes
-const BUTTON_PREFIX = "button:"; // v1 buttons (btn_xxx)
-const BUTTON_V2_PREFIX = "btn:"; // v2 buttons (n_xxx)
-const SITE_PREFIX = "site:";
+const BUTTON_PREFIX = "btn:"; // buttons (n_xxx)
 const NICE_PREFIX = "nice:"; // nice:{button_id}:{visitor_hash} -> 1 (with TTL)
 const COUNT_PREFIX = "count:"; // count:{button_id} -> number
 
@@ -70,7 +65,6 @@ function checkReferrer(
   }
 
   // Prefer body referrer (from embed's document.referrer) over header
-  // Body referrer gives us the parent page URL for iframe embeds
   const referrer = bodyReferrer || request.headers.get("Referer");
 
   // nice.sbs is always allowed (home domain for button pages)
@@ -89,7 +83,6 @@ function checkReferrer(
   }
 
   if (restriction === "url") {
-    // Exact URL match (normalized)
     if (normalizeUrl(referrer) === normalizeUrl(buttonUrl)) {
       return { allowed: true };
     }
@@ -97,7 +90,6 @@ function checkReferrer(
   }
 
   if (restriction === "domain") {
-    // Domain match
     const referrerDomain = extractUrlDomain(referrer);
     const buttonDomain = extractUrlDomain(buttonUrl);
     if (referrerDomain && buttonDomain && referrerDomain === buttonDomain) {
@@ -111,8 +103,6 @@ function checkReferrer(
 
 /**
  * POST /api/v1/nice/:button_id - Record a nice
- *
- * Supports both v1 (btn_xxx) and v2 (n_xxx) button formats.
  */
 export async function recordNice(
   request: Request,
@@ -120,47 +110,21 @@ export async function recordNice(
   buttonId: string
 ): Promise<Response> {
   try {
-    // Determine button type and fetch data
-    let buttonUrl: string;
-    let restriction: RestrictionMode = "global"; // v1 buttons default to global
-    let isV2 = false;
-    let kvPrefix: string;
-
-    if (isValidPublicId(buttonId)) {
-      // V2 button (n_xxx)
-      isV2 = true;
-      kvPrefix = BUTTON_V2_PREFIX;
-      const buttonData = await env.NICE_KV.get(`${BUTTON_V2_PREFIX}${buttonId}`);
-      if (!buttonData) {
-        return jsonError("Button not found", "BUTTON_NOT_FOUND", 404);
-      }
-      const button: ButtonV2 = JSON.parse(buttonData);
-      buttonUrl = button.url;
-      restriction = button.restriction;
-    } else if (isLegacyButtonId(buttonId)) {
-      // V1 button (btn_xxx)
-      kvPrefix = BUTTON_PREFIX;
-      const buttonData = await env.NICE_KV.get(`${BUTTON_PREFIX}${buttonId}`);
-      if (!buttonData) {
-        return jsonError("Button not found", "BUTTON_NOT_FOUND", 404);
-      }
-      const button: Button = JSON.parse(buttonData);
-      buttonUrl = button.url;
-
-      // Check site is verified for v1 buttons
-      const siteData = await env.NICE_KV.get(`${SITE_PREFIX}${button.siteId}`);
-      if (!siteData) {
-        return jsonError("Site not found", "SITE_NOT_FOUND", 404);
-      }
-      const site: Site = JSON.parse(siteData);
-      if (!site.verified) {
-        return jsonError("Site not verified", "SITE_NOT_VERIFIED", 403);
-      }
-    } else {
+    // Validate button ID format
+    if (!isValidPublicId(buttonId)) {
       return jsonError("Invalid button ID format", "INVALID_BUTTON_ID", 400);
     }
 
-    // Parse request body early - needed for referrer check, fingerprint, and PoW
+    // Fetch button data
+    const buttonData = await env.NICE_KV.get(`${BUTTON_PREFIX}${buttonId}`);
+    if (!buttonData) {
+      return jsonError("Button not found", "BUTTON_NOT_FOUND", 404);
+    }
+    const button: ButtonV2 = JSON.parse(buttonData);
+    const buttonUrl = button.url;
+    const restriction = button.restriction;
+
+    // Parse request body - needed for referrer check, fingerprint, and PoW
     let bodyReferrer: string | undefined;
     let fingerprint: string | undefined;
     let powSolution: NiceRequest["pow_solution"] | undefined;
@@ -173,18 +137,16 @@ export async function recordNice(
       // No body or invalid JSON is fine
     }
 
-    // Check referrer restriction (v2 buttons only, v1 defaults to global)
-    if (isV2) {
-      const referrerCheck = checkReferrer(request, buttonUrl, restriction, bodyReferrer);
-      if (!referrerCheck.allowed) {
-        return new Response(
-          JSON.stringify({ error: referrerCheck.error, code: "REFERRER_DENIED" }),
-          { status: 403, headers: { "Content-Type": "application/json" } }
-        );
-      }
+    // Check referrer restriction
+    const referrerCheck = checkReferrer(request, buttonUrl, restriction, bodyReferrer);
+    if (!referrerCheck.allowed) {
+      return new Response(
+        JSON.stringify({ error: referrerCheck.error, code: "REFERRER_DENIED" }),
+        { status: 403, headers: { "Content-Type": "application/json" } }
+      );
     }
 
-    // Get visitor IP - prefer CF-Connecting-IP (set by Cloudflare)
+    // Get visitor IP
     let ip = request.headers.get("CF-Connecting-IP");
     if (!ip) {
       const xff = request.headers.get("X-Forwarded-For");
@@ -214,7 +176,7 @@ export async function recordNice(
       }
     }
 
-    // Compute visitor hash for deduplication (IP + fingerprint = unique device)
+    // Compute visitor hash for deduplication
     const dailySalt = await getDailySalt(env.NICE_KV);
     const visitorHash = await computeVisitorHash(ip, fingerprint || "", buttonId, dailySalt);
 
@@ -242,21 +204,8 @@ export async function recordNice(
     const newCount = await incrementCount(env, buttonId);
 
     // Update button's cached count
-    if (isV2) {
-      const buttonData = await env.NICE_KV.get(`${BUTTON_V2_PREFIX}${buttonId}`);
-      if (buttonData) {
-        const button: ButtonV2 = JSON.parse(buttonData);
-        button.count = newCount;
-        await env.NICE_KV.put(`${BUTTON_V2_PREFIX}${buttonId}`, JSON.stringify(button));
-      }
-    } else {
-      const buttonData = await env.NICE_KV.get(`${BUTTON_PREFIX}${buttonId}`);
-      if (buttonData) {
-        const button: Button = JSON.parse(buttonData);
-        button.count = newCount;
-        await env.NICE_KV.put(`${BUTTON_PREFIX}${buttonId}`, JSON.stringify(button));
-      }
-    }
+    button.count = newCount;
+    await env.NICE_KV.put(`${BUTTON_PREFIX}${buttonId}`, JSON.stringify(button));
 
     const response: NiceResponse = {
       success: true,
@@ -277,11 +226,6 @@ export async function recordNice(
  * GET /api/v1/nice/:button_id/count - Get nice count
  * 
  * Returns 200 with count: 0 for non-existent buttons to prevent enumeration.
- * Attackers cannot determine which button IDs are valid.
- * 
- * Also checks if the current visitor has already niced (using IP hash).
- * 
- * Supports both v1 (btn_xxx) and v2 (n_xxx) button formats.
  */
 export async function getNiceCount(
   request: Request,
@@ -289,15 +233,9 @@ export async function getNiceCount(
   buttonId: string
 ): Promise<Response> {
   try {
-    // Check both v1 and v2 button storage
     let buttonExists = false;
 
     if (isValidPublicId(buttonId)) {
-      // V2 button (n_xxx)
-      const buttonData = await env.NICE_KV.get(`${BUTTON_V2_PREFIX}${buttonId}`);
-      buttonExists = !!buttonData;
-    } else if (isLegacyButtonId(buttonId)) {
-      // V1 button (btn_xxx)
       const buttonData = await env.NICE_KV.get(`${BUTTON_PREFIX}${buttonId}`);
       buttonExists = !!buttonData;
     }
@@ -305,8 +243,7 @@ export async function getNiceCount(
     // Return 0 for non-existent buttons (enumeration protection)
     const count = buttonExists ? await getCount(env, buttonId) : 0;
 
-    // Check if visitor has already niced (using same logic as recordNice)
-    // Get fingerprint from query param for device-specific check
+    // Check if visitor has already niced
     const url = new URL(request.url);
     const fingerprint = url.searchParams.get("fp") || "";
     
@@ -353,7 +290,6 @@ export async function getNiceCount(
 // Helper functions
 
 async function getCount(env: Env, buttonId: string): Promise<number> {
-  // Use cacheTtl: 60 (minimum) to reduce edge caching staleness
   const countData = await env.NICE_KV.get(`${COUNT_PREFIX}${buttonId}`, { cacheTtl: 60 });
   if (!countData) return 0;
   return parseInt(countData, 10) || 0;
@@ -361,10 +297,6 @@ async function getCount(env: Env, buttonId: string): Promise<number> {
 
 async function incrementCount(env: Env, buttonId: string): Promise<number> {
   const countKey = `${COUNT_PREFIX}${buttonId}`;
-  
-  // KV doesn't have atomic increment - use optimistic increment with retry
-  // This reduces (but doesn't eliminate) race condition impact
-  // For high-traffic buttons, consider using Durable Objects instead
   const maxRetries = 3;
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -372,25 +304,21 @@ async function incrementCount(env: Env, buttonId: string): Promise<number> {
     const current = parseInt(currentData || "0", 10) || 0;
     const newCount = current + 1;
     
-    // Write the new count
     await env.NICE_KV.put(countKey, newCount.toString());
     
-    // Verify the write (basic optimistic check)
     if (attempt < maxRetries - 1) {
       const verifyData = await env.NICE_KV.get(countKey, { cacheTtl: 60 });
       const verified = parseInt(verifyData || "0", 10) || 0;
       if (verified >= newCount) {
         return newCount;
       }
-      // Race detected, retry
       continue;
     }
     
     return newCount;
   }
   
-  // Fallback - just return the current count + 1
-  const fallback = await env.NICE_KV.get(countKey, { cacheTtl: 60 });
+  const fallback = await env.NICE_KV.get(`${COUNT_PREFIX}${buttonId}`, { cacheTtl: 60 });
   return (parseInt(fallback || "0", 10) || 0) + 1;
 }
 

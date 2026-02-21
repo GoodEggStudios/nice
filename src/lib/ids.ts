@@ -1,7 +1,7 @@
 /**
- * ID generation utilities for v2 buttons
+ * ID generation utilities for buttons
  *
- * Public ID: n_<8 base62 chars> - used in embeds, public-facing
+ * Public ID: n_<12 base62 chars> - used in embeds, public-facing
  * Private ID: ns_<20 base62 chars> - used for management, shown once
  */
 
@@ -70,25 +70,11 @@ export function isValidPrivateId(id: string): boolean {
 }
 
 /**
- * Check if an ID is a legacy button ID (btn_xxx)
- *
- * @param id - The ID to check
- * @returns true if legacy btn_ format
- */
-export function isLegacyButtonId(id: string): boolean {
-  if (!id.startsWith("btn_")) return false;
-  const payload = id.slice(4);
-  // Legacy IDs are base64url encoded 12 bytes = 16 chars
-  if (payload.length !== 16) return false;
-  return /^[A-Za-z0-9_-]+$/.test(payload);
-}
-
-/**
- * Validate any button ID format (v1 or v2)
+ * Validate any button ID format
  *
  * @param id - The ID to validate
  * @returns true if valid button ID format
  */
 export function isValidButtonId(id: string): boolean {
-  return isValidPublicId(id) || isLegacyButtonId(id);
+  return isValidPublicId(id);
 }

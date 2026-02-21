@@ -7,32 +7,42 @@ meta {
 post {
   url: {{baseUrl}}/api/v1/buttons
   body: json
-  auth: bearer
-}
-
-auth:bearer {
-  token: {{token}}
+  auth: none
 }
 
 body:json {
   {
-    "name": "My Blog Post",
-    "url": "https://example.com/blog/post-1"
+    "url": "https://example.com/my-article",
+    "theme": "light",
+    "size": "md",
+    "restriction": "url"
   }
 }
 
 script:post-response {
   if (res.status === 201) {
-    bru.setEnvVar("buttonId", res.body.button_id);
+    bru.setEnvVar("publicId", res.body.public_id);
+    bru.setEnvVar("privateId", res.body.private_id);
   }
 }
 
 docs {
-  # Create a nice button
+  # Create Button
   
-  Creates a new button for a specific URL on your verified domain.
+  Creates a new Nice button. No authentication required.
   
-  The response includes ready-to-use embed code.
+  ## Request Body
   
-  **Note:** Site must be verified before creating buttons.
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | url | string | Yes | Content URL |
+  | theme | string | No | light, dark, minimal, mono-dark, mono-light |
+  | size | string | No | xs, sm, md, lg, xl |
+  | restriction | string | No | url (default), domain, global |
+  
+  ## Response
+  
+  Returns `public_id` (for embeds) and `private_id` (for management).
+  
+  ⚠️ **Save your private_id!** It's only shown once.
 }
