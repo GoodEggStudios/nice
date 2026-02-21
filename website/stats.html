@@ -470,7 +470,7 @@
       btns.forEach(b => b.classList.add('saving'));
       
       try {
-        const res = await fetch(`${API_BASE}/api/v2/buttons/${privateId}`, {
+        const res = await fetch(`${API_BASE}/api/v1/buttons/${privateId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ restriction: newMode })
@@ -520,7 +520,7 @@
       }
       
       try {
-        const res = await fetch(`${API_BASE}/api/v2/buttons/stats/${privateId}`);
+        const res = await fetch(`${API_BASE}/api/v1/buttons/stats/${privateId}`);
         
         if (!res.ok) {
           showError();
@@ -617,7 +617,7 @@
     });
     document.getElementById('confirmDelete').addEventListener('click', async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/v2/buttons/${window.PRIVATE_ID}`, { 
+        const res = await fetch(`${API_BASE}/api/v1/buttons/${window.PRIVATE_ID}`, { 
           method: 'DELETE' 
         });
         if (res.ok) {

@@ -91,7 +91,7 @@ Customise the look with `theme` and `size` parameters:
 Check how many nice's your button has:
 
 ```bash
-curl https://api.nice.sbs/api/v2/buttons/stats/ns_your_private_id
+curl https://api.nice.sbs/api/v1/buttons/stats/ns_your_private_id
 ```
 
 Or visit `nice.sbs/stats?id=ns_your_private_id`

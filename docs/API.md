@@ -13,7 +13,7 @@ Nice is a simple button service that lets you add anonymous "nice" buttons to an
 Create a button with a single API call:
 
 ```bash
-curl -X POST https://api.nice.sbs/api/v2/buttons \
+curl -X POST https://api.nice.sbs/api/v1/buttons \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example.com/my-article"}'
 ```

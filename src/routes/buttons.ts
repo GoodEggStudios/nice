@@ -59,7 +59,7 @@ function generateEmbedSnippets(
 }
 
 /**
- * POST /api/v2/buttons - Create a new button
+ * POST /api/v1/buttons - Create a new button
  */
 export async function createButtonV2(
   request: Request,
@@ -180,7 +180,7 @@ export async function createButtonV2(
 }
 
 /**
- * GET /api/v2/buttons/stats/:private_id - Get button stats
+ * GET /api/v1/buttons/stats/:private_id - Get button stats
  */
 export async function getButtonStatsV2(
   request: Request,
@@ -240,7 +240,7 @@ export async function getButtonStatsV2(
 }
 
 /**
- * PATCH /api/v2/buttons/:private_id - Update button settings
+ * PATCH /api/v1/buttons/:private_id - Update button settings
  */
 export async function updateButtonV2(
   request: Request,
@@ -350,7 +350,7 @@ export async function updateButtonV2(
 }
 
 /**
- * DELETE /api/v2/buttons/:private_id - Delete a button
+ * DELETE /api/v1/buttons/:private_id - Delete a button
  */
 export async function deleteButtonV2(
   request: Request,
@@ -389,7 +389,7 @@ export async function deleteButtonV2(
 }
 
 /**
- * POST /api/v2/buttons/:private_id/nice - Record a nice (authenticated)
+ * POST /api/v1/buttons/:private_id/nice - Record a nice (authenticated)
  * 
  * This endpoint allows the button owner to record nices via API.
  * No referrer check, no IP deduplication - full control for the owner.

@@ -2,7 +2,7 @@
  * Nice Embed Script
  * 
  * Usage:
- * <script src="https://nice.sbs/embed.js" data-button="btn_xxx" async></script>
+ * <script src="https://nice.sbs/embed.js" data-button="n_xxx" async></script>
  * 
  * Options (data attributes):
  * - data-button: Button ID (required)

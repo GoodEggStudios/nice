@@ -193,7 +193,7 @@
     
     <h2 id="quickstart">Quick Start</h2>
     <p>Create a button with a single API call — no signup required:</p>
-    <pre><code>curl -X POST https://api.nice.sbs/api/v2/buttons \
+    <pre><code>curl -X POST https://api.nice.sbs/api/v1/buttons \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example.com/my-article"}'</code></pre>
     
@@ -215,7 +215,7 @@
     
     <div class="endpoint">
       <span class="method post">POST</span>
-      <span class="path">/api/v2/buttons</span>
+      <span class="path">/api/v1/buttons</span>
     </div>
     
     <p>Create a new Nice button.</p>
@@ -247,7 +247,7 @@
     
     <div class="endpoint">
       <span class="method get">GET</span>
-      <span class="path">/api/v2/buttons/stats/<span class="param">:private_id</span></span>
+      <span class="path">/api/v1/buttons/stats/<span class="param">:private_id</span></span>
     </div>
     
     <p>Get button statistics. Requires the private ID.</p>
@@ -267,7 +267,7 @@
     
     <div class="endpoint">
       <span class="method delete">DELETE</span>
-      <span class="path">/api/v2/buttons/<span class="param">:private_id</span></span>
+      <span class="path">/api/v1/buttons/<span class="param">:private_id</span></span>
     </div>
     
     <p>Delete a button. Requires the private ID. This action cannot be undone.</p>
@@ -282,7 +282,7 @@
     
     <div class="endpoint">
       <span class="method post">POST</span>
-      <span class="path">/api/v2/buttons/<span class="param">:private_id</span>/nice</span>
+      <span class="path">/api/v1/buttons/<span class="param">:private_id</span>/nice</span>
     </div>
     
     <p>Record a "nice" using the private ID. <strong>Owner only</strong> — no restrictions.</p>
