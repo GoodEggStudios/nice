@@ -1,6 +1,6 @@
 {
   "name": "nice",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Nice - The Anonymous Nice Button Service",
   "type": "module",
   "scripts": {
