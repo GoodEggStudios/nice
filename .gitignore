@@ -10,7 +10,6 @@ dist/
 .env.local
 .dev.vars
 
-
 # IDE
 .idea/
 .vscode/
