@@ -429,15 +429,19 @@ export async function recordNiceV2(
 
   const button: ButtonV2 = JSON.parse(buttonData);
 
-  // Increment count
-  button.count += 1;
+  // Increment the canonical count key (single source of truth)
+  const countKey = `count:${publicId}`;
+  const currentCount = parseInt(await env.NICE_KV.get(countKey) || "0", 10) || 0;
+  const newCount = currentCount + 1;
+  await env.NICE_KV.put(countKey, newCount.toString());
 
-  // Save updated button
+  // Sync button object's cached count
+  button.count = newCount;
   await env.NICE_KV.put(`btn:${publicId}`, JSON.stringify(button));
 
   return Response.json({
     success: true,
-    count: button.count,
+    count: newCount,
     public_id: publicId,
   });
 }

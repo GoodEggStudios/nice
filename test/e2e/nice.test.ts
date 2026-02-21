@@ -335,12 +335,12 @@ describe("Nice API", () => {
       const ownerNiceData = await ownerNiceRes.json() as { count: number };
       expect(ownerNiceData.count).toBe(2);
 
-      // 4. Count (public) — reads from count: KV key, only incremented by public nice
+      // 4. Count (public) — both public and owner nices use same count key
       const countRes = await SELF.fetch(
         `https://api.nice.sbs/api/v1/nice/${button.public_id}/count`
       );
       const countData = await countRes.json() as { count: number };
-      expect(countData.count).toBe(1);
+      expect(countData.count).toBe(2);
 
       // 5. Stats (private) — reads from button object, includes owner nices
       const statsRes = await SELF.fetch(
