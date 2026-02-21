@@ -34,12 +34,12 @@ Response:
 
 ---
 
-## API v2 Endpoints
+## API Endpoints
 
 ### Create Button
 
 ```http
-POST /api/v2/buttons
+POST /api/v1/buttons
 Content-Type: application/json
 
 {
@@ -80,7 +80,7 @@ Content-Type: application/json
 ### Get Stats
 
 ```http
-GET /api/v2/buttons/stats/:private_id
+GET /api/v1/buttons/stats/:private_id
 ```
 
 Get button statistics. Requires the private ID.
@@ -103,7 +103,7 @@ Get button statistics. Requires the private ID.
 ### Update Button
 
 ```http
-PATCH /api/v2/buttons/:private_id
+PATCH /api/v1/buttons/:private_id
 Content-Type: application/json
 
 {
@@ -140,7 +140,7 @@ Update button settings. Requires the private ID.
 ### Delete Button
 
 ```http
-DELETE /api/v2/buttons/:private_id
+DELETE /api/v1/buttons/:private_id
 ```
 
 Delete a button. Requires the private ID. **This action cannot be undone.**
@@ -158,7 +158,7 @@ Delete a button. Requires the private ID. **This action cannot be undone.**
 ### Record Nice (Authenticated)
 
 ```http
-POST /api/v2/buttons/:private_id/nice
+POST /api/v1/buttons/:private_id/nice
 ```
 
 Record a "nice" using the private ID. **Owner only** — no restrictions.
@@ -350,6 +350,3 @@ Badges are cached for 60 seconds (browser) / 5 minutes (CDN). Counts are snapsho
 
 ---
 
-## Legacy API (v1)
-
-The v1 API with DNS verification is still supported for existing integrations but is deprecated for new users. See the v1 documentation for details.

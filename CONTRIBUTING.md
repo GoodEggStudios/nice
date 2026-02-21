@@ -43,11 +43,9 @@ src/
 ├── lib/              # Shared utilities (hashing, IDs, rate limiting)
 ├── routes/           # API route handlers
 │   ├── nice.ts       # Record/get nice counts
-│   ├── buttons.ts    # V1 button management (authenticated)
-│   ├── buttons-v2.ts # V2 button management (public)
+│   ├── buttons.ts    # Button management (create, stats, delete)
 │   ├── embed.ts      # Embed script & page
-│   ├── badge.ts      # SVG badge generation
-│   └── sites.ts      # Site registration & verification
+│   └── badge.ts      # SVG badge generation
 ├── embed/            # Embed HTML template & JS
 ├── pages/            # Page renderers (home, create, docs)
 └── assets/           # Static assets (favicon)

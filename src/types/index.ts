@@ -1,31 +1,7 @@
 export * from "./env";
 
 /**
- * Site registration data stored in KV
- */
-export interface Site {
-  id: string;
-  domain: string;
-  tokenHash: string;
-  verified: boolean;
-  verificationToken?: string;
-  createdAt: string;
-}
-
-/**
- * Button data stored in KV (v1 - legacy, requires site registration)
- */
-export interface Button {
-  id: string;
-  siteId: string;
-  name: string;
-  url: string;
-  count: number;
-  createdAt: string;
-}
-
-/**
- * Restriction mode for v2 buttons
+ * Restriction mode for buttons
  * - url: Only allow nices from exact URL match
  * - domain: Allow nices from any page on same domain
  * - global: Allow nices from any site
@@ -33,7 +9,7 @@ export interface Button {
 export type RestrictionMode = "url" | "domain" | "global";
 
 /**
- * Button data stored in KV (v2 - public, no site registration required)
+ * Button data stored in KV
  */
 export interface ButtonV2 {
   id: string; // Public ID: n_xxx

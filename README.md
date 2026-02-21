@@ -34,7 +34,7 @@ Head to **[nice.sbs/create](https://nice.sbs/create)** and enter your URL. You'l
 Or use the API:
 
 ```bash
-curl -X POST https://api.nice.sbs/api/v2/buttons \
+curl -X POST https://api.nice.sbs/api/v1/buttons \
   -H "Content-Type: application/json" \
   -d '{"url": "https://yoursite.com"}'
 ```
@@ -112,12 +112,12 @@ Full API docs at **[nice.sbs/docs](https://nice.sbs/docs)** or in [docs/API.md](
 
 | Endpoint | Description |
 |---|---|
-| `POST /api/v2/buttons` | Create a button |
+| `POST /api/v1/buttons` | Create a button |
 | `POST /api/v1/nice/:id` | Record a nice |
 | `GET /api/v1/nice/:id` | Get nice count |
-| `GET /api/v2/buttons/stats/:private_id` | Button stats |
+| `GET /api/v1/buttons/stats/:private_id` | Button stats |
 | `GET /badge/:id.svg` | Markdown badge |
-| `DELETE /api/v2/buttons/:private_id` | Delete button |
+| `DELETE /api/v1/buttons/:private_id` | Delete button |
 
 ## Tech Stack
 
