@@ -28,7 +28,7 @@ id = "aae1e02bdb4341b4b15db9c277d7bb84"
 # Production environment (releases only)
 # Deploy: wrangler deploy --env production
 [env.production]
-name = "nice"
+name = "nice-preview"
 [[env.production.kv_namespaces]]
 binding = "NICE_KV"
 id = "a56ec277eb20435190aca39bbcaff401"
