@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://nice.sbs/button?id=n_iSoPXADYGp0Q"><img src="https://api.nice.sbs/badge/n_iSoPXADYGp0Q.svg" alt="Nice"></a>
-  <a href="https://github.com/goodeggstudio/nice/actions/workflows/ci.yml"><img src="https://github.com/goodeggstudio/nice/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/Cloudflare%20Pages-deployed-orange?logo=cloudflarepages" alt="Cloudflare Pages">
   <a href="https://github.com/goodeggstudio/nice/actions/workflows/release.yml"><img src="https://github.com/goodeggstudio/nice/actions/workflows/release.yml/badge.svg" alt="Release"></a>
   <a href="https://github.com/goodeggstudio/nice/releases/latest"><img src="https://img.shields.io/github/v/release/goodeggstudio/nice?label=release&color=blue" alt="Latest Release"></a>
 </p>
