@@ -58,8 +58,9 @@ function generateRichBadge(count: number | null): string {
 
   const height = 20;
   const countPadding = 6;
+  const richFontSize = 9;
   // Use shields.io scale(.1) technique for precise text rendering
-  const countTextLen = textWidth(countText, 11) * 10;
+  const countTextLen = textWidth(countText, richFontSize) * 10;
   const countSectionWidth = Math.round(countTextLen / 10) + countPadding * 2;
 
   // Wordmark area: scale 252.201x72.001 to fit in height with padding
@@ -89,7 +90,7 @@ function generateRichBadge(count: number | null): string {
   <g transform="translate(${wordmarkPad}, ${wordmarkPad}) scale(${wordmarkScale.toFixed(4)})">
     <path d="${NICE_WORDMARK_PATH}" fill="#000" stroke="none"/>
   </g>
-  <g fill="#fbbf24" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110" font-weight="normal">
+  <g fill="#fbbf24" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="90" font-weight="normal">
     <text aria-hidden="true" x="${countCenterX}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="${countTextLen}">${escapeXml(countText)}</text>
     <text x="${countCenterX}" y="140" transform="scale(.1)" fill="#fbbf24" textLength="${countTextLen}">${escapeXml(countText)}</text>
   </g>
