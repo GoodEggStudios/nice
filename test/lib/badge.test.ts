@@ -42,6 +42,10 @@ describe('normalizeTheme', () => {
     expect(normalizeTheme('dark')).toBe('dark');
   });
 
+  it('accepts rich theme', () => {
+    expect(normalizeTheme('rich')).toBe('rich');
+  });
+
   it('returns default for invalid themes', () => {
     expect(normalizeTheme('invalid')).toBe('default');
     expect(normalizeTheme('')).toBe('default');
@@ -96,6 +100,26 @@ describe('generateBadge', () => {
     it('dark theme has black left background', () => {
       const svg = generateBadge(42, { theme: 'dark' });
       expect(svg).toContain('fill="#000"');
+    });
+
+    it('rich theme has yellow left and black right', () => {
+      const svg = generateBadge(42, { theme: 'rich' });
+      expect(svg).toContain('<svg');
+      expect(svg).toContain('fill="#fbbf24"'); // yellow left bg & counter text
+      expect(svg).toContain('fill="#000"'); // black right bg & wordmark
+      expect(svg).toContain('42');
+    });
+
+    it('rich theme uses full NICE wordmark', () => {
+      const svg = generateBadge(42, { theme: 'rich' });
+      // Contains multiple letter paths (N, I, C, E)
+      expect(svg).toContain('M18.601');
+      expect(svg).toContain('M248.601');
+    });
+
+    it('rich theme shows ? for null count', () => {
+      const svg = generateBadge(null, { theme: 'rich' });
+      expect(svg).toContain('?');
     });
   });
 
