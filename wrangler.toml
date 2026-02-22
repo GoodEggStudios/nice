@@ -17,7 +17,7 @@ local_protocol = "http"
 # Preview environment (PRs, staging)
 # Deploy: wrangler deploy --env preview
 [env.preview]
-name = "nice-preview"
+name = "nice"
 routes = [
   { pattern = "almost.nice.sbs/*", zone_name = "nice.sbs" }
 ]
