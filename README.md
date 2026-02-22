@@ -4,8 +4,8 @@
 
 <p align="center">
   <a href="https://nice.sbs/button?id=n_iSoPXADYGp0Q"><img src="https://api.nice.sbs/badge/n_iSoPXADYGp0Q.svg" alt="Nice"></a>
-  <img src="https://img.shields.io/badge/Cloudflare%20Pages-deployed-orange?logo=cloudflarepages" alt="Cloudflare Pages">
-  <img src="https://img.shields.io/badge/Cloudflare%20Workers-deployed-orange?logo=cloudflareworkers" alt="Cloudflare Workers">
+  <img src="https://img.shields.io/badge/Pages-deployed-orange?logo=cloudflarepages" alt="Pages">
+  <img src="https://img.shields.io/badge/Workers-deployed-orange?logo=cloudflareworkers" alt="Workers">
   <a href="https://github.com/GoodEggStudios/nice/actions/workflows/release.yml"><img src="https://github.com/GoodEggStudios/nice/actions/workflows/release.yml/badge.svg" alt="Release"></a>
   <a href="https://github.com/GoodEggStudios/nice/releases/latest"><img src="https://img.shields.io/github/v/release/GoodEggStudios/nice?label=release&color=blue" alt="Latest Release"></a>
 </p>
