@@ -148,6 +148,14 @@ npm run deploy   # Deploy to Cloudflare
 - 📖 **Docs**: [nice.sbs/docs](https://nice.sbs/docs)
 - 🔒 **Security**: [SECURITY.md](docs/SECURITY.md)
 
+## Badge Gallery
+
+| Theme | Preview |
+|-------|---------|
+| Default | ![Nice](https://api.nice.sbs/badge/n_iSoPXADYGp0Q.svg) |
+| Dark | ![Nice](https://api.nice.sbs/badge/n_iSoPXADYGp0Q.svg?theme=dark) |
+| Rich | ![Nice](https://api.nice.sbs/badge/n_iSoPXADYGp0Q.svg?theme=rich) |
+
 ## License
 
 Apache 2.0

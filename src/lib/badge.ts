@@ -57,35 +57,41 @@ function generateRichBadge(count: number | null): string {
   const countText = count === null ? '?' : formatCount(count);
 
   const height = 20;
-  const fontSize = 11;
-  const countPadding = 8;
-  const countTextWidth = textWidth(countText, fontSize);
-  const rightWidth = countTextWidth + countPadding * 2;
+  const countPadding = 6;
+  // Use shields.io scale(.1) technique for precise text rendering
+  const countTextLen = textWidth(countText, 11) * 10;
+  const countSectionWidth = Math.round(countTextLen / 10) + countPadding * 2;
 
   // Wordmark area: scale 252.201x72.001 to fit in height with padding
-  const wordmarkPad = 4;
-  const wordmarkHeight = height - wordmarkPad * 2; // 12px
+  const wordmarkPad = 5;
+  const wordmarkHeight = height - wordmarkPad * 2; // 10px
   const wordmarkScale = wordmarkHeight / 72.001;
   const wordmarkWidth = Math.ceil(252.201 * wordmarkScale);
   const leftWidth = wordmarkWidth + wordmarkPad * 2;
-  const totalWidth = leftWidth + rightWidth;
+  const totalWidth = leftWidth + countSectionWidth;
 
-  const countX = leftWidth + rightWidth / 2;
-  const textY = height / 2 + fontSize * 0.36;
+  const countCenterX = (leftWidth + totalWidth) / 2 * 10;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${height}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${height}" role="img" aria-label="nice: ${escapeXml(countText)}">
+  <title>nice: ${escapeXml(countText)}</title>
+  <linearGradient id="g" x2="0" y2="100%">
+    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+    <stop offset="1" stop-opacity=".1"/>
+  </linearGradient>
   <clipPath id="c">
     <rect width="${totalWidth}" height="${height}" rx="3" fill="#fff"/>
   </clipPath>
   <g clip-path="url(#c)">
     <rect width="${leftWidth}" height="${height}" fill="#fbbf24"/>
-    <rect x="${leftWidth}" width="${rightWidth}" height="${height}" fill="#000"/>
+    <rect x="${leftWidth}" width="${countSectionWidth}" height="${height}" fill="#000"/>
+    <rect width="${totalWidth}" height="${height}" fill="url(#g)"/>
   </g>
   <g transform="translate(${wordmarkPad}, ${wordmarkPad}) scale(${wordmarkScale.toFixed(4)})">
     <path d="${NICE_WORDMARK_PATH}" fill="#000" stroke="none"/>
   </g>
-  <g fill="#fbbf24" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="${fontSize}" font-weight="bold">
-    <text x="${countX}" y="${textY}">${escapeXml(countText)}</text>
+  <g fill="#fbbf24" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110" font-weight="normal">
+    <text aria-hidden="true" x="${countCenterX}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="${countTextLen}">${escapeXml(countText)}</text>
+    <text x="${countCenterX}" y="140" transform="scale(.1)" fill="#fbbf24" textLength="${countTextLen}">${escapeXml(countText)}</text>
   </g>
 </svg>`;
 }
@@ -149,7 +155,7 @@ export function generateBadge(count: number | null, options: BadgeOptions = {}):
     <text x="${labelX}" y="${shadowY}" fill="#010101" fill-opacity=".3">${escapeXml(labelText)}</text>
     <text x="${labelX}" y="${textY}">${escapeXml(labelText)}</text>
   </g>
-  <g fill="${rightText}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="${fontSize}" font-weight="bold">
+  <g fill="${rightText}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="${fontSize}">
     <text x="${countX}" y="${textY}">${escapeXml(countText)}</text>
   </g>
 </svg>`;
