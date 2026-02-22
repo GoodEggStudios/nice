@@ -46,6 +46,18 @@ describe('normalizeTheme', () => {
     expect(normalizeTheme('rich')).toBe('rich');
   });
 
+  it('accepts rich-inverted theme', () => {
+    expect(normalizeTheme('rich-inverted')).toBe('rich-inverted');
+  });
+
+  it('accepts rich-mono theme', () => {
+    expect(normalizeTheme('rich-mono')).toBe('rich-mono');
+  });
+
+  it('accepts rich-mono-inverted theme', () => {
+    expect(normalizeTheme('rich-mono-inverted')).toBe('rich-mono-inverted');
+  });
+
   it('returns default for invalid themes', () => {
     expect(normalizeTheme('invalid')).toBe('default');
     expect(normalizeTheme('')).toBe('default');
@@ -120,6 +132,53 @@ describe('generateBadge', () => {
     it('rich theme shows ? for null count', () => {
       const svg = generateBadge(null, { theme: 'rich' });
       expect(svg).toContain('?');
+    });
+
+    it('rich-inverted theme has black left and yellow right', () => {
+      const svg = generateBadge(42, { theme: 'rich-inverted' });
+      expect(svg).toContain('<svg');
+      // Left bg is black, right bg is yellow
+      expect(svg).toContain('fill="#000"');
+      expect(svg).toContain('fill="#fbbf24"');
+      // Wordmark text is yellow
+      expect(svg).toContain('<path d="M18.601');
+      expect(svg).toContain('42');
+    });
+
+    it('rich-inverted theme uses full NICE wordmark', () => {
+      const svg = generateBadge(42, { theme: 'rich-inverted' });
+      expect(svg).toContain('M18.601');
+      expect(svg).toContain('M248.601');
+    });
+
+    it('rich-mono theme has white left and black right', () => {
+      const svg = generateBadge(42, { theme: 'rich-mono' });
+      expect(svg).toContain('<svg');
+      // Left bg is white, right bg is black
+      expect(svg).toContain('fill="#fff"');
+      expect(svg).toContain('fill="#000"');
+      expect(svg).toContain('42');
+    });
+
+    it('rich-mono theme uses full NICE wordmark', () => {
+      const svg = generateBadge(42, { theme: 'rich-mono' });
+      expect(svg).toContain('M18.601');
+      expect(svg).toContain('M248.601');
+    });
+
+    it('rich-mono-inverted theme has black left and white right', () => {
+      const svg = generateBadge(42, { theme: 'rich-mono-inverted' });
+      expect(svg).toContain('<svg');
+      // Left bg is black, right bg is white
+      expect(svg).toContain('fill="#000"');
+      expect(svg).toContain('fill="#fff"');
+      expect(svg).toContain('42');
+    });
+
+    it('rich-mono-inverted theme uses full NICE wordmark', () => {
+      const svg = generateBadge(42, { theme: 'rich-mono-inverted' });
+      expect(svg).toContain('M18.601');
+      expect(svg).toContain('M248.601');
     });
   });
 

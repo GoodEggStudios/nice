@@ -313,7 +313,7 @@ https://api.nice.sbs/badge/:public_id.svg
 
 | Param | Default | Description |
 |-------|---------|-------------|
-| `theme` | `default` | Badge theme: `default` or `dark` |
+| `theme` | `default` | Badge theme: `default`, `dark`, `rich`, `rich-inverted`, `rich-mono`, `rich-mono-inverted` |
 
 ### Design
 

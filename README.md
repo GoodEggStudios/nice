@@ -71,7 +71,7 @@ Display your nice count in any README or markdown file:
 [![Nice](https://api.nice.sbs/badge/n_xxxx.svg?theme=rich)](https://nice.sbs/button?id=n_xxxx)
 ```
 
-**Badge themes:** `default` · `dark` · `rich`
+**Badge themes:** `default` · `dark` · `rich` · `rich-inverted` · `rich-mono` · `rich-mono-inverted`
 
 ## Themes & Sizes
 
@@ -155,6 +155,9 @@ npm run deploy   # Deploy to Cloudflare
 | Default | ![Nice](https://api.nice.sbs/badge/n_iSoPXADYGp0Q.svg) |
 | Dark | ![Nice](https://api.nice.sbs/badge/n_iSoPXADYGp0Q.svg?theme=dark) |
 | Rich | ![Nice](https://api.nice.sbs/badge/n_iSoPXADYGp0Q.svg?theme=rich) |
+| Rich Inverted | ![Nice](https://api.nice.sbs/badge/n_iSoPXADYGp0Q.svg?theme=rich-inverted) |
+| Rich Mono | ![Nice](https://api.nice.sbs/badge/n_iSoPXADYGp0Q.svg?theme=rich-mono) |
+| Rich Mono Inverted | ![Nice](https://api.nice.sbs/badge/n_iSoPXADYGp0Q.svg?theme=rich-mono-inverted) |
 
 ## License
 
