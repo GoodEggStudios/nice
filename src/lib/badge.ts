@@ -3,7 +3,7 @@
  * Generates shields.io-style badges with Nice branding
  */
 
-export type BadgeTheme = 'default' | 'dark';
+export type BadgeTheme = 'default' | 'dark' | 'rich';
 
 export interface BadgeOptions {
   theme?: BadgeTheme;
@@ -40,17 +40,62 @@ function textWidth(text: string, fontSize: number = 11): number {
  */
 export function normalizeTheme(theme: string | undefined): BadgeTheme {
   if (theme === 'dark') return 'dark';
+  if (theme === 'rich') return 'rich';
   return 'default';
 }
 
 // Nice "N" logo path (scaled for badge height)
 const N_LOGO_PATH = 'M4.53 17.55l-3.65 0q-0.88 0-0.88-0.88l0-15.79q0-0.88 0.88-0.88l2.53 0q0.88 0 1.44 0.66l4.73 5.41l0-5.19q0-0.88 0.88-0.88l3.65 0q0.88 0 0.88 0.88l0 15.79q0 0.88-0.88 0.88l-3.65 0q-0.88 0-0.88-0.88l0-3l-4.17-5.05l0 8.03q0 0.88-0.88 0.88z';
 
+// Full NICE wordmark path (from original SVG, viewBox 0 0 252.201 72.001)
+const NICE_WORDMARK_PATH = 'M18.601 72.001L3.601 72.001Q0.001 72.001 0.001 68.401L0.001 3.601Q0.001 0.001 3.601 0.001L14.001 0.001Q17.601 0.001 19.901 2.701L39.301 24.901L39.301 3.601Q39.301 0.001 42.901 0.001L57.901 0.001Q61.501 0.001 61.501 3.601L61.501 68.401Q61.501 72.001 57.901 72.001L42.901 72.001Q39.301 72.001 39.301 68.401L39.301 56.101L22.201 35.401L22.201 68.401Q22.201 72.001 18.601 72.001ZM248.601 72.001L202.201 72.001Q198.601 72.001 198.601 68.401L198.601 3.601Q198.601 0.001 202.201 0.001L248.601 0.001Q252.201 0.001 252.201 3.601L252.201 15.301Q252.201 18.901 248.601 18.901L221.001 18.901L221.001 26.601L240.501 26.601Q244.101 26.601 244.101 30.201L244.101 40.901Q244.101 44.501 240.501 44.501L221.001 44.501L221.001 53.101L248.601 53.101Q252.201 53.101 252.201 56.701L252.201 68.401Q252.201 72.001 248.601 72.001ZM119.901 72.001L77.301 72.001Q73.701 72.001 73.701 68.401L73.701 56.501Q73.701 52.901 77.301 52.901L87.201 52.901L87.201 19.301L77.301 19.301Q73.701 19.301 73.701 15.701L73.701 3.601Q73.701 0.001 77.301 0.001L119.901 0.001Q123.501 0.001 123.501 3.601L123.501 15.701Q123.501 19.301 119.901 19.301L110.201 19.301L110.201 52.901L119.901 52.901Q123.501 52.901 123.501 56.501L123.501 68.401Q123.501 72.001 119.901 72.001ZM183.701 72.001L159.301 72.001Q146.701 72.001 140.701 67.001Q134.701 62.001 134.701 51.601L134.701 20.501Q134.701 10.001 140.701 5.001Q146.701 0.001 159.301 0.001L183.701 0.001Q187.301 0.001 187.301 3.601L187.301 15.701Q187.301 19.301 183.701 19.301L163.601 19.301Q157.501 19.301 157.501 24.301L157.501 48.101Q157.501 52.901 163.601 52.901L183.701 52.901Q187.301 52.901 187.301 56.501L187.301 68.401Q187.301 72.001 183.701 72.001Z';
+
+/**
+ * Generate rich SVG badge (yellow wordmark + black counter)
+ */
+function generateRichBadge(count: number | null): string {
+  const countText = count === null ? '?' : formatCount(count);
+
+  const height = 28;
+  const fontSize = 12;
+  const countPadding = 10;
+  const countTextWidth = textWidth(countText, fontSize);
+  const rightWidth = countTextWidth + countPadding * 2;
+
+  // Wordmark area: scale 252.201x72.001 to fit in height with padding
+  const wordmarkPad = 6;
+  const wordmarkHeight = height - wordmarkPad * 2; // 16px
+  const wordmarkScale = wordmarkHeight / 72.001;
+  const wordmarkWidth = Math.ceil(252.201 * wordmarkScale);
+  const leftWidth = wordmarkWidth + wordmarkPad * 2;
+  const totalWidth = leftWidth + rightWidth;
+
+  const countX = leftWidth + rightWidth / 2;
+  const textY = height / 2 + fontSize * 0.36;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${height}">
+  <clipPath id="c">
+    <rect width="${totalWidth}" height="${height}" rx="4" fill="#fff"/>
+  </clipPath>
+  <g clip-path="url(#c)">
+    <rect width="${leftWidth}" height="${height}" fill="#fbbf24"/>
+    <rect x="${leftWidth}" width="${rightWidth}" height="${height}" fill="#000"/>
+  </g>
+  <g transform="translate(${wordmarkPad}, ${wordmarkPad}) scale(${wordmarkScale.toFixed(4)})">
+    <path d="${NICE_WORDMARK_PATH}" fill="#000" stroke="none"/>
+  </g>
+  <g fill="#fbbf24" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="${fontSize}" font-weight="bold">
+    <text x="${countX}" y="${textY}">${escapeXml(countText)}</text>
+  </g>
+</svg>`;
+}
+
 /**
  * Generate SVG badge
  */
 export function generateBadge(count: number | null, options: BadgeOptions = {}): string {
   const theme = normalizeTheme(options.theme);
+  if (theme === 'rich') return generateRichBadge(count);
   const countText = count === null ? '?' : formatCount(count);
   
   const height = 20;
