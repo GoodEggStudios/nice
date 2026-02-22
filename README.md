@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://nice.sbs/button?id=n_iSoPXADYGp0Q"><img src="https://api.nice.sbs/badge/n_iSoPXADYGp0Q.svg" alt="Nice"></a>
+  <a href="https://nice.sbs/button?id=n_iSoPXADYGp0Q"><img src="https://api.nice.sbs/badge/n_iSoPXADYGp0Q.svg?theme=rich" alt="Nice"></a>
   <img src="https://img.shields.io/badge/Pages-deployed-orange?logo=cloudflarepages" alt="Pages">
   <img src="https://img.shields.io/badge/Workers-deployed-orange?logo=cloudflareworkers" alt="Workers">
   <a href="https://github.com/GoodEggStudios/nice/actions/workflows/release.yml"><img src="https://github.com/GoodEggStudios/nice/actions/workflows/release.yml/badge.svg" alt="Release"></a>
@@ -68,8 +68,10 @@ That's it! 🎉
 Display your nice count in any README or markdown file:
 
 ```markdown
-[![Nice](https://api.nice.sbs/badge/n_xxxx.svg)](https://nice.sbs/button?id=n_xxxx)
+[![Nice](https://api.nice.sbs/badge/n_xxxx.svg?theme=rich)](https://nice.sbs/button?id=n_xxxx)
 ```
+
+**Badge themes:** `default` · `dark` · `rich`
 
 ## Themes & Sizes
 

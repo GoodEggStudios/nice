@@ -14,17 +14,17 @@ export async function serveBadge(
   const theme = normalizeTheme(url.searchParams.get('theme') ?? undefined);
 
   // Look up button by publicId in KV
-  let count: number | null = null;
+  let count: number = 0;
   
   try {
     const buttonData = await env.NICE_KV.get(`btn:${publicId}`);
     
     if (buttonData) {
       const button: Button = JSON.parse(buttonData);
-      count = button.count;
+      count = button.count ?? 0;
     }
   } catch {
-    // On error, show "?" - don't break the badge
+    // On error, default to 0 - don't break the badge
   }
 
   const svg = generateBadge(count, { theme });
