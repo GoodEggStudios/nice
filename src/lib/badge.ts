@@ -56,15 +56,15 @@ const NICE_WORDMARK_PATH = 'M18.601 72.001L3.601 72.001Q0.001 72.001 0.001 68.40
 function generateRichBadge(count: number | null): string {
   const countText = count === null ? '?' : formatCount(count);
 
-  const height = 28;
-  const fontSize = 12;
-  const countPadding = 10;
+  const height = 20;
+  const fontSize = 11;
+  const countPadding = 8;
   const countTextWidth = textWidth(countText, fontSize);
   const rightWidth = countTextWidth + countPadding * 2;
 
   // Wordmark area: scale 252.201x72.001 to fit in height with padding
-  const wordmarkPad = 6;
-  const wordmarkHeight = height - wordmarkPad * 2; // 16px
+  const wordmarkPad = 4;
+  const wordmarkHeight = height - wordmarkPad * 2; // 12px
   const wordmarkScale = wordmarkHeight / 72.001;
   const wordmarkWidth = Math.ceil(252.201 * wordmarkScale);
   const leftWidth = wordmarkWidth + wordmarkPad * 2;
@@ -75,7 +75,7 @@ function generateRichBadge(count: number | null): string {
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${height}">
   <clipPath id="c">
-    <rect width="${totalWidth}" height="${height}" rx="4" fill="#fff"/>
+    <rect width="${totalWidth}" height="${height}" rx="3" fill="#fff"/>
   </clipPath>
   <g clip-path="url(#c)">
     <rect width="${leftWidth}" height="${height}" fill="#fbbf24"/>
