@@ -89,7 +89,7 @@ function generateRichBadge(count: number | null): string {
   <g transform="translate(${wordmarkPad}, ${wordmarkPad}) scale(${wordmarkScale.toFixed(4)})">
     <path d="${NICE_WORDMARK_PATH}" fill="#000" stroke="none"/>
   </g>
-  <g fill="#fbbf24" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110">
+  <g fill="#fbbf24" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110" font-weight="normal">
     <text aria-hidden="true" x="${countCenterX}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="${countTextLen}">${escapeXml(countText)}</text>
     <text x="${countCenterX}" y="140" transform="scale(.1)" fill="#fbbf24" textLength="${countTextLen}">${escapeXml(countText)}</text>
   </g>
@@ -155,7 +155,7 @@ export function generateBadge(count: number | null, options: BadgeOptions = {}):
     <text x="${labelX}" y="${shadowY}" fill="#010101" fill-opacity=".3">${escapeXml(labelText)}</text>
     <text x="${labelX}" y="${textY}">${escapeXml(labelText)}</text>
   </g>
-  <g fill="${rightText}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="${fontSize}" font-weight="bold">
+  <g fill="${rightText}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="${fontSize}">
     <text x="${countX}" y="${textY}">${escapeXml(countText)}</text>
   </g>
 </svg>`;
