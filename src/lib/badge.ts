@@ -124,11 +124,11 @@ export function generateBadge(count: number | null, options: BadgeOptions = {}):
   const rightWidth = countTextWidth + countPadding * 2;
   const totalWidth = Math.round(leftWidth + rightWidth);
   
-  // Text positions
-  const labelX = logoWidth + labelPadding + labelTextWidth / 2;
-  const countX = leftWidth + rightWidth / 2;
-  const textY = 14;
-  const shadowY = 15;
+  // Use shields.io scale(.1) technique for precise text rendering
+  const labelTextLen = labelTextWidth * 10;
+  const countTextLen = countTextWidth * 10;
+  const labelCenterX = (logoWidth + labelPadding + labelTextWidth / 2) * 10;
+  const countCenterX = (leftWidth + rightWidth / 2) * 10;
   
   // Colors based on theme
   const leftBg = theme === 'dark' ? '#000' : '#333';
@@ -152,12 +152,13 @@ export function generateBadge(count: number | null, options: BadgeOptions = {}):
   <g transform="translate(${logoLeftPad}, 4) scale(0.67)">
     <path d="${N_LOGO_PATH}" fill="#fbbf24"/>
   </g>
-  <g fill="${leftText}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="${fontSize}">
-    <text x="${labelX}" y="${shadowY}" fill="#010101" fill-opacity=".3">${escapeXml(labelText)}</text>
-    <text x="${labelX}" y="${textY}">${escapeXml(labelText)}</text>
+  <g fill="${leftText}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110">
+    <text aria-hidden="true" x="${labelCenterX}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="${labelTextLen}">${escapeXml(labelText)}</text>
+    <text x="${labelCenterX}" y="140" transform="scale(.1)" fill="${leftText}" textLength="${labelTextLen}">${escapeXml(labelText)}</text>
   </g>
-  <g fill="${rightText}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="${fontSize}">
-    <text x="${countX}" y="${textY}">${escapeXml(countText)}</text>
+  <g fill="${rightText}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110">
+    <text aria-hidden="true" x="${countCenterX}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="${countTextLen}">${escapeXml(countText)}</text>
+    <text x="${countCenterX}" y="140" transform="scale(.1)" fill="${rightText}" textLength="${countTextLen}">${escapeXml(countText)}</text>
   </g>
 </svg>`;
 }
