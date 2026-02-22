@@ -4,7 +4,7 @@
  * Main entry point for Cloudflare Worker
  */
 
-declare const VERSION: string;
+declare const VERSION: string | undefined;
 
 import type { Env } from "./types";
 import { createButton, getButtonStats, updateButton, deleteButton, recordNiceOwner } from "./routes/buttons";
@@ -46,7 +46,7 @@ export default {
         JSON.stringify({
           status: "ok",
           service: "nice",
-          version: VERSION,
+          version: typeof VERSION !== "undefined" ? VERSION : "dev",
         }),
         {
           headers: { "Content-Type": "application/json", ...CORS_HEADERS },
