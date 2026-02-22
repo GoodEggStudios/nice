@@ -79,7 +79,7 @@ jobs:
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          command: deploy --env production
+          command: deploy --env production --define VERSION:\"${{ steps.version.outputs.new }}\"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
