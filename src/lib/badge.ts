@@ -28,11 +28,26 @@ export function formatCount(count: number): string {
 }
 
 /**
- * Calculate text width (approximate for Verdana 11px)
+ * Calculate text width using Verdana character widths at 11px.
+ * Values derived from shields.io's character width table.
  */
-function textWidth(text: string, fontSize: number = 11): number {
-  const avgCharWidth = fontSize * 0.62;
-  return text.length * avgCharWidth;
+const CHAR_WIDTHS: Record<string, number> = {
+  ' ': 3.58, '0': 7.05, '1': 5.29, '2': 6.61, '3': 6.72, '4': 7.05,
+  '5': 6.61, '6': 6.83, '7': 5.95, '8': 6.83, '9': 6.83, '.': 3.58,
+  ',': 3.58, 'k': 6.17, 'K': 7.49, 'M': 8.59, 'a': 6.17, 'b': 6.61,
+  'c': 5.51, 'd': 6.61, 'e': 6.17, 'f': 3.74, 'g': 6.61, 'h': 6.61,
+  'i': 2.86, 'j': 3.52, 'l': 2.86, 'm': 10.12, 'n': 6.61, 'o': 6.61,
+  'p': 6.61, 'q': 6.61, 'r': 4.40, 's': 5.29, 't': 4.18, 'u': 6.61,
+  'v': 5.95, 'w': 8.81, 'x': 5.95, 'y': 5.95, 'z': 5.51, '?': 5.95,
+};
+const DEFAULT_CHAR_WIDTH = 6.83;
+
+function textWidth(text: string): number {
+  let width = 0;
+  for (const ch of text) {
+    width += CHAR_WIDTHS[ch] ?? DEFAULT_CHAR_WIDTH;
+  }
+  return width;
 }
 
 /**
@@ -59,7 +74,7 @@ function generateRichBadge(count: number | null): string {
   const height = 20;
   const countPadding = 6;
   // Use shields.io scale(.1) technique for precise text rendering
-  const countTextLen = textWidth(countText, 11) * 10;
+  const countTextLen = textWidth(countText) * 10;
   const countSectionWidth = Math.round(countTextLen / 10) + countPadding * 2;
 
   // Wordmark area: scale 252.201x72.001 to fit in height with padding
@@ -89,7 +104,7 @@ function generateRichBadge(count: number | null): string {
   <g transform="translate(${wordmarkPad}, ${wordmarkPad}) scale(${wordmarkScale.toFixed(4)})">
     <path d="${NICE_WORDMARK_PATH}" fill="#000" stroke="none"/>
   </g>
-  <g fill="#fbbf24" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110" font-weight="normal">
+  <g fill="#fbbf24" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110">
     <text aria-hidden="true" x="${countCenterX}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="${countTextLen}">${escapeXml(countText)}</text>
     <text x="${countCenterX}" y="140" transform="scale(.1)" fill="#fbbf24" textLength="${countTextLen}">${escapeXml(countText)}</text>
   </g>
@@ -114,8 +129,8 @@ export function generateBadge(count: number | null, options: BadgeOptions = {}):
   const countPadding = 8;
   
   const labelText = 'nice';
-  const labelTextWidth = textWidth(labelText, fontSize);
-  const countTextWidth = textWidth(countText, fontSize);
+  const labelTextWidth = textWidth(labelText);
+  const countTextWidth = textWidth(countText);
   
   // Left section: logo + "nice" text
   const leftWidth = logoWidth + labelTextWidth + labelPadding * 2;
@@ -123,11 +138,11 @@ export function generateBadge(count: number | null, options: BadgeOptions = {}):
   const rightWidth = countTextWidth + countPadding * 2;
   const totalWidth = Math.round(leftWidth + rightWidth);
   
-  // Text positions
-  const labelX = logoWidth + labelPadding + labelTextWidth / 2;
-  const countX = leftWidth + rightWidth / 2;
-  const textY = 14;
-  const shadowY = 15;
+  // Use shields.io scale(.1) technique for precise text rendering
+  const labelTextLen = labelTextWidth * 10;
+  const countTextLen = countTextWidth * 10;
+  const labelCenterX = (logoWidth + labelPadding + labelTextWidth / 2) * 10;
+  const countCenterX = (leftWidth + rightWidth / 2) * 10;
   
   // Colors based on theme
   const leftBg = theme === 'dark' ? '#000' : '#333';
@@ -151,12 +166,13 @@ export function generateBadge(count: number | null, options: BadgeOptions = {}):
   <g transform="translate(${logoLeftPad}, 4) scale(0.67)">
     <path d="${N_LOGO_PATH}" fill="#fbbf24"/>
   </g>
-  <g fill="${leftText}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="${fontSize}">
-    <text x="${labelX}" y="${shadowY}" fill="#010101" fill-opacity=".3">${escapeXml(labelText)}</text>
-    <text x="${labelX}" y="${textY}">${escapeXml(labelText)}</text>
+  <g fill="${leftText}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110">
+    <text aria-hidden="true" x="${labelCenterX}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="${labelTextLen}">${escapeXml(labelText)}</text>
+    <text x="${labelCenterX}" y="140" transform="scale(.1)" fill="${leftText}" textLength="${labelTextLen}">${escapeXml(labelText)}</text>
   </g>
-  <g fill="${rightText}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="${fontSize}">
-    <text x="${countX}" y="${textY}">${escapeXml(countText)}</text>
+  <g fill="${rightText}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110">
+    <text aria-hidden="true" x="${countCenterX}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="${countTextLen}">${escapeXml(countText)}</text>
+    <text x="${countCenterX}" y="140" transform="scale(.1)" fill="${rightText}" textLength="${countTextLen}">${escapeXml(countText)}</text>
   </g>
 </svg>`;
 }
