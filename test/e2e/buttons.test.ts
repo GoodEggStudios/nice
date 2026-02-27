@@ -323,6 +323,30 @@ describe("Button API", () => {
 
       expect(res.status).toBe(404);
     });
+
+    it("should rate limit after 20 requests per IP", async () => {
+      const button = await createButton("https://example.com/rate-test", {
+        restriction: "global",
+      });
+
+      // Fire 20 requests (IP limit)
+      for (let i = 0; i < 20; i++) {
+        const res = await SELF.fetch(
+          `https://api.nice.sbs/api/v1/buttons/${button.private_id}/nice`,
+          { method: "POST" }
+        );
+        expect(res.status).toBe(200);
+      }
+
+      // 21st should be rate limited
+      const res = await SELF.fetch(
+        `https://api.nice.sbs/api/v1/buttons/${button.private_id}/nice`,
+        { method: "POST" }
+      );
+      expect(res.status).toBe(429);
+      const data = await res.json() as { code: string };
+      expect(data.code).toBe("IP_LIMIT");
+    });
   });
 
   describe("DELETE /api/v1/buttons/:private_id - Delete", () => {
