@@ -17,6 +17,8 @@ import {
   sha256,
   checkCreateRateLimit,
   createRateLimitResponse,
+  checkRateLimit,
+  rateLimitResponse,
 } from "../lib";
 
 // Valid themes and sizes
@@ -392,7 +394,7 @@ export async function deleteButton(
  * POST /api/v1/buttons/:private_id/nice - Record a nice (authenticated)
  * 
  * This endpoint allows the button owner to record nices via API.
- * No referrer check, no IP deduplication - full control for the owner.
+ * No referrer check, no IP deduplication - but rate limited to prevent abuse.
  */
 export async function recordNiceOwner(
   request: Request,
@@ -407,7 +409,8 @@ export async function recordNiceOwner(
     );
   }
 
-  // Hash the private ID to look up the public ID
+  // Rate limit by IP to prevent abuse even with valid private ID
+  const ip = getClientIp(request);
   const secretHash = await sha256(privateId);
   const publicId = await env.NICE_KV.get(`secret:${secretHash}`);
 
@@ -416,6 +419,11 @@ export async function recordNiceOwner(
       { error: "Button not found", code: "NOT_FOUND" },
       { status: 404 }
     );
+  }
+
+  const rateLimitResult = await checkRateLimit(env.NICE_KV, ip, publicId);
+  if (!rateLimitResult.allowed) {
+    return rateLimitResponse(rateLimitResult);
   }
 
   // Get button data
