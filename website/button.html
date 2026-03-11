@@ -130,12 +130,16 @@
                 opacity: 1;
                 transform: translateY(0) translateX(0) rotate(0deg) scale(1);
             }
-            80% {
+            15% {
                 opacity: 1;
+                transform: translateY(calc(var(--lift, -120px))) translateX(calc(var(--drift, 0px) * 0.3)) rotate(180deg) scale(1);
+            }
+            60% {
+                opacity: 0.9;
             }
             100% {
                 opacity: 0;
-                transform: translateY(70vh) translateX(var(--drift, 0px)) rotate(720deg) scale(0.3);
+                transform: translateY(60vh) translateX(var(--drift, 0px)) rotate(720deg) scale(0.2);
             }
         }
 
@@ -280,9 +284,9 @@
                 piece.style.width = (4 + Math.random() * 8) + 'px';
                 piece.style.height = shape === 'rectangle' ? (8 + Math.random() * 6) + 'px' : piece.style.width;
                 piece.style.borderRadius = shape === 'circle' ? '50%' : '1px';
-                piece.style.animation = `confetti-fall ${1 + Math.random() * 1.5}s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards`;
-                piece.style.animationDelay = (Math.random() * 0.3) + 's';
+                piece.style.animation = `confetti-fall ${1.8 + Math.random() * 1.2}s cubic-bezier(0.15, 0.8, 0.35, 1) forwards`;
                 piece.style.setProperty('--drift', drift + 'px');
+                piece.style.setProperty('--lift', -(80 + Math.random() * 120) + 'px');
                 
                 container.appendChild(piece);
             }
