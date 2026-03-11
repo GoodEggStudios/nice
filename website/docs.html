@@ -361,6 +361,28 @@
       <tr><td><code>lg</code></td><td>120 × 44px</td></tr>
       <tr><td><code>xl</code></td><td>140 × 52px</td></tr>
     </table>
+
+    <h3 id="multi-nice">Multi-Nice (Clap Mode)</h3>
+    <p>Enable <code>multi_nice</code> on a button to allow visitors to click multiple times — like Medium's clap button.</p>
+    
+    <h4>Enable on creation:</h4>
+    <pre><code>curl -X POST https://api.nice.sbs/api/v1/buttons \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com", "multi_nice": true, "restriction": "global"}'</code></pre>
+    
+    <h4>Enable on existing button:</h4>
+    <pre><code>curl -X PATCH https://api.nice.sbs/api/v1/buttons/YOUR_PRIVATE_ID \
+  -H "Content-Type: application/json" \
+  -d '{"multi_nice": true}'</code></pre>
+    
+    <h4>How it works:</h4>
+    <ul>
+        <li>Visitors can click the button as many times as they like</li>
+        <li>Clicks are debounced client-side (2s) and batched into one API call</li>
+        <li>The button turns gold after clicking but stays clickable</li>
+        <li>IP rate limiting still applies (20/min)</li>
+        <li>Batch endpoint: <code>POST /api/v1/nice/:id/multi</code> with <code>{"count": N}</code> (max 50)</li>
+    </ul>
     
     <h3>Error Codes</h3>
     <table>
