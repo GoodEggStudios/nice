@@ -139,13 +139,13 @@ describe("Multi-Nice", () => {
       expect(data.added).toBe(7);
     });
 
-    it("should cap count at 50 per request", async () => {
+    it("should cap count at 20 per request (matches IP rate limit)", async () => {
       const button = await createButton("https://example.com/batch-cap", { multi_nice: true });
 
       const res = await recordMultiNice(button.public_id, 999);
       const data = await res.json() as { success: boolean; count: number; added: number };
-      expect(data.added).toBe(50);
-      expect(data.count).toBe(50);
+      expect(data.added).toBe(20);
+      expect(data.count).toBe(20);
     });
 
     it("should floor count to 1 for zero or negative", async () => {

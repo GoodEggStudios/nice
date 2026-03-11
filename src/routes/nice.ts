@@ -366,7 +366,7 @@ export async function recordMultiNice(
       return jsonError("Invalid JSON", "INVALID_JSON", 400);
     }
 
-    const niceCount = Math.min(Math.max(Math.floor(body?.count || 1), 1), 50);
+    let niceCount = Math.min(Math.max(Math.floor(body?.count || 1), 1), 20);
 
     // Check referrer
     const referrerCheck = checkReferrer(request, button.url, button.restriction, body?.referrer);
@@ -385,17 +385,16 @@ export async function recordMultiNice(
       else ip = "unknown";
     }
 
+    // Rate limit: check normally (increments counter by 1), then verify
+    // the batch won't exceed limits. This prevents 50x amplification.
     const rateLimitResult = await checkRateLimit(env.NICE_KV, ip, buttonId);
-    if (!rateLimitResult.allowed && rateLimitResult.reason !== "pow_required") {
+    if (!rateLimitResult.allowed) {
       return rateLimitResponse(rateLimitResult);
     }
+    // niceCount already capped to 20 (matching IP rate limit per minute)
 
-    // Increment count by niceCount
-    const countKey = `${COUNT_PREFIX}${buttonId}`;
-    const currentData = await env.NICE_KV.get(countKey);
-    const current = parseInt(currentData || "0", 10) || 0;
-    const newCount = current + niceCount;
-    await env.NICE_KV.put(countKey, newCount.toString());
+    // Increment count using retry logic (same as incrementCount)
+    const newCount = await incrementCountBy(env, buttonId, niceCount);
 
     // Update button's cached count
     button.count = newCount;
@@ -413,6 +412,33 @@ export async function recordMultiNice(
     console.error("recordMultiNice error:", e);
     return jsonError("Internal server error", "INTERNAL_ERROR", 500);
   }
+}
+
+async function incrementCountBy(env: Env, buttonId: string, amount: number): Promise<number> {
+  const countKey = `${COUNT_PREFIX}${buttonId}`;
+  const maxRetries = 3;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const currentData = await env.NICE_KV.get(countKey, { cacheTtl: 60 });
+    const current = parseInt(currentData || "0", 10) || 0;
+    const newCount = current + amount;
+    
+    await env.NICE_KV.put(countKey, newCount.toString());
+    
+    if (attempt < maxRetries - 1) {
+      const verifyData = await env.NICE_KV.get(countKey, { cacheTtl: 60 });
+      const verified = parseInt(verifyData || "0", 10) || 0;
+      if (verified >= newCount) {
+        return newCount;
+      }
+      continue;
+    }
+    
+    return newCount;
+  }
+  
+  const fallback = await env.NICE_KV.get(`${COUNT_PREFIX}${buttonId}`, { cacheTtl: 60 });
+  return (parseInt(fallback || "0", 10) || 0) + amount;
 }
 
 function jsonError(message: string, code: string, status: number): Response {

@@ -381,7 +381,7 @@
         <li>Clicks are debounced client-side (2s) and batched into one API call</li>
         <li>The button turns gold after clicking but stays clickable</li>
         <li>IP rate limiting still applies (20/min)</li>
-        <li>Batch endpoint: <code>POST /api/v1/nice/:id/multi</code> with <code>{"count": N}</code> (max 50)</li>
+        <li>Batch endpoint: <code>POST /api/v1/nice/:id/multi</code> with <code>{"count": N}</code> (max 20 per request)</li>
     </ul>
     
     <h3>Error Codes</h3>

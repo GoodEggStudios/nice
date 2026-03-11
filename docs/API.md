@@ -231,7 +231,7 @@ Batch-record multiple nices in one request. Only works for buttons with `multi_n
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `count` | number | Yes | Number of nices to record (1–50) |
+| `count` | number | Yes | Number of nices to record (1–20) |
 | `fingerprint` | string | No | Device fingerprint |
 | `referrer` | string | No | Page referrer |
 
