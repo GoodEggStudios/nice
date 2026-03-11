@@ -146,6 +146,7 @@ async function recordNice(){
 if(isLoading)return;
 if(hasNiced){btn.classList.add('shake');setTimeout(()=>btn.classList.remove('shake'),300);return;}
 isLoading=true;
+if(parentOrigin){parent.postMessage({type:'nice-clicked',buttonId:BUTTON_ID},parentOrigin);}
 count++;hasNiced=true;btn.classList.add('animating');updateDisplay();
 setTimeout(()=>btn.classList.remove('animating'),300);
 try{
