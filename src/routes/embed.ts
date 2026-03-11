@@ -94,6 +94,7 @@ body{font-family:'Bungee',cursive;background:transparent;display:flex;align-item
 (function(){'use strict';
 const API_BASE='{{API_BASE}}';
 const BUTTON_ID='{{BUTTON_ID}}';
+const IS_MULTI='{{MULTI_NICE}}'==='1';
 const STORAGE_KEY='nice:'+BUTTON_ID;
 const btn=document.getElementById('niceBtn');
 const textEl=document.getElementById('niceText');
@@ -102,7 +103,7 @@ let count=0,hasNiced=false,isLoading=false;
 // Get parent origin for secure postMessage (no referrer = no message)
 let parentOrigin=null;
 try{if(document.referrer){parentOrigin=new URL(document.referrer).origin;}}catch(e){}
-try{hasNiced=localStorage.getItem(STORAGE_KEY)==='1';}catch(e){}
+if(!IS_MULTI){try{hasNiced=localStorage.getItem(STORAGE_KEY)==='1';}catch(e){}}
 function formatCount(n){
 if(n>=1e9)return(n/1e9).toFixed(1).replace(/\\.0$/,'')+'B';
 if(n>=1e6)return(n/1e6).toFixed(1).replace(/\\.0$/,'')+'M';
@@ -136,8 +137,8 @@ const res=await fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID+'/count?fp='+fp);
 if(res.ok){
 const data=await res.json();
 count=data.count||0;
-// Sync has_niced state from server (handles same IP+fingerprint)
-if(data.has_niced&&!hasNiced){hasNiced=true;try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}
+// Sync has_niced state from server (handles same IP+fingerprint) — skip for multi-nice
+if(!IS_MULTI&&data.has_niced&&!hasNiced){hasNiced=true;try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}
 updateDisplay();
 }
 }catch(e){console.error('Nice: Failed to fetch count',e);}
@@ -147,12 +148,12 @@ if(isLoading)return;
 if(hasNiced){btn.classList.add('shake');setTimeout(()=>btn.classList.remove('shake'),300);return;}
 isLoading=true;
 if(parentOrigin){parent.postMessage({type:'nice-clicked',buttonId:BUTTON_ID},parentOrigin);}
-count++;hasNiced=true;btn.classList.add('animating');updateDisplay();
+count++;if(!IS_MULTI){hasNiced=true;}btn.classList.add('animating');updateDisplay();
 setTimeout(()=>btn.classList.remove('animating'),300);
 try{
 const res=await fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fingerprint:getFingerprint(),referrer:document.referrer||''})});
 const data=await res.json();
-if(res.ok){count=data.count;if(data.success||data.reason==='already_niced'){hasNiced=true;try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}if(data.success&&parentOrigin){parent.postMessage({type:'nice-recorded',buttonId:BUTTON_ID,count:count},parentOrigin);}}
+if(res.ok){count=data.count;if(IS_MULTI){hasNiced=false;}else if(data.success||data.reason==='already_niced'){hasNiced=true;try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}if(data.success&&parentOrigin){parent.postMessage({type:'nice-recorded',buttonId:BUTTON_ID,count:count},parentOrigin);}}
 else if(res.status===429){count--;hasNiced=false;btn.classList.remove('niced');}
 updateDisplay();
 }catch(e){count--;hasNiced=false;btn.classList.remove('niced');updateDisplay();console.error('Nice: Failed to record',e);}
@@ -302,6 +303,9 @@ export async function serveEmbedPage(
     });
   }
 
+  // Check for multi-nice mode
+  const isMulti = url.searchParams.get("multi") === "1" ? "1" : "0";
+
   // Get the API base URL from the request
   const apiBase = `${url.protocol}//${url.host}`;
 
@@ -313,7 +317,8 @@ export async function serveEmbedPage(
     .replace(/\{\{API_BASE\}\}/g, apiBase)
     .replace(/\{\{BUTTON_ID\}\}/g, safeButtonId)
     .replace(/\{\{THEME\}\}/g, safeTheme)
-    .replace(/\{\{SIZE\}\}/g, safeSize);
+    .replace(/\{\{SIZE\}\}/g, safeSize)
+    .replace(/\{\{MULTI_NICE\}\}/g, isMulti);
 
   return new Response(html, {
     status: 200,

@@ -40,9 +40,10 @@ function generateEmbedSnippets(
   publicId: string,
   baseUrl: string,
   theme: string,
-  size: string
+  size: string,
+  multiNice?: boolean
 ): { iframe: string; script: string } {
-  const embedUrl = `${baseUrl}/e/${publicId}?theme=${theme}&size=${size}`;
+  const embedUrl = `${baseUrl}/e/${publicId}?theme=${theme}&size=${size}${multiNice ? '&multi=1' : ''}`;
 
   // Iframe dimensions based on size
   const dimensions: Record<string, { w: number; h: number }> = {
@@ -73,6 +74,7 @@ export async function createButton(
     theme?: string;
     size?: string;
     restriction?: string;
+    multi_nice?: boolean;
   };
 
   try {
@@ -148,6 +150,7 @@ export async function createButton(
     restriction,
     creatorIpHash,
     count: 0,
+    multiNice: body.multi_nice || false,
     theme,
     size,
     createdAt: new Date().toISOString(),
@@ -162,7 +165,7 @@ export async function createButton(
   // Generate embed snippets
   const url = new URL(request.url);
   const baseUrl = `${url.protocol}//${url.host}`;
-  const embed = generateEmbedSnippets(publicId, baseUrl, theme, size);
+  const embed = generateEmbedSnippets(publicId, baseUrl, theme, size, button.multiNice);
 
   // Return response with both IDs (private shown only once!)
   return Response.json(
@@ -171,6 +174,7 @@ export async function createButton(
       private_id: privateId, // Only shown once!
       url: body.url,
       restriction,
+      multi_nice: button.multiNice || false,
       theme,
       size,
       count: 0,
@@ -233,6 +237,7 @@ export async function getButtonStats(
     id: publicId,
     url: button.url,
     restriction: button.restriction,
+    multi_nice: button.multiNice || false,
     count: button.count,
     theme: button.theme,
     size: button.size,
@@ -262,6 +267,7 @@ export async function updateButton(
     restriction?: string;
     theme?: string;
     size?: string;
+    multi_nice?: boolean;
   };
 
   try {
@@ -326,6 +332,10 @@ export async function updateButton(
     button.size = body.size;
   }
 
+  if (body.multi_nice !== undefined) {
+    button.multiNice = body.multi_nice;
+  }
+
   // Save updated button
   await env.NICE_KV.put(`btn:${publicId}`, JSON.stringify(button));
 
@@ -343,6 +353,7 @@ export async function updateButton(
     id: publicId,
     url: button.url,
     restriction: button.restriction,
+    multi_nice: button.multiNice || false,
     count: button.count,
     theme: button.theme,
     size: button.size,

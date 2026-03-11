@@ -45,6 +45,7 @@ interface CountResponse {
   count: number;
   button_id: string;
   has_niced?: boolean;
+  multi_nice?: boolean;
 }
 
 /**
@@ -176,29 +177,29 @@ export async function recordNice(
       }
     }
 
-    // Compute visitor hash for deduplication
-    const dailySalt = await getDailySalt(env.NICE_KV);
-    const visitorHash = await computeVisitorHash(ip, fingerprint || "", buttonId, dailySalt);
+    // Deduplication — skip for multi-nice buttons
+    if (!button.multiNice) {
+      const dailySalt = await getDailySalt(env.NICE_KV);
+      const visitorHash = await computeVisitorHash(ip, fingerprint || "", buttonId, dailySalt);
 
-    // Check if already niced
-    const niceKey = `${NICE_PREFIX}${buttonId}:${visitorHash}`;
-    const existingNice = await env.NICE_KV.get(niceKey);
+      const niceKey = `${NICE_PREFIX}${buttonId}:${visitorHash}`;
+      const existingNice = await env.NICE_KV.get(niceKey);
 
-    if (existingNice) {
-      const currentCount = await getCount(env, buttonId);
-      const response: NiceResponse = {
-        success: false,
-        count: currentCount,
-        reason: "already_niced",
-      };
-      return new Response(JSON.stringify(response), {
-        status: 200,
-        headers: noCacheHeaders(),
-      });
+      if (existingNice) {
+        const currentCount = await getCount(env, buttonId);
+        const response: NiceResponse = {
+          success: false,
+          count: currentCount,
+          reason: "already_niced",
+        };
+        return new Response(JSON.stringify(response), {
+          status: 200,
+          headers: noCacheHeaders(),
+        });
+      }
+
+      await env.NICE_KV.put(niceKey, "1", { expirationTtl: DEDUPE_TTL_SECONDS });
     }
-
-    // Record the nice with TTL for deduplication
-    await env.NICE_KV.put(niceKey, "1", { expirationTtl: DEDUPE_TTL_SECONDS });
 
     // Increment count
     const newCount = await incrementCount(env, buttonId);
@@ -243,26 +244,35 @@ export async function getNiceCount(
     // Return 0 for non-existent buttons (enumeration protection)
     const count = buttonExists ? await getCount(env, buttonId) : 0;
 
-    // Check if visitor has already niced
+    // Check if visitor has already niced (skip for multi-nice buttons)
     const url = new URL(request.url);
     const fingerprint = url.searchParams.get("fp") || "";
     
     let hasNiced = false;
+    let isMultiNice = false;
     if (buttonExists) {
-      let ip = request.headers.get("CF-Connecting-IP");
-      if (!ip) {
-        const xff = request.headers.get("X-Forwarded-For");
-        if (xff) {
-          ip = xff.split(",")[0].trim();
-        }
+      const buttonData = await env.NICE_KV.get(`${BUTTON_PREFIX}${buttonId}`);
+      if (buttonData) {
+        const button: Button = JSON.parse(buttonData);
+        isMultiNice = !!button.multiNice;
       }
-      
-      if (ip) {
-        const dailySalt = await getDailySalt(env.NICE_KV);
-        const visitorHash = await computeVisitorHash(ip, fingerprint, buttonId, dailySalt);
-        const niceKey = `${NICE_PREFIX}${buttonId}:${visitorHash}`;
-        const existingNice = await env.NICE_KV.get(niceKey);
-        hasNiced = !!existingNice;
+
+      if (!isMultiNice) {
+        let ip = request.headers.get("CF-Connecting-IP");
+        if (!ip) {
+          const xff = request.headers.get("X-Forwarded-For");
+          if (xff) {
+            ip = xff.split(",")[0].trim();
+          }
+        }
+        
+        if (ip) {
+          const dailySalt = await getDailySalt(env.NICE_KV);
+          const visitorHash = await computeVisitorHash(ip, fingerprint, buttonId, dailySalt);
+          const niceKey = `${NICE_PREFIX}${buttonId}:${visitorHash}`;
+          const existingNice = await env.NICE_KV.get(niceKey);
+          hasNiced = !!existingNice;
+        }
       }
     }
 
@@ -270,6 +280,7 @@ export async function getNiceCount(
       count,
       button_id: buttonId,
       has_niced: hasNiced,
+      multi_nice: isMultiNice,
     };
 
     return new Response(JSON.stringify(response), {
