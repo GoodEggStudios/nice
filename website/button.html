@@ -106,43 +106,6 @@
             color: #fbbf24;
         }
 
-        /* Confetti */
-        .confetti-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            overflow: hidden;
-            z-index: 1000;
-        }
-
-        .confetti-piece {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            opacity: 0;
-        }
-
-        @keyframes confetti-fall {
-            0% {
-                opacity: 1;
-                transform: translateY(0) translateX(0) rotate(0deg) scale(1);
-            }
-            15% {
-                opacity: 1;
-                transform: translateY(calc(var(--lift, -120px))) translateX(calc(var(--drift, 0px) * 0.3)) rotate(180deg) scale(1);
-            }
-            60% {
-                opacity: 0.9;
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(60vh) translateX(var(--drift, 0px)) rotate(720deg) scale(0.2);
-            }
-        }
-
         @media (max-width: 600px) {
             .logo {
                 font-size: 20px;
@@ -231,12 +194,16 @@
 
         // Listen for nice events from the embed iframe
         window.addEventListener('message', function(event) {
-            // Only accept messages from the API origin
             if (!event.origin.includes('nice.sbs')) return;
-            
             const data = event.data;
+            
+            // Fire confetti instantly on click (before API response)
+            if (data.type === 'nice-clicked' && data.buttonId === buttonId) {
+                launchConfetti();
+            }
+            
+            // Update count when API confirms
             if (data.type === 'nice-recorded' && data.buttonId === buttonId) {
-                // Update count display
                 const countEl = document.querySelector('.count');
                 const labelEl = document.querySelector('.count-label');
                 if (countEl) {
@@ -246,54 +213,48 @@
                 if (labelEl) {
                     labelEl.textContent = data.count === 1 ? 'nice' : 'nices';
                 }
-                
-                // Shoot confetti!
-                launchConfetti();
             }
         });
 
         function launchConfetti() {
-            const container = document.createElement('div');
-            container.className = 'confetti-container';
-            document.body.appendChild(container);
-
             const buttonFrame = document.querySelector('.button-frame');
-            const rect = buttonFrame ? buttonFrame.getBoundingClientRect() : { left: window.innerWidth / 2 - 60, right: window.innerWidth / 2 + 60, top: window.innerHeight / 2 };
-            
-            const colors = ['#fbbf24', '#f59e0b', '#fcd34d', '#fde68a', '#fffbeb', '#fff'];
-            const shapes = ['square', 'circle', 'rectangle'];
-            const particleCount = 40;
+            const rect = buttonFrame
+                ? buttonFrame.getBoundingClientRect()
+                : { left: window.innerWidth / 2 - 60, right: window.innerWidth / 2 + 60, top: window.innerHeight / 2, width: 120 };
 
-            for (let i = 0; i < particleCount; i++) {
-                const piece = document.createElement('div');
-                piece.className = 'confetti-piece';
-                
-                const color = colors[Math.floor(Math.random() * colors.length)];
-                const shape = shapes[Math.floor(Math.random() * shapes.length)];
-                
-                // Start from across the top of the button area
-                const startX = rect.left + Math.random() * (rect.right - rect.left);
-                const startY = rect.top - 10;
-                
-                // Spread out horizontally as they fall
-                const drift = (Math.random() - 0.5) * 200;
-                
-                piece.style.left = startX + 'px';
-                piece.style.top = startY + 'px';
-                piece.style.backgroundColor = color;
-                piece.style.width = (4 + Math.random() * 8) + 'px';
-                piece.style.height = shape === 'rectangle' ? (8 + Math.random() * 6) + 'px' : piece.style.width;
-                piece.style.borderRadius = shape === 'circle' ? '50%' : '1px';
-                piece.style.animation = `confetti-fall ${1.8 + Math.random() * 1.2}s cubic-bezier(0.15, 0.8, 0.35, 1) forwards`;
-                piece.style.setProperty('--drift', drift + 'px');
-                piece.style.setProperty('--lift', -(80 + Math.random() * 120) + 'px');
-                
-                container.appendChild(piece);
-            }
+            // Origin point in canvas-confetti coordinates (0-1)
+            const originX = (rect.left + rect.width / 2) / window.innerWidth;
+            const originY = rect.top / window.innerHeight;
 
-            // Clean up after animation
-            setTimeout(() => container.remove(), 3000);
+            // Burst 1: main burst upward
+            confetti({
+                particleCount: 30,
+                spread: 55,
+                startVelocity: 45,
+                origin: { x: originX, y: originY },
+                colors: ['#fbbf24', '#f59e0b', '#fcd34d', '#fde68a', '#fff'],
+                gravity: 0.8,
+                ticks: 200,
+                decay: 0.92,
+                scalar: 0.9,
+            });
+
+            // Burst 2: wider, slightly delayed for fullness
+            setTimeout(() => {
+                confetti({
+                    particleCount: 20,
+                    spread: 80,
+                    startVelocity: 35,
+                    origin: { x: originX, y: originY },
+                    colors: ['#fbbf24', '#f59e0b', '#fcd34d', '#fde68a'],
+                    gravity: 0.7,
+                    ticks: 200,
+                    decay: 0.94,
+                    scalar: 0.7,
+                });
+            }, 80);
         }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </body>
 </html>
