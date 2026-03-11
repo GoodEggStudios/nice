@@ -106,43 +106,6 @@
             color: #fbbf24;
         }
 
-        /* Confetti */
-        .confetti-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            overflow: hidden;
-            z-index: 1000;
-        }
-
-        .confetti-piece {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            opacity: 0;
-        }
-
-        @keyframes confetti-fall {
-            0% {
-                opacity: 1;
-                transform: translateY(0) translateX(0) rotate(0deg) scale(1);
-            }
-            15% {
-                opacity: 1;
-                transform: translateY(calc(var(--lift, -120px))) translateX(calc(var(--drift, 0px) * 0.3)) rotate(180deg) scale(1);
-            }
-            60% {
-                opacity: 0.9;
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(60vh) translateX(var(--drift, 0px)) rotate(720deg) scale(0.2);
-            }
-        }
-
         @media (max-width: 600px) {
             .logo {
                 font-size: 20px;
@@ -231,12 +194,16 @@
 
         // Listen for nice events from the embed iframe
         window.addEventListener('message', function(event) {
-            // Only accept messages from the API origin
             if (!event.origin.includes('nice.sbs')) return;
-            
             const data = event.data;
+
+            // Confetti fires instantly on click (before API round trip)
+            if (data.type === 'nice-clicked' && data.buttonId === buttonId) {
+                launchConfetti();
+            }
+
+            // Count updates when API confirms
             if (data.type === 'nice-recorded' && data.buttonId === buttonId) {
-                // Update count display
                 const countEl = document.querySelector('.count');
                 const labelEl = document.querySelector('.count-label');
                 if (countEl) {
@@ -246,53 +213,87 @@
                 if (labelEl) {
                     labelEl.textContent = data.count === 1 ? 'nice' : 'nices';
                 }
-                
-                // Shoot confetti!
-                launchConfetti();
             }
         });
 
+        // Simple physics-based confetti — no libraries
         function launchConfetti() {
-            const container = document.createElement('div');
-            container.className = 'confetti-container';
-            document.body.appendChild(container);
+            const canvas = document.createElement('canvas');
+            canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1000';
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            document.body.appendChild(canvas);
+            const ctx = canvas.getContext('2d');
 
             const buttonFrame = document.querySelector('.button-frame');
-            const rect = buttonFrame ? buttonFrame.getBoundingClientRect() : { left: window.innerWidth / 2 - 60, right: window.innerWidth / 2 + 60, top: window.innerHeight / 2 };
-            
-            const colors = ['#fbbf24', '#f59e0b', '#fcd34d', '#fde68a', '#fffbeb', '#fff'];
-            const shapes = ['square', 'circle', 'rectangle'];
-            const particleCount = 40;
+            const rect = buttonFrame
+                ? buttonFrame.getBoundingClientRect()
+                : { left: canvas.width / 2 - 60, width: 120, top: canvas.height / 2 };
+            const originX = rect.left + rect.width / 2;
+            const originY = rect.top;
 
-            for (let i = 0; i < particleCount; i++) {
-                const piece = document.createElement('div');
-                piece.className = 'confetti-piece';
-                
-                const color = colors[Math.floor(Math.random() * colors.length)];
-                const shape = shapes[Math.floor(Math.random() * shapes.length)];
-                
-                // Start from across the top of the button area
-                const startX = rect.left + Math.random() * (rect.right - rect.left);
-                const startY = rect.top - 10;
-                
-                // Spread out horizontally as they fall
-                const drift = (Math.random() - 0.5) * 200;
-                
-                piece.style.left = startX + 'px';
-                piece.style.top = startY + 'px';
-                piece.style.backgroundColor = color;
-                piece.style.width = (4 + Math.random() * 8) + 'px';
-                piece.style.height = shape === 'rectangle' ? (8 + Math.random() * 6) + 'px' : piece.style.width;
-                piece.style.borderRadius = shape === 'circle' ? '50%' : '1px';
-                piece.style.animation = `confetti-fall ${1.8 + Math.random() * 1.2}s cubic-bezier(0.15, 0.8, 0.35, 1) forwards`;
-                piece.style.setProperty('--drift', drift + 'px');
-                piece.style.setProperty('--lift', -(80 + Math.random() * 120) + 'px');
-                
-                container.appendChild(piece);
+            const colors = ['#fbbf24', '#f59e0b', '#fcd34d', '#fde68a', '#fff'];
+            const GRAVITY = 0.12;       // pixels/frame² — gentle pull
+            const DRAG = 0.98;          // air resistance
+            const PARTICLE_COUNT = 35;
+
+            const particles = [];
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                const angle = -Math.PI / 2 + (Math.random() - 0.5) * 1.2; // spread ~70° upward
+                const speed = 6 + Math.random() * 8;
+                particles.push({
+                    x: originX + (Math.random() - 0.5) * rect.width * 0.6,
+                    y: originY,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    w: 4 + Math.random() * 5,
+                    h: 3 + Math.random() * 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rotation: Math.random() * 360,
+                    rotSpeed: (Math.random() - 0.5) * 12,
+                    opacity: 1,
+                });
             }
 
-            // Clean up after animation
-            setTimeout(() => container.remove(), 3000);
+            let frame = 0;
+            function tick() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let alive = false;
+
+                for (const p of particles) {
+                    // Physics
+                    p.vy += GRAVITY;            // gravity accelerates downward
+                    p.vx *= DRAG;               // air resistance
+                    p.vy *= DRAG;
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.rotation += p.rotSpeed;
+
+                    // Fade out after they start falling (vy > 0 means falling)
+                    if (p.vy > 0 && frame > 20) {
+                        p.opacity -= 0.008;
+                    }
+
+                    if (p.opacity <= 0 || p.y > canvas.height) continue;
+                    alive = true;
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rotation * Math.PI / 180);
+                    ctx.globalAlpha = p.opacity;
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    ctx.restore();
+                }
+
+                frame++;
+                if (alive && frame < 300) {
+                    requestAnimationFrame(tick);
+                } else {
+                    canvas.remove();
+                }
+            }
+            requestAnimationFrame(tick);
         }
     </script>
 </body>
