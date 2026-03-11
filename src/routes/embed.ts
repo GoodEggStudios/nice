@@ -151,7 +151,7 @@ setTimeout(()=>btn.classList.remove('animating'),300);
 try{
 const res=await fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fingerprint:getFingerprint(),referrer:document.referrer||''})});
 const data=await res.json();
-if(res.ok){count=data.count;if(data.success||data.reason==='already_niced'){hasNiced=true;try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}}
+if(res.ok){count=data.count;if(data.success||data.reason==='already_niced'){hasNiced=true;try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}if(data.success&&parentOrigin){parent.postMessage({type:'nice-recorded',buttonId:BUTTON_ID,count:count},parentOrigin);}}
 else if(res.status===429){count--;hasNiced=false;btn.classList.remove('niced');}
 updateDisplay();
 }catch(e){count--;hasNiced=false;btn.classList.remove('niced');updateDisplay();console.error('Nice: Failed to record',e);}
