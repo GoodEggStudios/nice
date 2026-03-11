@@ -333,6 +333,88 @@ async function incrementCount(env: Env, buttonId: string): Promise<number> {
   return (parseInt(fallback || "0", 10) || 0) + 1;
 }
 
+/**
+ * POST /api/v1/nice/:button_id/multi - Record multiple nices in one request
+ * 
+ * Body: { count: number, fingerprint?: string, referrer?: string }
+ * Only works for buttons with multiNice enabled. Max 50 per request.
+ */
+export async function recordMultiNice(
+  request: Request,
+  env: Env,
+  buttonId: string
+): Promise<Response> {
+  try {
+    if (!isValidPublicId(buttonId)) {
+      return jsonError("Invalid button ID format", "INVALID_BUTTON_ID", 400);
+    }
+
+    const buttonData = await env.NICE_KV.get(`${BUTTON_PREFIX}${buttonId}`);
+    if (!buttonData) {
+      return jsonError("Button not found", "BUTTON_NOT_FOUND", 404);
+    }
+    const button: Button = JSON.parse(buttonData);
+
+    if (!button.multiNice) {
+      return jsonError("Multi-nice not enabled for this button", "MULTI_NICE_DISABLED", 403);
+    }
+
+    let body: { count?: number; fingerprint?: string; referrer?: string };
+    try {
+      body = (await request.json()) as typeof body;
+    } catch {
+      return jsonError("Invalid JSON", "INVALID_JSON", 400);
+    }
+
+    const niceCount = Math.min(Math.max(Math.floor(body?.count || 1), 1), 50);
+
+    // Check referrer
+    const referrerCheck = checkReferrer(request, button.url, button.restriction, body?.referrer);
+    if (!referrerCheck.allowed) {
+      return new Response(
+        JSON.stringify({ error: referrerCheck.error, code: "REFERRER_DENIED" }),
+        { status: 403, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Rate limit by IP
+    let ip = request.headers.get("CF-Connecting-IP");
+    if (!ip) {
+      const xff = request.headers.get("X-Forwarded-For");
+      if (xff) ip = xff.split(",")[0].trim();
+      else ip = "unknown";
+    }
+
+    const rateLimitResult = await checkRateLimit(env.NICE_KV, ip, buttonId);
+    if (!rateLimitResult.allowed && rateLimitResult.reason !== "pow_required") {
+      return rateLimitResponse(rateLimitResult);
+    }
+
+    // Increment count by niceCount
+    const countKey = `${COUNT_PREFIX}${buttonId}`;
+    const currentData = await env.NICE_KV.get(countKey);
+    const current = parseInt(currentData || "0", 10) || 0;
+    const newCount = current + niceCount;
+    await env.NICE_KV.put(countKey, newCount.toString());
+
+    // Update button's cached count
+    button.count = newCount;
+    await env.NICE_KV.put(`${BUTTON_PREFIX}${buttonId}`, JSON.stringify(button));
+
+    return new Response(JSON.stringify({
+      success: true,
+      count: newCount,
+      added: niceCount,
+    }), {
+      status: 200,
+      headers: noCacheHeaders(),
+    });
+  } catch (e) {
+    console.error("recordMultiNice error:", e);
+    return jsonError("Internal server error", "INTERNAL_ERROR", 500);
+  }
+}
+
 function jsonError(message: string, code: string, status: number): Response {
   return new Response(JSON.stringify({ error: message, code }), {
     status,
