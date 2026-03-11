@@ -164,7 +164,7 @@ count++;hasNiced=true;pendingMultiCount++;
 btn.classList.add('animating');updateDisplay();
 setTimeout(()=>btn.classList.remove('animating'),150);
 clearTimeout(multiTimer);
-multiTimer=setTimeout(flushMultiNice,500);
+multiTimer=setTimeout(flushMultiNice,2000);
 return;
 }
 // Single-nice: immediate API call
