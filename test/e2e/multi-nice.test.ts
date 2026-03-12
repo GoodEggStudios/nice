@@ -35,8 +35,8 @@ async function recordMultiNice(publicId: string, count: number) {
   });
 }
 
-async function getCount(publicId: string) {
-  const res = await SELF.fetch(`https://api.nice.sbs/api/v1/nice/${publicId}/count`);
+async function getCount(publicId: string, fp = "fp1") {
+  const res = await SELF.fetch(`https://api.nice.sbs/api/v1/nice/${publicId}/count?fp=${fp}`);
   return res.json() as Promise<{ count: number; has_niced: boolean; multi_nice: boolean }>;
 }
 
