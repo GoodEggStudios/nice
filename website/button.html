@@ -80,6 +80,20 @@
             margin-top: -8px;
         }
 
+        .button-url {
+            display: block;
+            font-size: 13px;
+            color: #888;
+            text-decoration: none;
+            margin-bottom: 32px;
+            word-break: break-all;
+            max-width: 400px;
+        }
+
+        .button-url:hover {
+            color: #fbbf24;
+        }
+
         .loading {
             color: #666;
             font-size: 16px;
@@ -161,7 +175,10 @@
                 const count = data.count || 0;
                 const multiParam = data.multi_nice ? '&multi=1' : '';
 
+                const urlHtml = data.url ? `<a href="${data.url}" class="button-url" target="_blank" rel="noopener">${data.url}</a>` : '';
+
                 content.innerHTML = `
+                    ${urlHtml}
                     <div class="button-frame">
                         <iframe 
                             src="${API_BASE}/e/${id}?theme=dark&size=lg${multiParam}"
