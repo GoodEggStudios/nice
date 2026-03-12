@@ -1,0 +1,45 @@
+meta {
+  name: Record Multi Nice
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/nice/{{buttonId}}/multi
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "count": 5,
+    "fingerprint": "test-fingerprint-123"
+  }
+}
+
+docs {
+  # Record Multiple Nices (Batch)
+  
+  Records multiple nices in one request. Only works for buttons with `multi_nice` enabled.
+  The embed uses this with client-side debouncing (2s) to batch rapid clicks.
+  
+  ## Parameters
+  
+  | Field | Type | Required | Description |
+  |-------|------|----------|-------------|
+  | `count` | number | Yes | Number of nices to record (1–20) |
+  | `fingerprint` | string | No | Device fingerprint |
+  | `referrer` | string | No | Page referrer |
+  
+  ## Response
+  
+  **Success:**
+  ```json
+  {"success": true, "count": 48, "added": 5}
+  ```
+  
+  **Multi-nice not enabled:**
+  ```json
+  {"error": "Multi-nice not enabled for this button", "code": "MULTI_NICE_DISABLED"}
+  ```
+}

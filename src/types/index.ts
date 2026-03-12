@@ -18,6 +18,7 @@ export interface Button {
   restriction: RestrictionMode; // Referrer verification mode
   creatorIpHash: string; // SHA256 of creator IP (for rate limiting)
   count: number;
+  multiNice?: boolean; // Allow multiple nices per visitor (clap-style)
   theme?: string; // Default theme
   size?: string; // Default size
   createdAt: string;

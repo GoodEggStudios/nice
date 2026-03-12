@@ -159,11 +159,12 @@
 
                 const data = await res.json();
                 const count = data.count || 0;
+                const multiParam = data.multi_nice ? '&multi=1' : '';
 
                 content.innerHTML = `
                     <div class="button-frame">
                         <iframe 
-                            src="${API_BASE}/e/${id}?theme=dark&size=lg"
+                            src="${API_BASE}/e/${id}?theme=dark&size=lg${multiParam}"
                             style="border:none; width:120px; height:44px;"
                             scrolling="no"
                             frameborder="0"

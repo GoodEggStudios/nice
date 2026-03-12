@@ -45,6 +45,7 @@ interface CountResponse {
   count: number;
   button_id: string;
   has_niced?: boolean;
+  multi_nice?: boolean;
 }
 
 /**
@@ -176,15 +177,14 @@ export async function recordNice(
       }
     }
 
-    // Compute visitor hash for deduplication
+    // Deduplication
     const dailySalt = await getDailySalt(env.NICE_KV);
     const visitorHash = await computeVisitorHash(ip, fingerprint || "", buttonId, dailySalt);
-
-    // Check if already niced
     const niceKey = `${NICE_PREFIX}${buttonId}:${visitorHash}`;
     const existingNice = await env.NICE_KV.get(niceKey);
 
-    if (existingNice) {
+    if (existingNice && !button.multiNice) {
+      // Single-nice: block repeat nices
       const currentCount = await getCount(env, buttonId);
       const response: NiceResponse = {
         success: false,
@@ -197,8 +197,10 @@ export async function recordNice(
       });
     }
 
-    // Record the nice with TTL for deduplication
-    await env.NICE_KV.put(niceKey, "1", { expirationTtl: DEDUPE_TTL_SECONDS });
+    // Write visitor marker (for both single and multi — tracks has_niced state)
+    if (!existingNice) {
+      await env.NICE_KV.put(niceKey, "1", { expirationTtl: DEDUPE_TTL_SECONDS });
+    }
 
     // Increment count
     const newCount = await incrementCount(env, buttonId);
@@ -243,17 +245,27 @@ export async function getNiceCount(
     // Return 0 for non-existent buttons (enumeration protection)
     const count = buttonExists ? await getCount(env, buttonId) : 0;
 
-    // Check if visitor has already niced
+    // Check if visitor has already niced (for both single and multi-nice)
     const url = new URL(request.url);
     const fingerprint = url.searchParams.get("fp") || "";
     
     let hasNiced = false;
+    let isMultiNice = false;
     if (buttonExists) {
+      const buttonData = await env.NICE_KV.get(`${BUTTON_PREFIX}${buttonId}`);
+      if (buttonData) {
+        const button: Button = JSON.parse(buttonData);
+        isMultiNice = !!button.multiNice;
+      }
+
+      // Check has_niced for both single and multi-nice (multi uses it for gold colour)
       let ip = request.headers.get("CF-Connecting-IP");
       if (!ip) {
         const xff = request.headers.get("X-Forwarded-For");
         if (xff) {
           ip = xff.split(",")[0].trim();
+        } else {
+          ip = "unknown";
         }
       }
       
@@ -270,6 +282,7 @@ export async function getNiceCount(
       count,
       button_id: buttonId,
       has_niced: hasNiced,
+      multi_nice: isMultiNice,
     };
 
     return new Response(JSON.stringify(response), {
@@ -320,6 +333,123 @@ async function incrementCount(env: Env, buttonId: string): Promise<number> {
   
   const fallback = await env.NICE_KV.get(`${COUNT_PREFIX}${buttonId}`, { cacheTtl: 60 });
   return (parseInt(fallback || "0", 10) || 0) + 1;
+}
+
+/**
+ * POST /api/v1/nice/:button_id/multi - Record multiple nices in one request
+ * 
+ * Body: { count: number, fingerprint?: string, referrer?: string }
+ * Only works for buttons with multiNice enabled. Max 50 per request.
+ */
+export async function recordMultiNice(
+  request: Request,
+  env: Env,
+  buttonId: string
+): Promise<Response> {
+  try {
+    if (!isValidPublicId(buttonId)) {
+      return jsonError("Invalid button ID format", "INVALID_BUTTON_ID", 400);
+    }
+
+    const buttonData = await env.NICE_KV.get(`${BUTTON_PREFIX}${buttonId}`);
+    if (!buttonData) {
+      return jsonError("Button not found", "BUTTON_NOT_FOUND", 404);
+    }
+    const button: Button = JSON.parse(buttonData);
+
+    if (!button.multiNice) {
+      return jsonError("Multi-nice not enabled for this button", "MULTI_NICE_DISABLED", 403);
+    }
+
+    let body: { count?: number; fingerprint?: string; referrer?: string };
+    try {
+      body = (await request.json()) as typeof body;
+    } catch {
+      return jsonError("Invalid JSON", "INVALID_JSON", 400);
+    }
+
+    let niceCount = Math.min(Math.max(Math.floor(body?.count || 1), 1), 20);
+
+    // Check referrer
+    const referrerCheck = checkReferrer(request, button.url, button.restriction, body?.referrer);
+    if (!referrerCheck.allowed) {
+      return new Response(
+        JSON.stringify({ error: referrerCheck.error, code: "REFERRER_DENIED" }),
+        { status: 403, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Rate limit by IP
+    let ip = request.headers.get("CF-Connecting-IP");
+    if (!ip) {
+      const xff = request.headers.get("X-Forwarded-For");
+      if (xff) ip = xff.split(",")[0].trim();
+      else ip = "unknown";
+    }
+
+    // Rate limit: check normally (increments counter by 1), then verify
+    // the batch won't exceed limits. This prevents 50x amplification.
+    const rateLimitResult = await checkRateLimit(env.NICE_KV, ip, buttonId);
+    if (!rateLimitResult.allowed) {
+      return rateLimitResponse(rateLimitResult);
+    }
+    // niceCount already capped to 20 (matching IP rate limit per minute)
+
+    // Write visitor marker for has_niced tracking on reload
+    const dailySalt = await getDailySalt(env.NICE_KV);
+    const visitorHash = await computeVisitorHash(ip, body?.fingerprint || "", buttonId, dailySalt);
+    const niceKey = `${NICE_PREFIX}${buttonId}:${visitorHash}`;
+    const existingMarker = await env.NICE_KV.get(niceKey);
+    if (!existingMarker) {
+      await env.NICE_KV.put(niceKey, "1", { expirationTtl: DEDUPE_TTL_SECONDS });
+    }
+
+    // Increment count using retry logic (same as incrementCount)
+    const newCount = await incrementCountBy(env, buttonId, niceCount);
+
+    // Update button's cached count
+    button.count = newCount;
+    await env.NICE_KV.put(`${BUTTON_PREFIX}${buttonId}`, JSON.stringify(button));
+
+    return new Response(JSON.stringify({
+      success: true,
+      count: newCount,
+      added: niceCount,
+    }), {
+      status: 200,
+      headers: noCacheHeaders(),
+    });
+  } catch (e) {
+    console.error("recordMultiNice error:", e);
+    return jsonError("Internal server error", "INTERNAL_ERROR", 500);
+  }
+}
+
+async function incrementCountBy(env: Env, buttonId: string, amount: number): Promise<number> {
+  const countKey = `${COUNT_PREFIX}${buttonId}`;
+  const maxRetries = 3;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const currentData = await env.NICE_KV.get(countKey, { cacheTtl: 60 });
+    const current = parseInt(currentData || "0", 10) || 0;
+    const newCount = current + amount;
+    
+    await env.NICE_KV.put(countKey, newCount.toString());
+    
+    if (attempt < maxRetries - 1) {
+      const verifyData = await env.NICE_KV.get(countKey, { cacheTtl: 60 });
+      const verified = parseInt(verifyData || "0", 10) || 0;
+      if (verified >= newCount) {
+        return newCount;
+      }
+      continue;
+    }
+    
+    return newCount;
+  }
+  
+  const fallback = await env.NICE_KV.get(`${COUNT_PREFIX}${buttonId}`, { cacheTtl: 60 });
+  return (parseInt(fallback || "0", 10) || 0) + amount;
 }
 
 function jsonError(message: string, code: string, status: number): Response {

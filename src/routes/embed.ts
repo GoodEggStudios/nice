@@ -94,6 +94,7 @@ body{font-family:'Bungee',cursive;background:transparent;display:flex;align-item
 (function(){'use strict';
 const API_BASE='{{API_BASE}}';
 const BUTTON_ID='{{BUTTON_ID}}';
+const IS_MULTI='{{MULTI_NICE}}'==='1';
 const STORAGE_KEY='nice:'+BUTTON_ID;
 const btn=document.getElementById('niceBtn');
 const textEl=document.getElementById('niceText');
@@ -113,8 +114,9 @@ function updateDisplay(){
 if(count>0){countEl.textContent=formatCount(count);countEl.style.display='';}else{countEl.textContent='';countEl.style.display='none';}
 if(hasNiced){
 btn.classList.add('niced');
-textEl.textContent="Nice'd";
+textEl.textContent=IS_MULTI?"Nice":"Nice'd";
 }else{
+btn.classList.remove('niced');
 textEl.textContent='Nice';
 }
 notifyResize();
@@ -136,13 +138,37 @@ const res=await fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID+'/count?fp='+fp);
 if(res.ok){
 const data=await res.json();
 count=data.count||0;
-// Sync has_niced state from server (handles same IP+fingerprint)
+// Sync has_niced state from server (for gold colour on reload)
 if(data.has_niced&&!hasNiced){hasNiced=true;try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}
 updateDisplay();
 }
 }catch(e){console.error('Nice: Failed to fetch count',e);}
 }
+// Multi-nice: debounce clicks, batch into one API call
+let pendingMultiCount=0;
+let multiTimer=null;
+function flushMultiNice(){
+if(pendingMultiCount<=0)return;
+const batch=pendingMultiCount;
+pendingMultiCount=0;
+fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID+'/multi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({count:batch,fingerprint:getFingerprint(),referrer:document.referrer||''})})
+.then(r=>r.json()).then(data=>{
+if(data.success){count=data.count;if(parentOrigin){parent.postMessage({type:'nice-recorded',buttonId:BUTTON_ID,count:count},parentOrigin);}}
+updateDisplay();
+}).catch(e=>{count-=batch;updateDisplay();console.error('Nice: batch failed',e);});
+}
 async function recordNice(){
+if(IS_MULTI){
+// Optimistic local update + debounced API call
+if(parentOrigin&&!hasNiced){parent.postMessage({type:'nice-clicked',buttonId:BUTTON_ID},parentOrigin);}
+count++;hasNiced=true;pendingMultiCount++;
+btn.classList.add('animating');updateDisplay();
+setTimeout(()=>btn.classList.remove('animating'),150);
+clearTimeout(multiTimer);
+multiTimer=setTimeout(flushMultiNice,2000);
+return;
+}
+// Single-nice: immediate API call
 if(isLoading)return;
 if(hasNiced){btn.classList.add('shake');setTimeout(()=>btn.classList.remove('shake'),300);return;}
 isLoading=true;
@@ -152,7 +178,7 @@ setTimeout(()=>btn.classList.remove('animating'),300);
 try{
 const res=await fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fingerprint:getFingerprint(),referrer:document.referrer||''})});
 const data=await res.json();
-if(res.ok){count=data.count;if(data.success||data.reason==='already_niced'){hasNiced=true;try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}if(data.success&&parentOrigin){parent.postMessage({type:'nice-recorded',buttonId:BUTTON_ID,count:count},parentOrigin);}}
+if(res.ok){count=data.count;if(data.success||data.reason==='already_niced'){try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}if(data.success&&parentOrigin){parent.postMessage({type:'nice-recorded',buttonId:BUTTON_ID,count:count},parentOrigin);}}
 else if(res.status===429){count--;hasNiced=false;btn.classList.remove('niced');}
 updateDisplay();
 }catch(e){count--;hasNiced=false;btn.classList.remove('niced');updateDisplay();console.error('Nice: Failed to record',e);}
@@ -163,6 +189,7 @@ try{const res=await fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID+'/count');if(!res.o
 catch(e){btn.classList.add('disabled');}
 }
 btn.addEventListener('click',recordNice);
+if(IS_MULTI){window.addEventListener('beforeunload',flushMultiNice);}
 if(BUTTON_ID){checkButton();fetchCount();}else{btn.classList.add('disabled');}
 setTimeout(notifyResize,100);
 })();
@@ -302,6 +329,9 @@ export async function serveEmbedPage(
     });
   }
 
+  // Check for multi-nice mode
+  const isMulti = url.searchParams.get("multi") === "1" ? "1" : "0";
+
   // Get the API base URL from the request
   const apiBase = `${url.protocol}//${url.host}`;
 
@@ -313,7 +343,8 @@ export async function serveEmbedPage(
     .replace(/\{\{API_BASE\}\}/g, apiBase)
     .replace(/\{\{BUTTON_ID\}\}/g, safeButtonId)
     .replace(/\{\{THEME\}\}/g, safeTheme)
-    .replace(/\{\{SIZE\}\}/g, safeSize);
+    .replace(/\{\{SIZE\}\}/g, safeSize)
+    .replace(/\{\{MULTI_NICE\}\}/g, isMulti);
 
   return new Response(html, {
     status: 200,

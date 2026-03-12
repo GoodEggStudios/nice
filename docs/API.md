@@ -57,6 +57,7 @@ Content-Type: application/json
 | `url` | string | Yes | Content URL where the button will be embedded |
 | `theme` | string | No | `light` (default), `dark`, `minimal`, `mono-dark`, `mono-light` |
 | `size` | string | No | `xs`, `sm`, `md` (default), `lg`, `xl` |
+| `multi_nice` | boolean | No | Enable clap-style multi-nice (default: `false`) |
 
 **Response (201 Created):**
 ```json
@@ -120,6 +121,7 @@ Update button settings. Requires the private ID.
 | `restriction` | string | No | `url`, `domain`, `global` |
 | `theme` | string | No | `light`, `dark`, `minimal`, `mono-dark`, `mono-light` |
 | `size` | string | No | `xs`, `sm`, `md`, `lg`, `xl` |
+| `multi_nice` | boolean | No | Enable/disable clap-style multi-nice. **Note:** toggling this changes the deduplication model — single-nice enforces one per visitor per day, multi-nice allows unlimited. |
 
 **Response (200 OK):**
 ```json
@@ -210,6 +212,48 @@ Record a "nice" on a button.
 }
 ```
 
+### Record Multiple Nices (Multi-Nice Only)
+
+```http
+POST /api/v1/nice/:public_id/multi
+Content-Type: application/json
+
+{
+  "count": 5,
+  "fingerprint": "abc123",
+  "referrer": "https://example.com"
+}
+```
+
+Batch-record multiple nices in one request. Only works for buttons with `multi_nice` enabled. Used by the embed's client-side debounce to reduce API calls.
+
+**Parameters:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `count` | number | Yes | Number of nices to record (1–20) |
+| `fingerprint` | string | No | Device fingerprint |
+| `referrer` | string | No | Page referrer |
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "count": 48,
+  "added": 5
+}
+```
+
+**Response (403) — Multi-nice not enabled:**
+```json
+{
+  "error": "Multi-nice not enabled for this button",
+  "code": "MULTI_NICE_DISABLED"
+}
+```
+
+---
+
 ### Get Nice Count
 
 ```http
@@ -227,7 +271,8 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 {
   "count": 43,
   "button_id": "n_x7Kf9mQ2",
-  "has_niced": true
+  "has_niced": true,
+  "multi_nice": false
 }
 ```
 
@@ -235,7 +280,8 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 |-------|-------------|
 | `count` | Total nice count |
 | `button_id` | The button ID |
-| `has_niced` | Whether the current visitor (by IP + fingerprint) has already niced |
+| `has_niced` | Whether the current visitor has already niced (always `false` for multi-nice buttons) |
+| `multi_nice` | Whether this button allows multiple nices per visitor |
 
 ---
 
@@ -250,6 +296,14 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
   title="Nice button">
 </iframe>
 ```
+
+**Query Parameters:**
+
+| Param | Default | Description |
+|-------|---------|-------------|
+| `theme` | `light` | Button theme |
+| `size` | `md` | Button size |
+| `multi` | `0` | Set to `1` for multi-nice (clap) mode |
 
 ### Themes
 
@@ -285,6 +339,7 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 | `INVALID_RESTRICTION` | 400 | Invalid restriction mode |
 | `NOT_FOUND` | 404 | Button not found |
 | `REFERRER_DENIED` | 403 | Nice not allowed from this referrer |
+| `MULTI_NICE_DISABLED` | 403 | Multi-nice endpoint called on a single-nice button |
 | `IP_LIMIT` | 429 | Rate limit exceeded |
 | `BUTTON_LIMIT` | 429 | Button rate limit exceeded |
 

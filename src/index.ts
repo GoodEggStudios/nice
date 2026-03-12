@@ -8,7 +8,7 @@ declare const VERSION: string | undefined;
 
 import type { Env } from "./types";
 import { createButton, getButtonStats, updateButton, deleteButton, recordNiceOwner } from "./routes/buttons";
-import { recordNice, getNiceCount } from "./routes/nice";
+import { recordNice, recordMultiNice, getNiceCount } from "./routes/nice";
 import { serveEmbedScript, serveEmbedPage } from "./routes/embed";
 import { serveBadge } from "./routes/badge";
 
@@ -111,6 +111,11 @@ export default {
       else if (method === "POST" && path.match(/^\/api\/v1\/buttons\/[^/]+\/nice$/)) {
         const privateId = path.split("/")[4];
         response = await recordNiceOwner(request, privateId, env);
+      }
+      // POST /api/v1/nice/:button_id/multi - Record multiple nices (public, multi-nice only)
+      else if (method === "POST" && path.match(/^\/api\/v1\/nice\/[^/]+\/multi$/)) {
+        const buttonId = path.split("/")[4];
+        response = await recordMultiNice(request, env, buttonId);
       }
       // POST /api/v1/nice/:button_id - Record a nice (public)
       else if (method === "POST" && path.match(/^\/api\/v1\/nice\/[^/]+$/)) {
