@@ -121,7 +121,7 @@ Update button settings. Requires the private ID.
 | `restriction` | string | No | `url`, `domain`, `global` |
 | `theme` | string | No | `light`, `dark`, `minimal`, `mono-dark`, `mono-light` |
 | `size` | string | No | `xs`, `sm`, `md`, `lg`, `xl` |
-| `multi_nice` | boolean | No | Enable/disable clap-style multi-nice |
+| `multi_nice` | boolean | No | Enable/disable clap-style multi-nice. **Note:** toggling this changes the deduplication model — single-nice enforces one per visitor per day, multi-nice allows unlimited. |
 
 **Response (200 OK):**
 ```json
