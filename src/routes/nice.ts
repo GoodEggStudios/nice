@@ -46,6 +46,7 @@ interface CountResponse {
   button_id: string;
   has_niced?: boolean;
   multi_nice?: boolean;
+  url?: string;
 }
 
 /**
@@ -251,11 +252,13 @@ export async function getNiceCount(
     
     let hasNiced = false;
     let isMultiNice = false;
+    let buttonUrl: string | undefined;
     if (buttonExists) {
       const buttonData = await env.NICE_KV.get(`${BUTTON_PREFIX}${buttonId}`);
       if (buttonData) {
         const button: Button = JSON.parse(buttonData);
         isMultiNice = !!button.multiNice;
+        buttonUrl = button.url;
       }
 
       // Check has_niced for both single and multi-nice (multi uses it for gold colour)
@@ -283,6 +286,7 @@ export async function getNiceCount(
       button_id: buttonId,
       has_niced: hasNiced,
       multi_nice: isMultiNice,
+      url: buttonUrl,
     };
 
     return new Response(JSON.stringify(response), {
