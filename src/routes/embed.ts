@@ -103,7 +103,7 @@ let count=0,hasNiced=false,isLoading=false;
 // Get parent origin for secure postMessage (no referrer = no message)
 let parentOrigin=null;
 try{if(document.referrer){parentOrigin=new URL(document.referrer).origin;}}catch(e){}
-if(!IS_MULTI){try{hasNiced=localStorage.getItem(STORAGE_KEY)==='1';}catch(e){}}
+try{hasNiced=localStorage.getItem(STORAGE_KEY)==='1';}catch(e){}
 function formatCount(n){
 if(n>=1e9)return(n/1e9).toFixed(1).replace(/\\.0$/,'')+'B';
 if(n>=1e6)return(n/1e6).toFixed(1).replace(/\\.0$/,'')+'M';
@@ -114,8 +114,9 @@ function updateDisplay(){
 if(count>0){countEl.textContent=formatCount(count);countEl.style.display='';}else{countEl.textContent='';countEl.style.display='none';}
 if(hasNiced){
 btn.classList.add('niced');
-textEl.textContent="Nice'd";
+textEl.textContent=IS_MULTI?"Nice":"Nice'd";
 }else{
+btn.classList.remove('niced');
 textEl.textContent='Nice';
 }
 notifyResize();
@@ -137,8 +138,8 @@ const res=await fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID+'/count?fp='+fp);
 if(res.ok){
 const data=await res.json();
 count=data.count||0;
-// Sync has_niced state from server (handles same IP+fingerprint) — skip for multi-nice
-if(!IS_MULTI&&data.has_niced&&!hasNiced){hasNiced=true;try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}
+// Sync has_niced state from server (for gold colour on reload)
+if(data.has_niced&&!hasNiced){hasNiced=true;try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}
 updateDisplay();
 }
 }catch(e){console.error('Nice: Failed to fetch count',e);}
@@ -188,6 +189,7 @@ try{const res=await fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID+'/count');if(!res.o
 catch(e){btn.classList.add('disabled');}
 }
 btn.addEventListener('click',recordNice);
+if(IS_MULTI){window.addEventListener('beforeunload',flushMultiNice);}
 if(BUTTON_ID){checkButton();fetchCount();}else{btn.classList.add('disabled');}
 setTimeout(notifyResize,100);
 })();

@@ -177,27 +177,28 @@ export async function recordNice(
       }
     }
 
-    // Deduplication — skip for multi-nice buttons
-    if (!button.multiNice) {
-      const dailySalt = await getDailySalt(env.NICE_KV);
-      const visitorHash = await computeVisitorHash(ip, fingerprint || "", buttonId, dailySalt);
+    // Deduplication
+    const dailySalt = await getDailySalt(env.NICE_KV);
+    const visitorHash = await computeVisitorHash(ip, fingerprint || "", buttonId, dailySalt);
+    const niceKey = `${NICE_PREFIX}${buttonId}:${visitorHash}`;
+    const existingNice = await env.NICE_KV.get(niceKey);
 
-      const niceKey = `${NICE_PREFIX}${buttonId}:${visitorHash}`;
-      const existingNice = await env.NICE_KV.get(niceKey);
+    if (existingNice && !button.multiNice) {
+      // Single-nice: block repeat nices
+      const currentCount = await getCount(env, buttonId);
+      const response: NiceResponse = {
+        success: false,
+        count: currentCount,
+        reason: "already_niced",
+      };
+      return new Response(JSON.stringify(response), {
+        status: 200,
+        headers: noCacheHeaders(),
+      });
+    }
 
-      if (existingNice) {
-        const currentCount = await getCount(env, buttonId);
-        const response: NiceResponse = {
-          success: false,
-          count: currentCount,
-          reason: "already_niced",
-        };
-        return new Response(JSON.stringify(response), {
-          status: 200,
-          headers: noCacheHeaders(),
-        });
-      }
-
+    // Write visitor marker (for both single and multi — tracks has_niced state)
+    if (!existingNice) {
       await env.NICE_KV.put(niceKey, "1", { expirationTtl: DEDUPE_TTL_SECONDS });
     }
 
@@ -257,22 +258,21 @@ export async function getNiceCount(
         isMultiNice = !!button.multiNice;
       }
 
-      if (!isMultiNice) {
-        let ip = request.headers.get("CF-Connecting-IP");
-        if (!ip) {
-          const xff = request.headers.get("X-Forwarded-For");
-          if (xff) {
-            ip = xff.split(",")[0].trim();
-          }
+      // Check has_niced for both single and multi-nice (multi uses it for gold colour)
+      let ip = request.headers.get("CF-Connecting-IP");
+      if (!ip) {
+        const xff = request.headers.get("X-Forwarded-For");
+        if (xff) {
+          ip = xff.split(",")[0].trim();
         }
-        
-        if (ip) {
-          const dailySalt = await getDailySalt(env.NICE_KV);
-          const visitorHash = await computeVisitorHash(ip, fingerprint, buttonId, dailySalt);
-          const niceKey = `${NICE_PREFIX}${buttonId}:${visitorHash}`;
-          const existingNice = await env.NICE_KV.get(niceKey);
-          hasNiced = !!existingNice;
-        }
+      }
+      
+      if (ip) {
+        const dailySalt = await getDailySalt(env.NICE_KV);
+        const visitorHash = await computeVisitorHash(ip, fingerprint, buttonId, dailySalt);
+        const niceKey = `${NICE_PREFIX}${buttonId}:${visitorHash}`;
+        const existingNice = await env.NICE_KV.get(niceKey);
+        hasNiced = !!existingNice;
       }
     }
 
@@ -392,6 +392,15 @@ export async function recordMultiNice(
       return rateLimitResponse(rateLimitResult);
     }
     // niceCount already capped to 20 (matching IP rate limit per minute)
+
+    // Write visitor marker for has_niced tracking on reload
+    const dailySalt = await getDailySalt(env.NICE_KV);
+    const visitorHash = await computeVisitorHash(ip, body?.fingerprint || "", buttonId, dailySalt);
+    const niceKey = `${NICE_PREFIX}${buttonId}:${visitorHash}`;
+    const existingMarker = await env.NICE_KV.get(niceKey);
+    if (!existingMarker) {
+      await env.NICE_KV.put(niceKey, "1", { expirationTtl: DEDUPE_TTL_SECONDS });
+    }
 
     // Increment count using retry logic (same as incrementCount)
     const newCount = await incrementCountBy(env, buttonId, niceCount);

@@ -183,11 +183,11 @@ describe("Multi-Nice", () => {
       expect(data.multi_nice).toBe(true);
     });
 
-    it("should always return has_niced false for multi-nice", async () => {
+    it("should return has_niced true after nicing a multi-nice button", async () => {
       const button = await createButton("https://example.com/count-niced", { multi_nice: true });
       await recordNice(button.public_id);
       const data = await getCount(button.public_id);
-      expect(data.has_niced).toBe(false);
+      expect(data.has_niced).toBe(true);
     });
 
     it("should return correct count after batch", async () => {
