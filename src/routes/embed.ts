@@ -160,7 +160,7 @@ updateDisplay();
 async function recordNice(){
 if(IS_MULTI){
 // Optimistic local update + debounced API call
-if(parentOrigin&&!hasNiced){parent.postMessage({type:'nice-clicked',buttonId:BUTTON_ID},parentOrigin);}
+if(parentOrigin){parent.postMessage({type:'nice-clicked',buttonId:BUTTON_ID,count:count+1},parentOrigin);}
 count++;hasNiced=true;pendingMultiCount++;
 btn.classList.add('animating');updateDisplay();
 setTimeout(()=>btn.classList.remove('animating'),150);
@@ -172,7 +172,7 @@ return;
 if(isLoading)return;
 if(hasNiced){btn.classList.add('shake');setTimeout(()=>btn.classList.remove('shake'),300);return;}
 isLoading=true;
-if(parentOrigin){parent.postMessage({type:'nice-clicked',buttonId:BUTTON_ID},parentOrigin);}
+// Single-nice: confetti via nice-recorded on success (not here)
 count++;hasNiced=true;btn.classList.add('animating');updateDisplay();
 setTimeout(()=>btn.classList.remove('animating'),300);
 try{
