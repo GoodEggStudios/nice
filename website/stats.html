@@ -375,6 +375,13 @@
             <button type="button" class="restriction-btn" data-value="global">Global</button>
           </div>
         </div>
+        <div class="stat-row" style="display:flex;align-items:center;justify-content:space-between;">
+          <span class="stat-label">Multi-Nice</span>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="multiNiceToggle" style="width:18px;height:18px;accent-color:#fbbf24;cursor:pointer;">
+            <span style="font-size:0.75rem;color:#888;" id="multiNiceLabel">Off</span>
+          </label>
+        </div>
         <div class="stat-row">
           <span class="stat-label">Public ID</span>
           <span class="stat-value" id="publicId"></span>
@@ -548,6 +555,13 @@
       urlLink.textContent = truncateUrl(data.url);
       
       setActiveRestriction(data.restriction);
+      
+      // Multi-nice toggle
+      const multiToggle = document.getElementById('multiNiceToggle');
+      const multiLabel = document.getElementById('multiNiceLabel');
+      multiToggle.checked = !!data.multi_nice;
+      multiLabel.textContent = data.multi_nice ? 'On' : 'Off';
+      
       document.getElementById('publicId').textContent = data.id;
       document.getElementById('created').textContent = formatDate(data.created_at);
       
@@ -631,6 +645,33 @@
     });
     
     // Load on page ready
+    // Multi-nice toggle handler
+    document.getElementById('multiNiceToggle').addEventListener('change', async (e) => {
+      const privateId = window.PRIVATE_ID;
+      if (!privateId) return;
+      const checked = e.target.checked;
+      const label = document.getElementById('multiNiceLabel');
+      label.textContent = 'Saving...';
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/buttons/${privateId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ multi_nice: checked })
+        });
+        if (res.ok) {
+          label.textContent = checked ? 'On' : 'Off';
+        } else {
+          e.target.checked = !checked;
+          label.textContent = !checked ? 'On' : 'Off';
+          alert('Failed to update multi-nice');
+        }
+      } catch (err) {
+        e.target.checked = !checked;
+        label.textContent = !checked ? 'On' : 'Off';
+        alert('Failed to update multi-nice');
+      }
+    });
+
     loadStats();
   </script>
 </body>
