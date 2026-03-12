@@ -473,6 +473,16 @@
         </div>
         <div class="restriction-desc" id="restrictionDesc">Only readers of this exact page can nice (recommended)</div>
       </div>
+
+      <div class="form-group">
+        <label>Multi-Nice</label>
+        <div class="options-grid">
+          <label class="option" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="multiNice" style="width:18px;height:18px;accent-color:#fbbf24;cursor:pointer;">
+            <span class="option-label">Allow multiple nices per person (clap-style)</span>
+          </label>
+        </div>
+      </div>
       
       <div class="preview-section">
         <div class="preview-label">Preview</div>
@@ -735,7 +745,7 @@
         const response = await fetch('https://api.nice.sbs/api/v1/buttons', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url, theme, size, restriction })
+          body: JSON.stringify({ url, theme, size, restriction, multi_nice: document.getElementById('multiNice').checked })
         });
         
         const data = await response.json();
