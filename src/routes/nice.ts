@@ -245,7 +245,7 @@ export async function getNiceCount(
     // Return 0 for non-existent buttons (enumeration protection)
     const count = buttonExists ? await getCount(env, buttonId) : 0;
 
-    // Check if visitor has already niced (skip for multi-nice buttons)
+    // Check if visitor has already niced (for both single and multi-nice)
     const url = new URL(request.url);
     const fingerprint = url.searchParams.get("fp") || "";
     
