@@ -264,6 +264,8 @@ export async function getNiceCount(
         const xff = request.headers.get("X-Forwarded-For");
         if (xff) {
           ip = xff.split(",")[0].trim();
+        } else {
+          ip = "unknown";
         }
       }
       
