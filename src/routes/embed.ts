@@ -160,7 +160,7 @@ updateDisplay();
 async function recordNice(){
 if(IS_MULTI){
 // Optimistic local update + debounced API call
-if(parentOrigin&&!hasNiced){parent.postMessage({type:'nice-clicked',buttonId:BUTTON_ID},parentOrigin);}
+if(parentOrigin){parent.postMessage({type:'nice-clicked',buttonId:BUTTON_ID,count:count+1},parentOrigin);}
 count++;hasNiced=true;pendingMultiCount++;
 btn.classList.add('animating');updateDisplay();
 setTimeout(()=>btn.classList.remove('animating'),150);
