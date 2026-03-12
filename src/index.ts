@@ -71,11 +71,11 @@ export default {
     }
     if (method === "GET" && path.match(/^\/embed\/[^/]+$/)) {
       const buttonId = path.split("/")[2];
-      return serveEmbedPage(request, buttonId);
+      return serveEmbedPage(request, buttonId, env);
     }
     if (method === "GET" && path.match(/^\/e\/[^/]+$/)) {
       const buttonId = path.split("/")[2];
-      return serveEmbedPage(request, buttonId);
+      return serveEmbedPage(request, buttonId, env);
     }
 
     // Badge route /badge/:publicId.svg

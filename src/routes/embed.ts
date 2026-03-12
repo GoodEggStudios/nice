@@ -288,7 +288,8 @@ function isValidButtonIdFormat(id: string): boolean {
  */
 export async function serveEmbedPage(
   request: Request,
-  buttonId: string
+  buttonId: string,
+  env?: Env
 ): Promise<Response> {
   const url = new URL(request.url);
   const theme = url.searchParams.get("theme") || "light";
@@ -329,8 +330,21 @@ export async function serveEmbedPage(
     });
   }
 
-  // Check for multi-nice mode
-  const isMulti = url.searchParams.get("multi") === "1" ? "1" : "0";
+  // Check for multi-nice mode: query param takes priority, then look up button config from KV
+  let isMulti = url.searchParams.get("multi") === "1" ? "1" : "0";
+  if (isMulti === "0" && env?.NICE_KV) {
+    try {
+      const buttonData = await env.NICE_KV.get(`btn:${buttonId}`);
+      if (buttonData) {
+        const button = JSON.parse(buttonData);
+        if (button.multiNice) {
+          isMulti = "1";
+        }
+      }
+    } catch (e) {
+      // Fail open — default to single-nice
+    }
+  }
 
   // Get the API base URL from the request
   const apiBase = `${url.protocol}//${url.host}`;
