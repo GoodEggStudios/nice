@@ -198,8 +198,9 @@
             if (!event.origin.includes('nice.sbs')) return;
             const data = event.data;
 
-            // Fires on every click — update count locally + confetti
+            // Multi-nice: fires on every click — update count locally + confetti
             if (data.type === 'nice-clicked' && data.buttonId === buttonId) {
+                window._isMultiNice = true;
                 launchConfetti();
                 // Update count instantly from embed's local count
                 const countEl = document.querySelector('.count');
@@ -213,7 +214,7 @@
                 }
             }
 
-            // Sync with server-confirmed count (corrects any drift)
+            // Server confirmed — update count + confetti for single-nice
             if (data.type === 'nice-recorded' && data.buttonId === buttonId) {
                 const countEl = document.querySelector('.count');
                 const labelEl = document.querySelector('.count-label');
@@ -223,6 +224,12 @@
                 }
                 if (labelEl) {
                     labelEl.textContent = data.count === 1 ? 'nice' : 'nices';
+                }
+                // Single-nice: confetti on first successful nice
+                // (multi-nice confetti is handled by nice-clicked)
+                if (!window._isMultiNice && !window._hasConfettied) {
+                    launchConfetti();
+                    window._hasConfettied = true;
                 }
             }
         });
