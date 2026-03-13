@@ -141,8 +141,8 @@
     <a href="/" class="logo">NICE</a>
 
     <div class="button-container">
-        <div id="content">
-            <p class="loading">Loading...</p>
+        <div id="content" aria-live="polite">
+            <p class="loading" role="status">Loading...</p>
         </div>
     </div>
 
@@ -177,7 +177,16 @@
                 const count = data.count || 0;
                 const multiParam = data.multi_nice ? '&multi=1' : '';
 
-                const urlHtml = data.url ? `<a href="${data.url}" class="button-url" target="_blank" rel="noopener">${data.url}</a>` : '';
+                function escapeHtml(s) {
+                    const d = document.createElement('div');
+                    d.textContent = s;
+                    return d.innerHTML;
+                }
+                function sanitiseUrl(u) {
+                    try { const p = new URL(u); return ['http:', 'https:'].includes(p.protocol) ? p.href : null; } catch { return null; }
+                }
+                const safeUrl = data.url ? sanitiseUrl(data.url) : null;
+                const urlHtml = safeUrl ? `<a href="${escapeHtml(safeUrl)}" class="button-url" target="_blank" rel="noopener">${escapeHtml(safeUrl)}</a>` : '';
 
                 content.innerHTML = `
                     ${urlHtml}

@@ -186,7 +186,15 @@
     }
     
     .option input {
-      display: none;
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .option:focus-within {
+      outline: 2px solid #fbbf24;
+      outline-offset: 2px;
     }
     
     .option-label {
@@ -449,10 +457,10 @@
       <div class="form-group">
         <label for="urlInput">Content URL <span class="label-hint">(the page where this button will be embedded)</span></label>
         <div class="url-input-group">
-          <button type="button" class="protocol-btn https" id="protocolBtn">https://</button>
-          <input type="text" class="url-input" id="urlInput" name="url" placeholder="example.com/my-article" required>
+          <button type="button" class="protocol-btn https" id="protocolBtn" aria-label="Toggle protocol between HTTPS and HTTP">https://</button>
+          <input type="text" class="url-input" id="urlInput" name="url" placeholder="example.com/my-article" required aria-describedby="urlError">
         </div>
-        <div class="url-error" id="urlError">Please enter a valid URL</div>
+        <div class="url-error" id="urlError" role="alert">Please enter a valid URL</div>
       </div>
       
       <div class="form-group">
@@ -562,7 +570,7 @@
         <div class="result-label">Private ID</div>
         <div class="result-value private-id-row">
           <span id="privateId"></span>
-          <button type="button" class="btn-copy-inline" id="copyPrivateBtn" title="Copy Private ID">
+          <button type="button" class="btn-copy-inline" id="copyPrivateBtn" title="Copy Private ID" aria-label="Copy private ID">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -575,7 +583,7 @@
         <div class="result-label">Embed Snippet</div>
         <div class="snippet-container">
           <pre class="snippet" id="snippet"></pre>
-          <button type="button" class="btn-copy" id="copyBtn">Copy</button>
+          <button type="button" class="btn-copy" id="copyBtn" aria-label="Copy embed snippet">Copy</button>
         </div>
       </div>
       
@@ -584,7 +592,7 @@
         <div class="badge-preview" id="badgePreview"></div>
         <div class="snippet-container">
           <pre class="snippet" id="badgeSnippet"></pre>
-          <button type="button" class="btn-copy" id="copyBadgeBtn">Copy</button>
+          <button type="button" class="btn-copy" id="copyBadgeBtn" aria-label="Copy badge markdown">Copy</button>
         </div>
       </div>
       
