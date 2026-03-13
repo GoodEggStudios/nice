@@ -27,6 +27,7 @@ body{font-family:'Bungee',cursive;background:transparent;display:flex;align-item
 .nice-button{display:inline-flex;align-items:center;border:none;font-family:'Bungee',cursive;cursor:pointer;transition:all .15s ease;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;text-transform:uppercase;letter-spacing:0.5px}
 .nice-button:hover{transform:scale(1.05)}
 .nice-button:active{transform:scale(0.95)}
+.nice-button:focus-visible{outline:2px solid #fbbf24;outline-offset:2px}
 
 /* Size variants */
 .size-xs .nice-button{gap:4px;padding:4px 8px;border-radius:4px;font-size:10px}
@@ -86,9 +87,9 @@ body{font-family:'Bungee',cursive;background:transparent;display:flex;align-item
 </style>
 </head>
 <body class="theme-{{THEME}} size-{{SIZE}}">
-<button class="nice-button" id="niceBtn">
+<button class="nice-button" id="niceBtn" aria-label="Nice this" aria-pressed="false">
 <span class="nice-text" id="niceText">Nice</span>
-<span class="nice-count" id="niceCount"></span>
+<span class="nice-count" id="niceCount" aria-live="polite"></span>
 </button>
 <script>
 (function(){'use strict';
@@ -114,9 +115,11 @@ function updateDisplay(){
 if(count>0){countEl.textContent=formatCount(count);countEl.style.display='';}else{countEl.textContent='';countEl.style.display='none';}
 if(hasNiced){
 btn.classList.add('niced');
+btn.setAttribute('aria-pressed','true');
 textEl.textContent=IS_MULTI?"Nice":"Nice'd";
 }else{
 btn.classList.remove('niced');
+btn.setAttribute('aria-pressed','false');
 textEl.textContent='Nice';
 }
 notifyResize();
@@ -228,6 +231,7 @@ body{font-family:'Bungee',cursive;background:transparent;display:flex;align-item
 .nice-button{display:inline-flex;align-items:center;border:none;font-family:'Bungee',cursive;cursor:pointer;transition:all .15s ease;-webkit-user-select:none;user-select:none;text-transform:uppercase;letter-spacing:0.5px}
 .nice-button:hover{transform:scale(1.05)}
 .nice-button:active{transform:scale(0.95)}
+.nice-button:focus-visible{outline:2px solid #fbbf24;outline-offset:2px}
 .size-xl .nice-button{gap:8px;padding:8px 16px;border-radius:8px;font-size:16px}
 .size-xl .nice-count{font-size:14px}
 .size-lg .nice-button{gap:7px;padding:7px 14px;border-radius:7px;font-size:14px}
@@ -256,9 +260,9 @@ body{font-family:'Bungee',cursive;background:transparent;display:flex;align-item
 </style>
 </head>
 <body class="theme-{{THEME}} size-{{SIZE}}">
-<button class="nice-button" id="niceBtn">
+<button class="nice-button" id="niceBtn" aria-label="Nice this" aria-pressed="false">
 <span class="nice-text" id="niceText">Nice</span>
-<span class="nice-count" id="niceCount">42</span>
+<span class="nice-count" id="niceCount" aria-live="polite">42</span>
 </button>
 <script>
 const btn=document.getElementById('niceBtn');
