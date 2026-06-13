@@ -141,7 +141,13 @@ describe("Rate Limiting", () => {
       };
 
       const response = createRateLimitResponse(result);
-      const body = await response.json();
+      const body = (await response.json()) as {
+        code: string;
+        limits: {
+          hourly: { limit: number; remaining: number };
+          daily: { limit: number; remaining: number };
+        };
+      };
 
       expect(body.code).toBe("HOURLY_LIMIT");
       expect(body.limits.hourly.limit).toBe(10);
@@ -160,7 +166,12 @@ describe("Rate Limiting", () => {
       };
 
       const response = createRateLimitResponse(result);
-      const body = await response.json();
+      const body = (await response.json()) as {
+        code: string;
+        limits: {
+          daily: { remaining: number };
+        };
+      };
 
       expect(body.code).toBe("DAILY_LIMIT");
       expect(body.limits.daily.remaining).toBe(0);
