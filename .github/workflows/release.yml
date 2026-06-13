@@ -83,7 +83,7 @@ jobs:
           command: deploy --env production --define VERSION:'"${{ steps.version.outputs.new }}"'
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ steps.version.outputs.new }}
           name: v${{ steps.version.outputs.new }}
