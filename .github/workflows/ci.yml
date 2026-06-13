@@ -10,6 +10,11 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   verify:
     name: Verify
@@ -28,7 +33,28 @@ jobs:
         run: npm run typecheck
 
       - name: Unit tests
-        run: npm run test:unit
+        run: |
+          mkdir -p test-results
+          npm run test:unit -- --reporter=default --reporter=junit --outputFile.junit=test-results/unit.xml
 
       - name: E2E tests
-        run: npm run test:e2e
+        run: |
+          mkdir -p test-results
+          npm run test:e2e -- --reporter=default --reporter=junit --outputFile.junit=test-results/e2e.xml
+
+      - name: Publish test report
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always() && !cancelled()
+        with:
+          files: test-results/**/*.xml
+          check_name: Test Results
+          comment_mode: always
+          report_individual_runs: true
+
+      - name: Upload test reports
+        uses: actions/upload-artifact@v4
+        if: always() && !cancelled()
+        with:
+          name: test-results
+          path: test-results/
+          if-no-files-found: ignore
