@@ -77,7 +77,7 @@ jobs:
           cat /tmp/changelog.md
 
       - name: Deploy to production
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           command: deploy --env production --define VERSION:'"${{ steps.version.outputs.new }}"'
