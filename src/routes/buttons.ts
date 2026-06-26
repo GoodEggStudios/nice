@@ -55,7 +55,7 @@ function generateEmbedSnippets(
   };
   const dim = dimensions[size] || dimensions.md;
 
-  const iframe = `<iframe src="${embedUrl}" style="border:none;width:${dim.w}px;height:${dim.h}px;" title="Nice button"></iframe>`;
+  const iframe = `<iframe src="${embedUrl}" style="background:transparent;border:none;overflow:hidden;display:block;width:${dim.w}px;height:${dim.h}px;" scrolling="no" frameborder="0" allowtransparency="true" title="Nice button"></iframe>`;
   const script = `<script src="${baseUrl}/embed.js" data-button="${publicId}" data-theme="${theme}" data-size="${size}" async></script>`;
 
   return { iframe, script };
