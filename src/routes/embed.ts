@@ -24,7 +24,7 @@ const EMBED_HTML = `<!DOCTYPE html>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{background:transparent}
-body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-content:center;padding:2px}
+body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-content:center}
 .nice-button{display:inline-flex;align-items:center;border:none;font-family:'Bungee',cursive;cursor:pointer;transition:all .15s ease;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;text-transform:uppercase;letter-spacing:0.5px}
 .nice-button:hover{transform:scale(1.05)}
 .nice-button:active{transform:scale(0.95)}
@@ -128,7 +128,7 @@ notifyResize();
 function notifyResize(){
 if(!parentOrigin)return;
 const rect=btn.getBoundingClientRect();
-parent.postMessage({type:'nice-resize',buttonId:BUTTON_ID,width:Math.ceil(rect.width)+8,height:Math.ceil(rect.height)+8},parentOrigin);
+parent.postMessage({type:'nice-resize',buttonId:BUTTON_ID,width:Math.ceil(rect.width),height:Math.ceil(rect.height)},parentOrigin);
 }
 function getFingerprint(){
 const data=[screen.width+'x'+screen.height,new Date().getTimezoneOffset(),navigator.language,navigator.userAgent.slice(0,50)].join('|');

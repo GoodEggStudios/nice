@@ -103,6 +103,16 @@ describe("Embed", () => {
       expect(body).toContain("html,body{background:transparent}");
     });
 
+    it("should size the iframe tightly to the button content", async () => {
+      const res = await SELF.fetch("https://api.nice.sbs/embed/n_abc123456789");
+      const body = await res.text();
+
+      expect(body).toContain("justify-content:center}");
+      expect(body).not.toContain("justify-content:center;padding:2px");
+      expect(body).toContain("width:Math.ceil(rect.width),height:Math.ceil(rect.height)");
+      expect(body).not.toContain("width:Math.ceil(rect.width)+8,height:Math.ceil(rect.height)+8");
+    });
+
     it("should return 400 for invalid button ID", async () => {
       const res = await SELF.fetch("https://api.nice.sbs/embed/not_valid");
 
