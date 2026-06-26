@@ -30,6 +30,14 @@ describe("Embed", () => {
       expect(body).toContain("nice-embed");
       expect(body).toContain("data-button");
     });
+
+    it("should point iframe embeds back to the API host", async () => {
+      const res = await SELF.fetch("https://api.nice.sbs/embed.js");
+      const body = await res.text();
+
+      expect(body).toContain("const EMBED_BASE='https://api.nice.sbs'");
+      expect(body).not.toContain("const EMBED_BASE='https://nice.sbs'");
+    });
   });
 
   describe("GET /embed/:button_id", () => {

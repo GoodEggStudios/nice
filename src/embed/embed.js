@@ -2,7 +2,7 @@
  * Nice Embed Script
  * 
  * Usage:
- * <script src="https://nice.sbs/embed.js" data-button="n_xxx" async></script>
+ * <script src="https://api.nice.sbs/embed.js" data-button="n_xxx" async></script>
  * 
  * Options (data attributes):
  * - data-button: Button ID (required)
@@ -12,7 +12,7 @@
 (function() {
   'use strict';
 
-  const EMBED_BASE = 'https://nice.sbs';
+  const EMBED_BASE = 'https://api.nice.sbs';
   
   // Default iframe sizes per size variant
   const SIZES = {
