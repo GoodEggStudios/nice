@@ -103,13 +103,13 @@ describe("Embed", () => {
       expect(body).toContain("html,body{background:transparent}");
     });
 
-    it("should size the iframe tightly to the button content", async () => {
+    it("should size the iframe to the padded transparent document", async () => {
       const res = await SELF.fetch("https://api.nice.sbs/embed/n_abc123456789");
       const body = await res.text();
 
-      expect(body).toContain("justify-content:center}");
-      expect(body).not.toContain("justify-content:center;padding:2px");
-      expect(body).toContain("width:Math.ceil(rect.width),height:Math.ceil(rect.height)");
+      expect(body).toContain("justify-content:center;padding:2px");
+      expect(body).toContain("const root=document.documentElement;");
+      expect(body).toContain("width:Math.ceil(root.scrollWidth),height:Math.ceil(root.scrollHeight)");
       expect(body).not.toContain("width:Math.ceil(rect.width)+8,height:Math.ceil(rect.height)+8");
     });
 
