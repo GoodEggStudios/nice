@@ -88,6 +88,13 @@ describe("Embed", () => {
       }
     });
 
+    it("should render the root document with a transparent background", async () => {
+      const res = await SELF.fetch("https://api.nice.sbs/embed/n_abc123456789");
+      const body = await res.text();
+
+      expect(body).toContain("html,body{background:transparent}");
+    });
+
     it("should return 400 for invalid button ID", async () => {
       const res = await SELF.fetch("https://api.nice.sbs/embed/not_valid");
 
