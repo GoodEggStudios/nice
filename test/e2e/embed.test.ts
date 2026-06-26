@@ -38,6 +38,14 @@ describe("Embed", () => {
       expect(body).toContain("const EMBED_BASE='https://api.nice.sbs'");
       expect(body).not.toContain("const EMBED_BASE='https://nice.sbs'");
     });
+
+    it("should style generated iframes as transparent", async () => {
+      const res = await SELF.fetch("https://api.nice.sbs/embed.js");
+      const body = await res.text();
+
+      expect(body).toContain("background:transparent;border:none;overflow:hidden");
+      expect(body).toContain("display:block");
+    });
   });
 
   describe("GET /embed/:button_id", () => {
