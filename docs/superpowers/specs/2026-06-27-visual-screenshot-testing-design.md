@@ -28,6 +28,8 @@ Add a Playwright-based visual testing layer with two main commands:
 
 Phase 1 will focus on generating and committing screenshots. Reviewers will inspect changed PNGs directly in the worktree or pull request. Later phases can enable strict comparisons locally and in CI after the fixture catalog has stabilized.
 
+Playwright is the preferred browser layer because it can capture focused locator screenshots instead of full pages. Button and badge screenshots should capture a small wrapper around the visual element with deliberate padding, not the whole viewport.
+
 ## Visual Surfaces
 
 ### Embed Buttons
@@ -128,7 +130,9 @@ Use a deterministic local server for visual tests. The server should be able to:
 - provide mocked JSON responses for API calls used by website pages
 - avoid calls to production APIs during screenshots
 
-The implementation may use Playwright's built-in request interception, a small Node server, or a local Wrangler server if that proves simpler. The chosen implementation should prioritize deterministic output and low maintenance.
+Use Playwright's built-in request interception for API calls made by static website pages, because those pages currently reference `https://api.nice.sbs` directly. This keeps production files unchanged while allowing tests to provide deterministic JSON, SVG, embed HTML, and script responses.
+
+Small generated assets that are useful both in production routes and tests should live in source files rather than duplicated inline strings. In particular, reusable SVG or HTML snippets can be exported from source modules, served by API routes, and imported by the visual harness.
 
 ### Baselines
 
@@ -142,9 +146,11 @@ website-home-desktop.png
 website-create-result-mobile.png
 ```
 
+Naming should follow Playwright snapshot conventions where practical so future `toHaveScreenshot()` verification can reuse the same files without a migration.
+
 Screenshots should remain small:
 
-- capture only the button or badge bounding box for compact embed surfaces
+- capture a padded wrapper around the button or badge for compact embed surfaces
 - use representative viewport screenshots for full website pages
 - disable or stabilize animation where possible
 - use deterministic fonts or wait for fonts to load before capture
@@ -201,7 +207,5 @@ When visual behavior changes unintentionally:
 
 ## Open Decisions For Implementation Planning
 
-- Whether the deterministic server should use Playwright route interception, a small Node server, or Wrangler.
-- Whether embed HTML and badge SVG should be imported from source functions or served through a running worker.
 - The exact screenshot naming convention after the first catalog is implemented.
 - The first stable subset to promote into CI during Phase 4.
