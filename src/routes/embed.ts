@@ -6,20 +6,21 @@
  */
 
 import type { Env } from "../types";
+import {
+  EMBED_SIZES,
+  EMBED_THEMES,
+  renderEmbedSizeMapLiteral,
+  type EmbedSize,
+  type EmbedTheme,
+} from "./embed-constants";
 
-export const EMBED_THEMES = ["light", "dark", "minimal", "mono-dark", "mono-light"] as const;
-export const EMBED_SIZES = ["xs", "sm", "md", "lg", "xl"] as const;
-
-export type EmbedTheme = typeof EMBED_THEMES[number];
-export type EmbedSize = typeof EMBED_SIZES[number];
-
-export const EMBED_DIMENSIONS: Record<EmbedSize, { w: number; h: number }> = {
-  xs: { w: 70, h: 28 },
-  sm: { w: 85, h: 32 },
-  md: { w: 100, h: 36 },
-  lg: { w: 120, h: 44 },
-  xl: { w: 140, h: 52 },
-};
+export {
+  EMBED_DIMENSIONS,
+  EMBED_SIZES,
+  EMBED_THEMES,
+  type EmbedSize,
+  type EmbedTheme,
+} from "./embed-constants";
 
 export interface RenderEmbedHtmlOptions {
   apiBase: string;
@@ -49,8 +50,9 @@ function escapeSingleQuotedJsString(value: string): string {
 export function renderEmbedScript(embedBase = DEFAULT_EMBED_BASE): string {
   const renderedEmbedBase =
     embedBase === DEFAULT_EMBED_BASE ? embedBase : escapeSingleQuotedJsString(embedBase);
+  const sizes = renderEmbedSizeMapLiteral();
 
-  return `(function(){'use strict';const EMBED_BASE='${renderedEmbedBase}';const SIZES={xs:{w:70,h:28},sm:{w:85,h:32},md:{w:100,h:36},lg:{w:120,h:44},xl:{w:140,h:52}};function init(){document.querySelectorAll('script[data-button]').forEach(createEmbed)}function createEmbed(script){const buttonId=script.getAttribute('data-button');if(!buttonId)return;const theme=script.getAttribute('data-theme')||'light';const size=script.getAttribute('data-size')||'md';const dims=SIZES[size]||SIZES.md;const container=document.createElement('div');container.className='nice-embed';container.style.cssText='display:inline-block;vertical-align:middle;';const iframe=document.createElement('iframe');iframe.src=EMBED_BASE+'/embed/'+buttonId+'?theme='+encodeURIComponent(theme)+'&size='+encodeURIComponent(size);iframe.style.cssText='background:transparent;border:none;overflow:hidden;width:'+dims.w+'px;height:'+dims.h+'px;display:block;';iframe.setAttribute('scrolling','no');iframe.setAttribute('frameborder','0');iframe.setAttribute('allowtransparency','true');iframe.setAttribute('sandbox','allow-scripts allow-same-origin');iframe.setAttribute('title','Nice button');container.appendChild(iframe);script.parentNode.insertBefore(container,script.nextSibling);window.addEventListener('message',function(event){if(event.origin!==EMBED_BASE)return;try{const data=event.data;if(data.type==='nice-resize'&&data.buttonId===buttonId){iframe.style.width=data.width+'px';iframe.style.height=data.height+'px'}}catch(e){}})}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}})();`;
+  return `(function(){'use strict';const EMBED_BASE='${renderedEmbedBase}';const SIZES=${sizes};function init(){document.querySelectorAll('script[data-button]').forEach(createEmbed)}function createEmbed(script){const buttonId=script.getAttribute('data-button');if(!buttonId)return;const theme=script.getAttribute('data-theme')||'light';const size=script.getAttribute('data-size')||'md';const dims=SIZES[size]||SIZES.md;const container=document.createElement('div');container.className='nice-embed';container.style.cssText='display:inline-block;vertical-align:middle;';const iframe=document.createElement('iframe');iframe.src=EMBED_BASE+'/embed/'+buttonId+'?theme='+encodeURIComponent(theme)+'&size='+encodeURIComponent(size);iframe.style.cssText='background:transparent;border:none;overflow:hidden;width:'+dims.w+'px;height:'+dims.h+'px;display:block;';iframe.setAttribute('scrolling','no');iframe.setAttribute('frameborder','0');iframe.setAttribute('allowtransparency','true');iframe.setAttribute('sandbox','allow-scripts allow-same-origin');iframe.setAttribute('title','Nice button');container.appendChild(iframe);script.parentNode.insertBefore(container,script.nextSibling);window.addEventListener('message',function(event){if(event.origin!==EMBED_BASE)return;try{const data=event.data;if(data.type==='nice-resize'&&data.buttonId===buttonId){iframe.style.width=data.width+'px';iframe.style.height=data.height+'px'}}catch(e){}})}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}})();`;
 }
 
 // Embed HTML template - Bungee font design with size variants

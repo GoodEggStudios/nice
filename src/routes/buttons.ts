@@ -9,7 +9,13 @@
  */
 
 import type { Env, Button, RestrictionMode } from "../types";
-import { EMBED_DIMENSIONS, type EmbedSize } from "./embed";
+import {
+  EMBED_DIMENSIONS,
+  EMBED_SIZES,
+  EMBED_THEMES,
+  type EmbedSize,
+  type EmbedTheme,
+} from "./embed-constants";
 import {
   generatePublicId,
   generatePrivateId,
@@ -22,9 +28,6 @@ import {
   rateLimitResponse,
 } from "../lib";
 
-// Valid themes and sizes
-const VALID_THEMES = ["light", "dark", "minimal", "mono-dark", "mono-light"];
-const VALID_SIZES = ["xs", "sm", "md", "lg", "xl"];
 const VALID_RESTRICTIONS: RestrictionMode[] = ["url", "domain", "global"];
 
 /**
@@ -96,7 +99,7 @@ export async function createButton(
 
   // Validate optional params
   const theme = body.theme || "light";
-  if (!VALID_THEMES.includes(theme)) {
+  if (!EMBED_THEMES.includes(theme as EmbedTheme)) {
     return Response.json(
       { error: "Invalid theme", code: "INVALID_THEME" },
       { status: 400 }
@@ -104,7 +107,7 @@ export async function createButton(
   }
 
   const size = body.size || "md";
-  if (!VALID_SIZES.includes(size)) {
+  if (!EMBED_SIZES.includes(size as EmbedSize)) {
     return Response.json(
       { error: "Invalid size", code: "INVALID_SIZE" },
       { status: 400 }
@@ -306,7 +309,7 @@ export async function updateButton(
   }
 
   if (body.theme !== undefined) {
-    if (!VALID_THEMES.includes(body.theme)) {
+    if (!EMBED_THEMES.includes(body.theme as EmbedTheme)) {
       return Response.json(
         { error: "Invalid theme", code: "INVALID_THEME" },
         { status: 400 }
@@ -316,7 +319,7 @@ export async function updateButton(
   }
 
   if (body.size !== undefined) {
-    if (!VALID_SIZES.includes(body.size)) {
+    if (!EMBED_SIZES.includes(body.size as EmbedSize)) {
       return Response.json(
         { error: "Invalid size", code: "INVALID_SIZE" },
         { status: 400 }
