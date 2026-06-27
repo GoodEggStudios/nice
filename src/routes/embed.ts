@@ -127,8 +127,8 @@ notifyResize();
 }
 function notifyResize(){
 if(!parentOrigin)return;
-const rect=btn.getBoundingClientRect();
-parent.postMessage({type:'nice-resize',buttonId:BUTTON_ID,width:Math.ceil(rect.width)+8,height:Math.ceil(rect.height)+8},parentOrigin);
+const root=document.documentElement;
+parent.postMessage({type:'nice-resize',buttonId:BUTTON_ID,width:Math.ceil(root.scrollWidth),height:Math.ceil(root.scrollHeight)},parentOrigin);
 }
 function getFingerprint(){
 const data=[screen.width+'x'+screen.height,new Date().getTimezoneOffset(),navigator.language,navigator.userAgent.slice(0,50)].join('|');
