@@ -42,6 +42,17 @@ jobs:
           mkdir -p test-results
           npm run test:e2e -- --reporter=default --reporter=junit --outputFile.junit=test-results/e2e.xml
 
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Visual typecheck
+        run: npm run typecheck:visual
+
+      - name: Visual screenshot tests
+        run: |
+          mkdir -p test-results
+          npm run test:visual
+
       - name: Publish test report
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always() && !cancelled()
@@ -57,4 +68,12 @@ jobs:
         with:
           name: test-results
           path: test-results/
+          if-no-files-found: ignore
+
+      - name: Upload visual diff artifacts
+        uses: actions/upload-artifact@v7
+        if: failure() && !cancelled()
+        with:
+          name: visual-screenshot-diffs
+          path: test-results/visual/
           if-no-files-found: ignore

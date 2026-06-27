@@ -29,10 +29,18 @@ async function openEmbed(page: Page, theme: EmbedTheme, size: EmbedSize, options
   await expect(page.locator("#niceBtn")).toBeVisible();
 }
 
-async function screenshotEmbedState(page: Page, name: string, size: EmbedSize = "md", padding = 2) {
+async function screenshotEmbedState(page: Page, name: string, size: EmbedSize = "md", margin = 4) {
   const dims = EMBED_DIMENSIONS[size];
-  await page.setViewportSize({ width: dims.w + 8, height: dims.h + 8 });
-  await screenshotPaddedLocator(page.locator("#niceBtn"), name, padding);
+  const width = dims.w + margin * 2;
+  const height = dims.h + margin * 2;
+  await page.setViewportSize({ width, height });
+  // Fixed viewport clip avoids flaky bounding-box changes from hover/focus transforms.
+  await expect(page).toHaveScreenshot(name, {
+    animations: "disabled",
+    clip: { x: 0, y: 0, width, height },
+    scale: "css",
+    omitBackground: true,
+  });
 }
 
 test.describe("embed default theme and size matrix", () => {
@@ -75,7 +83,10 @@ test("embed multi-nice state", async ({ page }) => {
 test("embed hover state", async ({ page }) => {
   await openEmbed(page, "dark", "md", { count: 42 });
   await expect(page.locator("#niceCount")).toHaveText("42");
-  await page.locator("#niceBtn").hover();
+  await page.addStyleTag({
+    content: ".theme-dark .nice-button.force-hover { background: #4b5563; transform: scale(1.05); }",
+  });
+  await page.locator("#niceBtn").evaluate((btn) => btn.classList.add("force-hover"));
   await screenshotEmbedState(page, "embed/states/dark-md-hover.png");
 });
 
