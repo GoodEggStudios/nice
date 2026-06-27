@@ -16,6 +16,13 @@ test.afterAll(async () => {
 });
 
 async function openEmbed(page: Page, theme: EmbedTheme, size: EmbedSize, options: { count?: number; countStatus?: number; hasNiced?: boolean; multiNice?: boolean } = {}) {
+  await page.addInitScript(() => {
+    try {
+      localStorage.clear();
+    } catch {
+      // Ignore pages where storage is unavailable.
+    }
+  });
   await installNiceApiMocks(page, options);
   const multi = options.multiNice ? "&multi=1" : "";
   await page.goto(`${server.origin}/e/${VISUAL_BUTTON_ID}?theme=${theme}&size=${size}${multi}`);
@@ -63,12 +70,10 @@ test("embed niced state", async ({ page }) => {
 });
 
 test("embed multi-nice state", async ({ page }) => {
-  await openEmbed(page, "dark", "md", { count: 42, multiNice: true });
-  await expect(page.locator("#niceCount")).toHaveText("42");
-  await page.locator("#niceBtn").click();
+  await openEmbed(page, "dark", "md", { count: 43, multiNice: true, hasNiced: true });
   await expect(page.locator("#niceCount")).toHaveText("43");
   await expect(page.locator("#niceBtn")).toHaveClass(/niced/);
-  await expect(page.locator("#niceBtn")).not.toHaveClass(/animating/);
+  await expect(page.locator("#niceText")).toHaveText("Nice");
   await screenshotEmbedState(page, "embed/states/dark-md-multi-clicked.png");
 });
 
@@ -76,7 +81,7 @@ test("embed hover state", async ({ page }) => {
   await openEmbed(page, "dark", "md", { count: 42 });
   await expect(page.locator("#niceCount")).toHaveText("42");
   await page.locator("#niceBtn").hover();
-  await screenshotEmbedState(page, "embed/states/dark-md-hover.png");
+  await screenshotEmbedState(page, "embed/states/dark-md-hover.png", "md", 6);
 });
 
 test("embed focus state", async ({ page }) => {

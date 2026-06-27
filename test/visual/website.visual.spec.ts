@@ -56,6 +56,7 @@ for (const viewport of viewports) {
     await page.locator("#sizeOptions .option").filter({ hasText: "XL" }).click();
     await expect(page.locator("#previewFrame")).toHaveAttribute("src", /theme=mono-light&size=xl/);
     await expectEmbedFrameReady(page, "#previewFrame");
+    await expect(page.frameLocator("#previewFrame").locator("#niceCount")).toHaveText("42");
     await screenshotWebsitePaddedLocator(page.locator("#previewContainer"), `website/create-preview-mono-light-xl-${viewport.name}.png`);
 
     await page.locator("#themeOptions .option").filter({ hasText: "Light" }).click();

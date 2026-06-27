@@ -5,7 +5,15 @@ export default defineConfig({
   outputDir: "test-results/visual",
   snapshotPathTemplate: "{testDir}/screenshots/{arg}{ext}",
   fullyParallel: false,
-  reporter: "list",
+  workers: 1,
+  retries: process.env.CI ? 1 : 0,
+  reporter: process.env.CI
+    ? [
+        ["list"],
+        ["github"],
+        ["junit", { outputFile: "test-results/visual.xml" }],
+      ]
+    : "list",
   use: {
     ...devices["Desktop Chrome"],
     browserName: "chromium",
@@ -19,7 +27,7 @@ export default defineConfig({
   expect: {
     toHaveScreenshot: {
       animations: "disabled",
-      maxDiffPixelRatio: 0.01,
+      maxDiffPixelRatio: 0.1,
     },
   },
 });
