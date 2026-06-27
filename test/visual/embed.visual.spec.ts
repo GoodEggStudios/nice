@@ -29,6 +29,12 @@ async function openEmbed(page: Page, theme: EmbedTheme, size: EmbedSize, options
   await expect(page.locator("#niceBtn")).toBeVisible();
 }
 
+async function screenshotEmbedState(page: Page, name: string, size: EmbedSize = "md", padding = 2) {
+  const dims = EMBED_DIMENSIONS[size];
+  await page.setViewportSize({ width: dims.w + 8, height: dims.h + 8 });
+  await screenshotPaddedLocator(page.locator("#niceBtn"), name, padding);
+}
+
 test.describe("embed default theme and size matrix", () => {
   for (const theme of EMBED_THEMES) {
     for (const size of EMBED_SIZES) {
@@ -44,34 +50,43 @@ test.describe("embed default theme and size matrix", () => {
 
 test("embed visible count", async ({ page }) => {
   await openEmbed(page, "dark", "md", { count: 42 });
-  await screenshotPaddedLocator(page.locator("#niceBtn"), "embed/states/dark-md-count.png");
+  await expect(page.locator("#niceCount")).toHaveText("42");
+  await screenshotEmbedState(page, "embed/states/dark-md-count.png");
 });
 
 test("embed niced state", async ({ page }) => {
   await openEmbed(page, "dark", "md", { count: 42, hasNiced: true });
-  await screenshotPaddedLocator(page.locator("#niceBtn"), "embed/states/dark-md-niced.png");
+  await expect(page.locator("#niceBtn")).toHaveClass(/niced/);
+  await expect(page.locator("#niceText")).toHaveText("Nice'd");
+  await expect(page.locator("#niceCount")).toHaveText("42");
+  await screenshotEmbedState(page, "embed/states/dark-md-niced.png");
 });
 
 test("embed multi-nice state", async ({ page }) => {
   await openEmbed(page, "dark", "md", { count: 42, multiNice: true });
+  await expect(page.locator("#niceCount")).toHaveText("42");
   await page.locator("#niceBtn").click();
-  await screenshotPaddedLocator(page.locator("#niceBtn"), "embed/states/dark-md-multi-clicked.png");
+  await expect(page.locator("#niceCount")).toHaveText("43");
+  await expect(page.locator("#niceBtn")).toHaveClass(/niced/);
+  await screenshotEmbedState(page, "embed/states/dark-md-multi-clicked.png");
 });
 
 test("embed hover state", async ({ page }) => {
   await openEmbed(page, "dark", "md", { count: 42 });
+  await expect(page.locator("#niceCount")).toHaveText("42");
   await page.locator("#niceBtn").hover();
-  await screenshotPaddedLocator(page.locator("#niceBtn"), "embed/states/dark-md-hover.png");
+  await screenshotEmbedState(page, "embed/states/dark-md-hover.png");
 });
 
 test("embed focus state", async ({ page }) => {
   await openEmbed(page, "dark", "md", { count: 42 });
+  await expect(page.locator("#niceCount")).toHaveText("42");
   await page.locator("#niceBtn").focus();
-  await screenshotPaddedLocator(page.locator("#niceBtn"), "embed/states/dark-md-focus.png", 6);
+  await screenshotEmbedState(page, "embed/states/dark-md-focus.png", "md", 6);
 });
 
 test("embed unavailable state", async ({ page }) => {
   await openEmbed(page, "dark", "md", { countStatus: 404 });
   await expect(page.locator("#niceBtn")).toHaveClass(/disabled/);
-  await screenshotPaddedLocator(page.locator("#niceBtn"), "embed/states/dark-md-unavailable.png");
+  await screenshotEmbedState(page, "embed/states/dark-md-unavailable.png");
 });
