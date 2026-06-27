@@ -11,11 +11,16 @@
     "test:unit": "vitest --run test/lib",
     "test:e2e": "vitest --run test/e2e",
     "test:coverage": "vitest --coverage",
-    "typecheck": "tsc --noEmit"
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots",
+    "typecheck": "tsc --noEmit",
+    "typecheck:visual": "tsc -p tsconfig.visual.json --noEmit"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.12.12",
     "@cloudflare/workers-types": "^4.20260410.1",
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^26.0.1",
     "@vitest/coverage-v8": "^3.2.6",
     "typescript": "^5.9.3",
     "vitest": "^3.2.6",
