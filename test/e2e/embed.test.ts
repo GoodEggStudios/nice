@@ -6,6 +6,7 @@
 
 import { describe, it, expect } from "vitest";
 import { SELF } from "cloudflare:test";
+import { renderEmbedScript } from "../../src/routes/embed";
 
 describe("Embed", () => {
   describe("GET /embed.js", () => {
@@ -127,6 +128,23 @@ describe("Embed", () => {
       // Should still serve successfully with defaults
       expect(res.status).toBe(200);
     });
+  });
+
+  it("should serve the shared embed script byte-for-byte", async () => {
+    const res = await SELF.fetch("https://api.nice.sbs/embed.js");
+
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe(renderEmbedScript());
+  });
+
+  it("should keep supported themes and sizes rendering through shared helpers", async () => {
+    const res = await SELF.fetch(
+      "https://api.nice.sbs/embed/n_abc123456789?theme=mono-light&size=sm"
+    );
+
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain('class="theme-mono-light size-sm"');
   });
 
   describe("GET /e/:button_id (short URL)", () => {
