@@ -135,6 +135,15 @@ describe("Embed", () => {
 
     expect(res.status).toBe(200);
     expect(await res.text()).toBe(renderEmbedScript());
+    expect(renderEmbedScript()).toContain("const EMBED_BASE='https://api.nice.sbs'");
+  });
+
+  it("should escape custom embed bases in the generated script literal", async () => {
+    const customBase = "https://exa'mple.test/a\\b\nc";
+    const script = renderEmbedScript(customBase);
+
+    expect(script).toContain("const EMBED_BASE='https://exa\\'mple.test/a\\\\b\\nc'");
+    expect(script).not.toContain(customBase);
   });
 
   it("should keep supported themes and sizes rendering through shared helpers", async () => {
