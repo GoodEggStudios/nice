@@ -80,12 +80,8 @@ test("embed multi-nice state", async ({ page }) => {
 test("embed hover state", async ({ page }) => {
   await openEmbed(page, "dark", "md", { count: 42 });
   await expect(page.locator("#niceCount")).toHaveText("42");
-  // Apply hover colours without scale() so the clipped screenshot stays tight and stable.
-  await page.addStyleTag({
-    content: ".theme-dark .nice-button.force-hover { background: #4b5563; }",
-  });
-  await page.locator("#niceBtn").evaluate((btn) => btn.classList.add("force-hover"));
-  await screenshotEmbedState(page, "embed/states/dark-md-hover.png");
+  await page.locator("#niceBtn").hover();
+  await screenshotEmbedState(page, "embed/states/dark-md-hover.png", "md", 6);
 });
 
 test("embed focus state", async ({ page }) => {
