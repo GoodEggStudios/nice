@@ -17,10 +17,10 @@ test.describe("badge visual snapshots", () => {
     for (const count of counts) {
       test(`${theme} ${count.label}`, async ({ page }) => {
         const svg = generateBadge(count.value, { theme });
-        await page.setContent(`<!doctype html><html><body style="margin:0;padding:12px;background:#202020"><div data-shot="badge" style="display:inline-block;padding:8px;background:#111">${svg}</div></body></html>`);
+        await page.setContent(`<!doctype html><html><body style="margin:0">${svg}</body></html>`);
         await stabilizePage(page);
-        await expect(page.locator("[data-shot='badge'] svg")).toBeVisible();
-        await screenshotPaddedLocator(page.locator("[data-shot='badge']"), `badge/${theme}-${count.label}.png`);
+        await expect(page.locator("svg")).toBeVisible();
+        await screenshotPaddedLocator(page.locator("svg"), `badge/${theme}-${count.label}.png`);
       });
     }
   }
