@@ -1,6 +1,6 @@
 # Visual Screenshot Testing Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For implementers:** Execute this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add Playwright-powered visual screenshot generation for Nice embed buttons, badges, and website placements, with small committed PNG snapshots.
 
