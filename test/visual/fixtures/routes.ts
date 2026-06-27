@@ -81,6 +81,14 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
     });
   });
 
+  await page.route(/https:\/\/api\.nice\.sbs\/api\/v1\/nice\/[^/]+$/, async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.continue();
+      return;
+    }
+    await fulfillJson(route, { success: true, count: count + 1 });
+  });
+
   await page.route(/https:\/\/api\.nice\.sbs\/api\/v1\/nice\/[^/]+\/multi$/, async (route) => {
     await fulfillJson(route, { success: true, count: count + 1 });
   });

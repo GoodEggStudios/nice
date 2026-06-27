@@ -25,14 +25,19 @@ export async function screenshotPaddedLocator(locator: Locator, name: string, pa
     throw new Error(`Cannot screenshot ${name}: locator has no bounding box`);
   }
 
+  const viewport = page.viewportSize();
+  if (!viewport) {
+    throw new Error(`Cannot screenshot ${name}: page has no viewport size`);
+  }
+
+  const x = Math.max(0, Math.floor(box.x - padding));
+  const y = Math.max(0, Math.floor(box.y - padding));
+  const width = Math.min(Math.ceil(box.width + padding * 2), viewport.width - x);
+  const height = Math.min(Math.ceil(box.height + padding * 2), viewport.height - y);
+
   await expect(page).toHaveScreenshot(name, {
     animations: "disabled",
-    clip: {
-      x: Math.max(0, Math.floor(box.x - padding)),
-      y: Math.max(0, Math.floor(box.y - padding)),
-      width: Math.ceil(box.width + padding * 2),
-      height: Math.ceil(box.height + padding * 2),
-    },
+    clip: { x, y, width, height },
     scale: "css",
   });
 }
