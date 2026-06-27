@@ -2,7 +2,7 @@ import { expect, type Locator, type Page } from "@playwright/test";
 
 /** Round clip sizes up so macOS/Linux sub-pixel layout differences share one baseline. */
 function stableClipSize(size: number, step = 4): number {
-  return Math.ceil((size + 2) / step) * step;
+  return Math.ceil((size + 4) / step) * step;
 }
 
 function stablePageHeight(height: number): number {
