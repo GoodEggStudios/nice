@@ -141,6 +141,24 @@ npm run test     # Run tests
 npm run deploy   # Deploy to Cloudflare
 ```
 
+### Visual Screenshots
+
+Nice keeps small Playwright screenshots in `test/visual/screenshots/` so button, badge, and website visual changes are reviewable in git.
+
+Regenerate screenshots after an intentional visual change:
+
+```bash
+npm run test:visual:update
+```
+
+Check current rendering against the committed screenshots:
+
+```bash
+npm run test:visual
+```
+
+Commit code and changed PNGs together. Screenshots are intentionally small and committed directly; Git LFS is not required.
+
 ## Links
 
 - 🌐 **Website**: [nice.sbs](https://nice.sbs)
