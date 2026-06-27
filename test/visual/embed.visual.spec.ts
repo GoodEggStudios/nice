@@ -35,8 +35,8 @@ test.describe("embed default theme and size matrix", () => {
       test(`${theme} ${size}`, async ({ page }) => {
         await openEmbed(page, theme, size, { count: 0 });
         const dims = EMBED_DIMENSIONS[size];
-        await page.setViewportSize({ width: dims.w + 32, height: dims.h + 32 });
-        await screenshotPaddedLocator(page.locator("body"), `embed/default/${theme}-${size}.png`);
+        await page.setViewportSize({ width: dims.w + 8, height: dims.h + 8 });
+        await screenshotPaddedLocator(page.locator("#niceBtn"), `embed/default/${theme}-${size}.png`);
       });
     }
   }
@@ -44,34 +44,34 @@ test.describe("embed default theme and size matrix", () => {
 
 test("embed visible count", async ({ page }) => {
   await openEmbed(page, "dark", "md", { count: 42 });
-  await screenshotPaddedLocator(page.locator("body"), "embed/states/dark-md-count.png");
+  await screenshotPaddedLocator(page.locator("#niceBtn"), "embed/states/dark-md-count.png");
 });
 
 test("embed niced state", async ({ page }) => {
   await openEmbed(page, "dark", "md", { count: 42, hasNiced: true });
-  await screenshotPaddedLocator(page.locator("body"), "embed/states/dark-md-niced.png");
+  await screenshotPaddedLocator(page.locator("#niceBtn"), "embed/states/dark-md-niced.png");
 });
 
 test("embed multi-nice state", async ({ page }) => {
   await openEmbed(page, "dark", "md", { count: 42, multiNice: true });
   await page.locator("#niceBtn").click();
-  await screenshotPaddedLocator(page.locator("body"), "embed/states/dark-md-multi-clicked.png");
+  await screenshotPaddedLocator(page.locator("#niceBtn"), "embed/states/dark-md-multi-clicked.png");
 });
 
 test("embed hover state", async ({ page }) => {
   await openEmbed(page, "dark", "md", { count: 42 });
   await page.locator("#niceBtn").hover();
-  await screenshotPaddedLocator(page.locator("body"), "embed/states/dark-md-hover.png");
+  await screenshotPaddedLocator(page.locator("#niceBtn"), "embed/states/dark-md-hover.png");
 });
 
 test("embed focus state", async ({ page }) => {
   await openEmbed(page, "dark", "md", { count: 42 });
   await page.locator("#niceBtn").focus();
-  await screenshotPaddedLocator(page.locator("body"), "embed/states/dark-md-focus.png");
+  await screenshotPaddedLocator(page.locator("#niceBtn"), "embed/states/dark-md-focus.png", 6);
 });
 
 test("embed unavailable state", async ({ page }) => {
   await openEmbed(page, "dark", "md", { countStatus: 404 });
   await expect(page.locator("#niceBtn")).toHaveClass(/disabled/);
-  await screenshotPaddedLocator(page.locator("body"), "embed/states/dark-md-unavailable.png");
+  await screenshotPaddedLocator(page.locator("#niceBtn"), "embed/states/dark-md-unavailable.png");
 });

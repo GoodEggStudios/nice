@@ -10,15 +10,15 @@ export async function stabilizePage(page: Page): Promise<void> {
         transition-duration: 0s !important;
         caret-color: transparent !important;
       }
-      body, button, input, textarea, select, pre, code {
-        font-family: Arial, sans-serif !important;
-      }
     `,
   });
-  await page.evaluate(() => document.fonts?.ready);
+  await page.evaluate(async () => {
+    await document.fonts.load("12px 'Bungee'");
+    await document.fonts.ready;
+  });
 }
 
-export async function screenshotPaddedLocator(locator: Locator, name: string, padding = 8): Promise<void> {
+export async function screenshotPaddedLocator(locator: Locator, name: string, padding = 2): Promise<void> {
   const page = locator.page();
   const box = await locator.boundingBox();
   if (!box) {
