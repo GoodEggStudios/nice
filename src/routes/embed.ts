@@ -6,9 +6,54 @@
  */
 
 import type { Env } from "../types";
+import {
+  EMBED_SIZES,
+  EMBED_THEMES,
+  renderEmbedSizeMapLiteral,
+  type EmbedSize,
+  type EmbedTheme,
+} from "./embed-constants";
 
-// Embed script (minified inline)
-const EMBED_SCRIPT = `(function(){'use strict';const EMBED_BASE='https://api.nice.sbs';const SIZES={xs:{w:70,h:28},sm:{w:85,h:32},md:{w:100,h:36},lg:{w:120,h:44},xl:{w:140,h:52}};function init(){document.querySelectorAll('script[data-button]').forEach(createEmbed)}function createEmbed(script){const buttonId=script.getAttribute('data-button');if(!buttonId)return;const theme=script.getAttribute('data-theme')||'light';const size=script.getAttribute('data-size')||'md';const dims=SIZES[size]||SIZES.md;const container=document.createElement('div');container.className='nice-embed';container.style.cssText='display:inline-block;vertical-align:middle;';const iframe=document.createElement('iframe');iframe.src=EMBED_BASE+'/embed/'+buttonId+'?theme='+encodeURIComponent(theme)+'&size='+encodeURIComponent(size);iframe.style.cssText='background:transparent;border:none;overflow:hidden;width:'+dims.w+'px;height:'+dims.h+'px;display:block;';iframe.setAttribute('scrolling','no');iframe.setAttribute('frameborder','0');iframe.setAttribute('allowtransparency','true');iframe.setAttribute('sandbox','allow-scripts allow-same-origin');iframe.setAttribute('title','Nice button');container.appendChild(iframe);script.parentNode.insertBefore(container,script.nextSibling);window.addEventListener('message',function(event){if(event.origin!==EMBED_BASE)return;try{const data=event.data;if(data.type==='nice-resize'&&data.buttonId===buttonId){iframe.style.width=data.width+'px';iframe.style.height=data.height+'px'}}catch(e){}})}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}})();`;
+export {
+  EMBED_DIMENSIONS,
+  EMBED_SIZES,
+  EMBED_THEMES,
+  type EmbedSize,
+  type EmbedTheme,
+} from "./embed-constants";
+
+export interface RenderEmbedHtmlOptions {
+  apiBase: string;
+  buttonId: string;
+  theme: EmbedTheme;
+  size: EmbedSize;
+  multiNice?: boolean;
+}
+
+export interface RenderDemoEmbedHtmlOptions {
+  theme: EmbedTheme;
+  size: EmbedSize;
+}
+
+const DEFAULT_EMBED_BASE = "https://api.nice.sbs";
+
+function escapeSingleQuotedJsString(value: string): string {
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/'/g, "\\'")
+    .replace(/\r/g, "\\r")
+    .replace(/\n/g, "\\n")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
+export function renderEmbedScript(embedBase = DEFAULT_EMBED_BASE): string {
+  const renderedEmbedBase =
+    embedBase === DEFAULT_EMBED_BASE ? embedBase : escapeSingleQuotedJsString(embedBase);
+  const sizes = renderEmbedSizeMapLiteral();
+
+  return `(function(){'use strict';const EMBED_BASE='${renderedEmbedBase}';const SIZES=${sizes};function init(){document.querySelectorAll('script[data-button]').forEach(createEmbed)}function createEmbed(script){const buttonId=script.getAttribute('data-button');if(!buttonId)return;const theme=script.getAttribute('data-theme')||'light';const size=script.getAttribute('data-size')||'md';const dims=SIZES[size]||SIZES.md;const container=document.createElement('div');container.className='nice-embed';container.style.cssText='display:inline-block;vertical-align:middle;';const iframe=document.createElement('iframe');iframe.src=EMBED_BASE+'/embed/'+buttonId+'?theme='+encodeURIComponent(theme)+'&size='+encodeURIComponent(size);iframe.style.cssText='background:transparent;border:none;overflow:hidden;width:'+dims.w+'px;height:'+dims.h+'px;display:block;';iframe.setAttribute('scrolling','no');iframe.setAttribute('frameborder','0');iframe.setAttribute('allowtransparency','true');iframe.setAttribute('sandbox','allow-scripts allow-same-origin');iframe.setAttribute('title','Nice button');container.appendChild(iframe);script.parentNode.insertBefore(container,script.nextSibling);window.addEventListener('message',function(event){if(event.origin!==EMBED_BASE)return;try{const data=event.data;if(data.type==='nice-resize'&&data.buttonId===buttonId){iframe.style.width=data.width+'px';iframe.style.height=data.height+'px'}}catch(e){}})}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}})();`;
+}
 
 // Embed HTML template - Bungee font design with size variants
 const EMBED_HTML = `<!DOCTYPE html>
@@ -201,11 +246,35 @@ setTimeout(notifyResize,100);
 </body>
 </html>`;
 
+function normalizeTheme(theme: string | null): EmbedTheme {
+  return EMBED_THEMES.includes(theme as EmbedTheme) ? (theme as EmbedTheme) : "light";
+}
+
+function normalizeSize(size: string | null): EmbedSize {
+  return EMBED_SIZES.includes(size as EmbedSize) ? (size as EmbedSize) : "md";
+}
+
+export function renderDemoEmbedHtml(options: RenderDemoEmbedHtmlOptions): string {
+  return DEMO_HTML
+    .replace(/\{\{THEME\}\}/g, options.theme)
+    .replace(/\{\{SIZE\}\}/g, options.size);
+}
+
+export function renderEmbedHtml(options: RenderEmbedHtmlOptions): string {
+  const safeButtonId = options.buttonId.replace(/[<>"'&]/g, "");
+  return EMBED_HTML
+    .replace(/\{\{API_BASE\}\}/g, options.apiBase)
+    .replace(/\{\{BUTTON_ID\}\}/g, safeButtonId)
+    .replace(/\{\{THEME\}\}/g, options.theme)
+    .replace(/\{\{SIZE\}\}/g, options.size)
+    .replace(/\{\{MULTI_NICE\}\}/g, options.multiNice ? "1" : "0");
+}
+
 /**
  * GET /embed.js - Serve the embed script
  */
 export async function serveEmbedScript(request: Request): Promise<Response> {
-  return new Response(EMBED_SCRIPT, {
+  return new Response(renderEmbedScript(), {
     status: 200,
     headers: {
       "Content-Type": "application/javascript; charset=utf-8",
@@ -297,23 +366,13 @@ export async function serveEmbedPage(
   env?: Env
 ): Promise<Response> {
   const url = new URL(request.url);
-  const theme = url.searchParams.get("theme") || "light";
-  const size = url.searchParams.get("size") || "md";
-  
-  // Validate theme
-  const validThemes = ["light", "dark", "minimal", "mono-dark", "mono-light"];
-  const safeTheme = validThemes.includes(theme) ? theme : "light";
-
-  // Validate size
-  const validSizes = ["xs", "sm", "md", "lg", "xl"];
-  const safeSize = validSizes.includes(size) ? size : "md";
+  const theme = normalizeTheme(url.searchParams.get("theme"));
+  const size = normalizeSize(url.searchParams.get("size"));
 
   // Demo button - static version for homepage
   if (buttonId === "demo") {
-    const html = DEMO_HTML
-      .replace(/\{\{THEME\}\}/g, safeTheme)
-      .replace(/\{\{SIZE\}\}/g, safeSize);
-    
+    const html = renderDemoEmbedHtml({ theme, size });
+
     return new Response(html, {
       status: 200,
       headers: {
@@ -353,17 +412,13 @@ export async function serveEmbedPage(
 
   // Get the API base URL from the request
   const apiBase = `${url.protocol}//${url.host}`;
-
-  // HTML-encode button ID as extra safety measure
-  const safeButtonId = buttonId.replace(/[<>"'&]/g, "");
-
-  // Replace placeholders in HTML
-  const html = EMBED_HTML
-    .replace(/\{\{API_BASE\}\}/g, apiBase)
-    .replace(/\{\{BUTTON_ID\}\}/g, safeButtonId)
-    .replace(/\{\{THEME\}\}/g, safeTheme)
-    .replace(/\{\{SIZE\}\}/g, safeSize)
-    .replace(/\{\{MULTI_NICE\}\}/g, isMulti);
+  const html = renderEmbedHtml({
+    apiBase,
+    buttonId,
+    theme,
+    size,
+    multiNice: isMulti === "1",
+  });
 
   return new Response(html, {
     status: 200,

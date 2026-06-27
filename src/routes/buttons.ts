@@ -10,6 +10,13 @@
 
 import type { Env, Button, RestrictionMode } from "../types";
 import {
+  EMBED_DIMENSIONS,
+  EMBED_SIZES,
+  EMBED_THEMES,
+  type EmbedSize,
+  type EmbedTheme,
+} from "./embed-constants";
+import {
   generatePublicId,
   generatePrivateId,
   isValidPrivateId,
@@ -21,9 +28,6 @@ import {
   rateLimitResponse,
 } from "../lib";
 
-// Valid themes and sizes
-const VALID_THEMES = ["light", "dark", "minimal", "mono-dark", "mono-light"];
-const VALID_SIZES = ["xs", "sm", "md", "lg", "xl"];
 const VALID_RESTRICTIONS: RestrictionMode[] = ["url", "domain", "global"];
 
 /**
@@ -45,15 +49,7 @@ function generateEmbedSnippets(
 ): { iframe: string; script: string } {
   const embedUrl = `${baseUrl}/e/${publicId}?theme=${theme}&size=${size}${multiNice ? '&multi=1' : ''}`;
 
-  // Iframe dimensions based on size
-  const dimensions: Record<string, { w: number; h: number }> = {
-    xs: { w: 70, h: 28 },
-    sm: { w: 85, h: 32 },
-    md: { w: 100, h: 36 },
-    lg: { w: 120, h: 44 },
-    xl: { w: 140, h: 52 },
-  };
-  const dim = dimensions[size] || dimensions.md;
+  const dim = EMBED_DIMENSIONS[size as EmbedSize] || EMBED_DIMENSIONS.md;
 
   const iframe = `<iframe src="${embedUrl}" style="background:transparent;border:none;overflow:hidden;display:block;width:${dim.w}px;height:${dim.h}px;" scrolling="no" frameborder="0" allowtransparency="true" title="Nice button"></iframe>`;
   const script = `<script src="${baseUrl}/embed.js" data-button="${publicId}" data-theme="${theme}" data-size="${size}" async></script>`;
@@ -103,7 +99,7 @@ export async function createButton(
 
   // Validate optional params
   const theme = body.theme || "light";
-  if (!VALID_THEMES.includes(theme)) {
+  if (!EMBED_THEMES.includes(theme as EmbedTheme)) {
     return Response.json(
       { error: "Invalid theme", code: "INVALID_THEME" },
       { status: 400 }
@@ -111,7 +107,7 @@ export async function createButton(
   }
 
   const size = body.size || "md";
-  if (!VALID_SIZES.includes(size)) {
+  if (!EMBED_SIZES.includes(size as EmbedSize)) {
     return Response.json(
       { error: "Invalid size", code: "INVALID_SIZE" },
       { status: 400 }
@@ -313,7 +309,7 @@ export async function updateButton(
   }
 
   if (body.theme !== undefined) {
-    if (!VALID_THEMES.includes(body.theme)) {
+    if (!EMBED_THEMES.includes(body.theme as EmbedTheme)) {
       return Response.json(
         { error: "Invalid theme", code: "INVALID_THEME" },
         { status: 400 }
@@ -323,7 +319,7 @@ export async function updateButton(
   }
 
   if (body.size !== undefined) {
-    if (!VALID_SIZES.includes(body.size)) {
+    if (!EMBED_SIZES.includes(body.size as EmbedSize)) {
       return Response.json(
         { error: "Invalid size", code: "INVALID_SIZE" },
         { status: 400 }
