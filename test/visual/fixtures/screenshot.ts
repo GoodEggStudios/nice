@@ -1,5 +1,32 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
+/** Round clip sizes up so macOS/Linux sub-pixel layout differences share one baseline. */
+function stableClipSize(size: number, step = 2): number {
+  return Math.ceil(size / step) * step;
+}
+
+function stablePageHeight(height: number): number {
+  return Math.ceil(height / 256) * 256;
+}
+
+async function measureStableScrollHeight(page: Page): Promise<number> {
+  let previous = -1;
+  let stableReads = 0;
+  while (stableReads < 3) {
+    const current = await page.evaluate(() =>
+      Math.max(document.documentElement.scrollHeight, document.body.scrollHeight),
+    );
+    if (current === previous) {
+      stableReads++;
+    } else {
+      stableReads = 0;
+    }
+    previous = current;
+    await page.waitForTimeout(100);
+  }
+  return previous;
+}
+
 export async function stabilizePage(page: Page): Promise<void> {
   await page.addStyleTag({
     content: `
@@ -40,6 +67,14 @@ export async function stabilizeWebsitePage(page: Page): Promise<void> {
 }
 
 export async function screenshotWebsiteFullPage(page: Page, name: string): Promise<void> {
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+  });
+  const scrollHeight = await measureStableScrollHeight(page);
+  const height = stablePageHeight(scrollHeight);
+  await page.addStyleTag({
+    content: `html { min-height: ${height}px !important; }`,
+  });
   await expect(page).toHaveScreenshot(name, {
     animations: "disabled",
     fullPage: true,
@@ -62,8 +97,8 @@ export async function screenshotWebsitePaddedLocator(locator: Locator, name: str
 
   const x = Math.max(0, Math.floor(box.x - padding));
   const y = Math.max(0, Math.floor(box.y - padding));
-  const width = Math.min(Math.ceil(box.width + padding * 2), viewport.width - x);
-  const height = Math.min(Math.ceil(box.height + padding * 2), viewport.height - y);
+  const width = Math.min(stableClipSize(box.width + padding * 2), viewport.width - x);
+  const height = Math.min(stableClipSize(box.height + padding * 2), viewport.height - y);
 
   await expect(page).toHaveScreenshot(name, {
     animations: "disabled",
@@ -87,8 +122,8 @@ export async function screenshotPaddedLocator(locator: Locator, name: string, pa
 
   const x = Math.max(0, Math.floor(box.x - padding));
   const y = Math.max(0, Math.floor(box.y - padding));
-  const width = Math.min(Math.ceil(box.width + padding * 2), viewport.width - x);
-  const height = Math.min(Math.ceil(box.height + padding * 2), viewport.height - y);
+  const width = Math.min(stableClipSize(box.width + padding * 2), viewport.width - x);
+  const height = Math.min(stableClipSize(box.height + padding * 2), viewport.height - y);
 
   await expect(page).toHaveScreenshot(name, {
     animations: "disabled",
