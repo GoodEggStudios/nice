@@ -1,6 +1,6 @@
 # Visual Screenshot Testing Implementation Plan
 
-> **For implementers:** Execute this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For implementers:** Execute this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Add Playwright-powered visual screenshot generation for Nice embed buttons, badges, and website placements, with small committed PNG snapshots.
 
@@ -62,7 +62,7 @@
 - Produces: `npm run test:visual`, which compares against committed screenshot baselines.
 - Produces: Playwright snapshot path convention rooted at `test/visual/screenshots/`.
 
-- [ ] **Step 1: Install Playwright Test**
+- [x] **Step 1: Install Playwright Test**
 
 Run:
 
@@ -90,7 +90,7 @@ Downloading Chromium
 
 If Chromium is already installed, the command may finish without downloading.
 
-- [ ] **Step 2: Add visual scripts**
+- [x] **Step 2: Add visual scripts**
 
 Edit `package.json` so the `scripts` block includes these entries:
 
@@ -104,7 +104,7 @@ Edit `package.json` so the `scripts` block includes these entries:
 
 Keep the existing scripts unchanged.
 
-- [ ] **Step 3: Add a visual TypeScript config**
+- [x] **Step 3: Add a visual TypeScript config**
 
 Create `tsconfig.visual.json` so Node and Playwright types are scoped to the visual harness and do not leak into worker source typechecking:
 
@@ -120,7 +120,7 @@ Create `tsconfig.visual.json` so Node and Playwright types are scoped to the vis
 }
 ```
 
-- [ ] **Step 4: Create Playwright config**
+- [x] **Step 4: Create Playwright config**
 
 Create `playwright.config.ts`:
 
@@ -152,7 +152,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 5: Ignore transient Playwright output**
+- [x] **Step 5: Ignore transient Playwright output**
 
 Append these lines to `.gitignore`:
 
@@ -164,11 +164,11 @@ playwright-report/
 
 Do not ignore `test/visual/screenshots/`; PNG baselines in that directory must be committed.
 
-- [ ] **Step 6: Create screenshot directory marker**
+- [x] **Step 6: Create screenshot directory marker**
 
 Create `test/visual/screenshots/.gitkeep` with no contents.
 
-- [ ] **Step 7: Verify Playwright discovers no tests yet**
+- [x] **Step 7: Verify Playwright discovers no tests yet**
 
 Run:
 
@@ -185,7 +185,7 @@ Total: 0 tests in 0 files
 
 The exact wording can vary, but the command must exit successfully.
 
-- [ ] **Step 8: Verify TypeScript still passes**
+- [x] **Step 8: Verify TypeScript still passes**
 
 Run:
 
@@ -202,7 +202,7 @@ Expected:
 
 Exit code must be 0.
 
-- [ ] **Step 9: Verify visual TypeScript config**
+- [x] **Step 9: Verify visual TypeScript config**
 
 Run:
 
@@ -212,7 +212,7 @@ npm run typecheck:visual
 
 Expected exit code: 0.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 Run:
 
@@ -242,7 +242,7 @@ git commit -m "test: add playwright visual test setup"
 - Preserves: `serveEmbedPage(request: Request, buttonId: string, env?: Env): Promise<Response>`.
 - Updates: `generateEmbedSnippets()` in `src/routes/buttons.ts` to read from `EMBED_DIMENSIONS`.
 
-- [ ] **Step 1: Add exports and types in `src/routes/embed.ts`**
+- [x] **Step 1: Add exports and types in `src/routes/embed.ts`**
 
 Near the top of `src/routes/embed.ts`, replace the private script/template constants with exported constants and render helpers. Keep the existing HTML/CSS/JS content identical except for template-token replacement moving into functions.
 
@@ -317,7 +317,7 @@ export function renderEmbedHtml(options: RenderEmbedHtmlOptions): string {
 }
 ```
 
-- [ ] **Step 2: Update route functions to use the helpers**
+- [x] **Step 2: Update route functions to use the helpers**
 
 Update `serveEmbedScript`:
 
@@ -381,7 +381,7 @@ const html = renderEmbedHtml({
 });
 ```
 
-- [ ] **Step 3: Reuse shared dimensions in button snippets**
+- [x] **Step 3: Reuse shared dimensions in button snippets**
 
 In `src/routes/buttons.ts`, import the shared embed dimensions:
 
@@ -397,7 +397,7 @@ const dim = EMBED_DIMENSIONS[size as EmbedSize] || EMBED_DIMENSIONS.md;
 
 This keeps API-generated iframe snippets aligned with the embed route and visual tests.
 
-- [ ] **Step 4: Add e2e assertions for exported route behavior**
+- [x] **Step 4: Add e2e assertions for exported route behavior**
 
 Update the imports at the top of `test/e2e/embed.test.ts`:
 
@@ -426,7 +426,7 @@ it("should keep supported themes and sizes rendering through shared helpers", as
 
 Also preserve the existing `/embed.js` e2e assertions that verify the API host and transparent iframe styles. Those tests are the regression guard for the render helper extraction.
 
-- [ ] **Step 5: Run focused tests**
+- [x] **Step 5: Run focused tests**
 
 Run:
 
@@ -440,7 +440,7 @@ Expected:
 Test Files  1 passed
 ```
 
-- [ ] **Step 6: Run typecheck**
+- [x] **Step 6: Run typecheck**
 
 Run:
 
@@ -450,7 +450,7 @@ npm run typecheck
 
 Expected exit code: 0.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 Run:
 
@@ -480,7 +480,7 @@ git commit -m "refactor: share embed rendering helpers"
 - Consumes: `renderEmbedHtml`, `renderDemoEmbedHtml`, `renderEmbedScript` from `src/routes/embed.ts`.
 - Consumes: `generateBadge` from `src/lib/badge.ts`.
 
-- [ ] **Step 1: Create deterministic data fixtures**
+- [x] **Step 1: Create deterministic data fixtures**
 
 Create `test/visual/fixtures/data.ts`:
 
@@ -535,7 +535,7 @@ export function mockCreateButtonResponse(overrides: Partial<VisualButtonStats> =
 }
 ```
 
-- [ ] **Step 2: Create the local visual server**
+- [x] **Step 2: Create the local visual server**
 
 Create `test/visual/fixtures/server.ts`:
 
@@ -640,7 +640,7 @@ export async function startVisualServer(): Promise<VisualServer> {
 }
 ```
 
-- [ ] **Step 3: Create API route interception helpers**
+- [x] **Step 3: Create API route interception helpers**
 
 Create `test/visual/fixtures/routes.ts`:
 
@@ -746,7 +746,7 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
 }
 ```
 
-- [ ] **Step 4: Create screenshot helpers**
+- [x] **Step 4: Create screenshot helpers**
 
 Create `test/visual/fixtures/screenshot.ts`:
 
@@ -791,7 +791,7 @@ export async function screenshotPaddedLocator(locator: Locator, name: string, pa
 }
 ```
 
-- [ ] **Step 5: Add a harness smoke test**
+- [x] **Step 5: Add a harness smoke test**
 
 Create `test/visual/harness.visual.spec.ts`:
 
@@ -821,7 +821,7 @@ test("visual harness serves static pages and intercepts API routes", async ({ pa
 });
 ```
 
-- [ ] **Step 6: Run the smoke test**
+- [x] **Step 6: Run the smoke test**
 
 Run:
 
@@ -835,7 +835,7 @@ Expected:
 1 passed
 ```
 
-- [ ] **Step 7: Run typecheck**
+- [x] **Step 7: Run typecheck**
 
 Run:
 
@@ -845,7 +845,7 @@ npm run typecheck
 
 Expected exit code: 0.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 Run:
 
@@ -870,7 +870,7 @@ git commit -m "test: add visual screenshot harness"
 - Produces: focused padded snapshots for all default theme x size combinations.
 - Produces: representative state snapshots for count, niced, multi-nice, hover, focus, and unavailable state.
 
-- [ ] **Step 1: Write embed visual tests**
+- [x] **Step 1: Write embed visual tests**
 
 Create `test/visual/embed.visual.spec.ts`:
 
@@ -954,7 +954,7 @@ test("embed unavailable state", async ({ page }) => {
 });
 ```
 
-- [ ] **Step 2: Run embed snapshots in update mode**
+- [x] **Step 2: Run embed snapshots in update mode**
 
 Run:
 
@@ -978,7 +978,7 @@ test/visual/screenshots/embed/states/dark-md-count.png
 test/visual/screenshots/embed/states/dark-md-niced.png
 ```
 
-- [ ] **Step 3: Verify embed snapshots compare cleanly**
+- [x] **Step 3: Verify embed snapshots compare cleanly**
 
 Run:
 
@@ -992,7 +992,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 4: Inspect screenshot file sizes**
+- [x] **Step 4: Inspect screenshot file sizes**
 
 Run:
 
@@ -1002,7 +1002,7 @@ find test/visual/screenshots/embed -type f -name '*.png' -maxdepth 3 -print0 | x
 
 Expected: focused button PNGs should be small. If a file is a full page screenshot, fix the locator before committing.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run:
 
@@ -1025,7 +1025,7 @@ git commit -m "test: add embed button visual snapshots"
 - Consumes: `screenshotPaddedLocator(locator, name)`.
 - Produces: badge screenshots for every badge theme and representative counts.
 
-- [ ] **Step 1: Write badge visual tests**
+- [x] **Step 1: Write badge visual tests**
 
 Create `test/visual/badge.visual.spec.ts`:
 
@@ -1059,7 +1059,7 @@ test.describe("badge visual snapshots", () => {
 });
 ```
 
-- [ ] **Step 2: Run badge snapshots in update mode**
+- [x] **Step 2: Run badge snapshots in update mode**
 
 Run:
 
@@ -1081,7 +1081,7 @@ test/visual/screenshots/badge/rich-1_2k.png
 test/visual/screenshots/badge/rich-mono-inverted-long.png
 ```
 
-- [ ] **Step 3: Verify badge snapshots compare cleanly**
+- [x] **Step 3: Verify badge snapshots compare cleanly**
 
 Run:
 
@@ -1095,7 +1095,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Run:
 
@@ -1118,7 +1118,7 @@ git commit -m "test: add badge visual snapshots"
 - Consumes: `installNiceApiMocks(page, options)`.
 - Produces: desktop and mobile screenshots for homepage, create page, public button page, stats page, and script-tag insertion host page.
 
-- [ ] **Step 1: Write website visual tests**
+- [x] **Step 1: Write website visual tests**
 
 Create `test/visual/website.visual.spec.ts`:
 
@@ -1225,7 +1225,7 @@ test("script tag insertion host page", async ({ page }) => {
 });
 ```
 
-- [ ] **Step 2: Run website snapshots in update mode**
+- [x] **Step 2: Run website snapshots in update mode**
 
 Run:
 
@@ -1249,7 +1249,7 @@ test/visual/screenshots/website/stats-loaded-mobile.png
 test/visual/screenshots/website/script-tag-host.png
 ```
 
-- [ ] **Step 3: Verify website snapshots compare cleanly**
+- [x] **Step 3: Verify website snapshots compare cleanly**
 
 Run:
 
@@ -1263,7 +1263,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Run:
 
@@ -1285,7 +1285,7 @@ git commit -m "test: add website placement visual snapshots"
 - Consumes: `npm run test:visual`.
 - Produces: contributor-facing instructions for updating committed PNG screenshots.
 
-- [ ] **Step 1: Add README section**
+- [x] **Step 1: Add README section**
 
 In `README.md`, after the Development command block, add:
 
@@ -1311,7 +1311,7 @@ Commit code and changed PNGs together. Screenshots are intentionally small and c
 
 Ensure the nested fenced code blocks render correctly. Use four backticks for the outer patch block if editing manually.
 
-- [ ] **Step 2: Verify README text**
+- [x] **Step 2: Verify README text**
 
 Run:
 
@@ -1325,7 +1325,7 @@ Expected:
 The output contains "### Visual Screenshots", "npm run test:visual:update", and "Git LFS is not required."
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 Run:
 
@@ -1345,7 +1345,7 @@ git commit -m "docs: document visual screenshot workflow"
 - Consumes: all prior tasks.
 - Produces: confidence that visual screenshot generation, existing API tests, and typechecking pass together.
 
-- [ ] **Step 1: Run typecheck**
+- [x] **Step 1: Run typecheck**
 
 Run:
 
@@ -1355,7 +1355,7 @@ npm run typecheck
 
 Expected exit code: 0.
 
-- [ ] **Step 2: Run visual typecheck**
+- [x] **Step 2: Run visual typecheck**
 
 Run:
 
@@ -1365,7 +1365,7 @@ npm run typecheck:visual
 
 Expected exit code: 0.
 
-- [ ] **Step 3: Run unit tests**
+- [x] **Step 3: Run unit tests**
 
 Run:
 
@@ -1379,7 +1379,7 @@ Expected:
 All unit test files passed.
 ```
 
-- [ ] **Step 4: Run worker e2e tests**
+- [x] **Step 4: Run worker e2e tests**
 
 Run:
 
@@ -1393,7 +1393,7 @@ Expected:
 All e2e test files passed.
 ```
 
-- [ ] **Step 5: Regenerate all visual screenshots**
+- [x] **Step 5: Regenerate all visual screenshots**
 
 Run:
 
@@ -1407,7 +1407,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 6: Compare all visual screenshots locally**
+- [x] **Step 6: Compare all visual screenshots locally**
 
 Run:
 
@@ -1423,7 +1423,7 @@ passed
 
 This remains a local sanity check for committed baselines. Do not wire it into CI until the later CI verification phase.
 
-- [ ] **Step 7: Review generated PNG footprint**
+- [x] **Step 7: Review generated PNG footprint**
 
 Run:
 
@@ -1433,7 +1433,7 @@ find test/visual/screenshots -type f -name '*.png' -print0 | xargs -0 du -ch | t
 
 Expected: total size is small enough for normal git review. If total size is unexpectedly large, inspect for accidental full-page captures in embed or badge screenshots.
 
-- [ ] **Step 8: Review git status**
+- [x] **Step 8: Review git status**
 
 Run:
 
@@ -1443,7 +1443,7 @@ git status --short
 
 Expected: only intentional implementation files and generated screenshots are modified or untracked.
 
-- [ ] **Step 9: Commit any remaining final fixes**
+- [x] **Step 9: Commit any remaining final fixes**
 
 If Task 8 produced final corrections, commit them:
 
