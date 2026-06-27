@@ -10,6 +10,9 @@ export async function stabilizePage(page: Page): Promise<void> {
         transition-duration: 0s !important;
         caret-color: transparent !important;
       }
+      html, body {
+        background: transparent !important;
+      }
     `,
   });
   await page.evaluate(async () => {
@@ -39,5 +42,6 @@ export async function screenshotPaddedLocator(locator: Locator, name: string, pa
     animations: "disabled",
     clip: { x, y, width, height },
     scale: "css",
+    omitBackground: true,
   });
 }

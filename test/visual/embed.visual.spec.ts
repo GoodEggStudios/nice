@@ -68,6 +68,7 @@ test("embed multi-nice state", async ({ page }) => {
   await page.locator("#niceBtn").click();
   await expect(page.locator("#niceCount")).toHaveText("43");
   await expect(page.locator("#niceBtn")).toHaveClass(/niced/);
+  await expect(page.locator("#niceBtn")).not.toHaveClass(/animating/);
   await screenshotEmbedState(page, "embed/states/dark-md-multi-clicked.png");
 });
 
