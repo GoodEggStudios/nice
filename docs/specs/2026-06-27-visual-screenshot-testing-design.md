@@ -26,7 +26,7 @@ Add a Playwright-based visual testing layer with two main commands:
 - `npm run test:visual:update`: regenerate committed PNG screenshots.
 - `npm run test:visual`: compare current rendering to committed screenshots once verification is enabled.
 
-Phase 1 will focus on generating and committing screenshots. Reviewers will inspect changed PNGs directly in the worktree or pull request. Later phases can enable strict comparisons locally and in CI after the fixture catalog has stabilized.
+Phase 1 will focus on generating and committing screenshots. Reviewers will inspect changed PNGs directly in the worktree or pull request. Local comparison against freshly generated baselines is allowed as a developer sanity check, but CI gating stays deferred until the fixture catalog has stabilized.
 
 Playwright is the preferred browser layer because it can capture focused locator screenshots instead of full pages. Button and badge screenshots should capture a small wrapper around the visual element with deliberate padding, not the whole viewport.
 
@@ -139,11 +139,11 @@ Small generated assets that are useful both in production routes and tests shoul
 Generated PNGs should be committed under `test/visual/screenshots/`. Names should encode the surface, variant, and viewport where relevant, for example:
 
 ```text
-embed-light-md-default.png
-embed-dark-lg-niced.png
-badge-rich-1_2k.png
-website-home-desktop.png
-website-create-result-mobile.png
+embed/default/light-md.png
+embed/states/dark-md-niced.png
+badge/rich-1_2k.png
+website/home-desktop.png
+website/create-result-mobile.png
 ```
 
 Naming should follow Playwright snapshot conventions where practical so future `toHaveScreenshot()` verification can reuse the same files without a migration.

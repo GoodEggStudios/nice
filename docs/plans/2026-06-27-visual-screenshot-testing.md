@@ -20,7 +20,8 @@
 - Use Playwright focused locator screenshots for button and badge surfaces, capturing a padded wrapper instead of the whole viewport.
 - Use Playwright request interception for `https://api.nice.sbs` calls made by static website pages.
 - Naming should follow Playwright snapshot conventions where practical so future `toHaveScreenshot()` verification can reuse the same files without a migration.
-- Run `npm run typecheck`, `npm run test:unit -- --run`, `npm run test:e2e`, and `npm run test:visual:update` before the final implementation handoff.
+- Run `npm run typecheck`, `npm run typecheck:visual`, `npm run test:unit -- --run`, `npm run test:e2e`, and `npm run test:visual:update` before the final implementation handoff.
+- `npm run test:visual` is a local sanity check after baselines exist; CI gating is deferred until the later CI verification phase.
 
 ---
 
@@ -28,10 +29,11 @@
 
 - Modify `package.json`: add Playwright dependency and visual scripts.
 - Modify `package-lock.json`: update dependency lock after `npm install`.
-- Modify `tsconfig.json`: include Node types for the visual test harness.
 - Create `playwright.config.ts`: Playwright project configuration and snapshot path template.
+- Create `tsconfig.visual.json`: TypeScript config for Playwright and Node-only visual test files.
 - Modify `.gitignore`: ignore Playwright transient output while keeping committed screenshots tracked.
 - Modify `src/routes/embed.ts`: export shared embed constants and render helpers while preserving existing route responses.
+- Modify `src/routes/buttons.ts`: use shared embed dimensions for generated iframe snippets.
 - Create `test/visual/fixtures/data.ts`: deterministic IDs, counts, button records, and API response payloads.
 - Create `test/visual/fixtures/server.ts`: local static server for website files and visual fixture pages.
 - Create `test/visual/fixtures/routes.ts`: Playwright route interception helpers for `https://api.nice.sbs`.
@@ -49,8 +51,8 @@
 **Files:**
 - Modify: `package.json`
 - Modify: `package-lock.json`
-- Modify: `tsconfig.json`
 - Create: `playwright.config.ts`
+- Create: `tsconfig.visual.json`
 - Modify: `.gitignore`
 - Create: `test/visual/screenshots/.gitkeep`
 - Test: `npx playwright test --list`
@@ -95,19 +97,26 @@ Edit `package.json` so the `scripts` block includes these entries:
 ```json
 {
   "test:visual": "playwright test",
-  "test:visual:update": "playwright test --update-snapshots"
+  "test:visual:update": "playwright test --update-snapshots",
+  "typecheck:visual": "tsc -p tsconfig.visual.json --noEmit"
 }
 ```
 
 Keep the existing scripts unchanged.
 
-- [ ] **Step 3: Add Node types to TypeScript config**
+- [ ] **Step 3: Add a visual TypeScript config**
 
-Edit `tsconfig.json` so `compilerOptions.types` includes `"node"` in addition to the existing Cloudflare and Vitest worker types:
+Create `tsconfig.visual.json` so Node and Playwright types are scoped to the visual harness and do not leak into worker source typechecking:
 
 ```json
 {
-  "types": ["node", "@cloudflare/workers-types/2023-07-01", "@cloudflare/vitest-pool-workers"]
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM"],
+    "types": ["node", "@playwright/test"],
+    "noEmit": true
+  },
+  "include": ["playwright.config.ts", "test/visual/**/*.ts"]
 }
 ```
 
@@ -127,6 +136,7 @@ export default defineConfig({
   use: {
     ...devices["Desktop Chrome"],
     browserName: "chromium",
+    timezoneId: "UTC",
     actionTimeout: 10_000,
     navigationTimeout: 15_000,
     screenshot: "only-on-failure",
@@ -150,7 +160,6 @@ Append these lines to `.gitignore`:
 
 # Playwright output
 playwright-report/
-test-results/visual/
 ```
 
 Do not ignore `test/visual/screenshots/`; PNG baselines in that directory must be committed.
@@ -193,12 +202,22 @@ Expected:
 
 Exit code must be 0.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 9: Verify visual TypeScript config**
 
 Run:
 
 ```bash
-git add package.json package-lock.json tsconfig.json playwright.config.ts .gitignore test/visual/screenshots/.gitkeep
+npm run typecheck:visual
+```
+
+Expected exit code: 0.
+
+- [ ] **Step 10: Commit**
+
+Run:
+
+```bash
+git add package.json package-lock.json tsconfig.visual.json playwright.config.ts .gitignore test/visual/screenshots/.gitkeep
 git commit -m "test: add playwright visual test setup"
 ```
 
@@ -208,6 +227,7 @@ git commit -m "test: add playwright visual test setup"
 
 **Files:**
 - Modify: `src/routes/embed.ts`
+- Modify: `src/routes/buttons.ts`
 - Modify: `test/e2e/embed.test.ts`
 - Test: `test/e2e/embed.test.ts`
 
@@ -217,9 +237,10 @@ git commit -m "test: add playwright visual test setup"
 - Produces: `EMBED_DIMENSIONS: Record<EmbedSize, { w: number; h: number }>` with current iframe dimensions.
 - Produces: `renderEmbedHtml(options: RenderEmbedHtmlOptions): string`.
 - Produces: `renderDemoEmbedHtml(options: RenderDemoEmbedHtmlOptions): string`.
-- Produces: `renderEmbedScript(embedBase?: string): string`.
+- Produces: `renderEmbedScript(embedBase?: string): string`, defaulting to `https://api.nice.sbs`.
 - Preserves: `serveEmbedScript(request: Request): Promise<Response>`.
 - Preserves: `serveEmbedPage(request: Request, buttonId: string, env?: Env): Promise<Response>`.
+- Updates: `generateEmbedSnippets()` in `src/routes/buttons.ts` to read from `EMBED_DIMENSIONS`.
 
 - [ ] **Step 1: Add exports and types in `src/routes/embed.ts`**
 
@@ -259,8 +280,8 @@ export interface RenderDemoEmbedHtmlOptions {
 Convert the current `EMBED_SCRIPT` constant into a function:
 
 ```ts
-export function renderEmbedScript(embedBase = "https://nice.sbs"): string {
-  return `(function(){'use strict';const EMBED_BASE=${JSON.stringify(embedBase)};const SIZES={xs:{w:70,h:28},sm:{w:85,h:32},md:{w:100,h:36},lg:{w:120,h:44},xl:{w:140,h:52}};function init(){document.querySelectorAll('script[data-button]').forEach(createEmbed)}function createEmbed(script){const buttonId=script.getAttribute('data-button');if(!buttonId)return;const theme=script.getAttribute('data-theme')||'light';const size=script.getAttribute('data-size')||'md';const dims=SIZES[size]||SIZES.md;const container=document.createElement('div');container.className='nice-embed';container.style.cssText='display:inline-block;vertical-align:middle;';const iframe=document.createElement('iframe');iframe.src=EMBED_BASE+'/embed/'+buttonId+'?theme='+encodeURIComponent(theme)+'&size='+encodeURIComponent(size);iframe.style.cssText='border:none;overflow:hidden;width:'+dims.w+'px;height:'+dims.h+'px;';iframe.setAttribute('scrolling','no');iframe.setAttribute('frameborder','0');iframe.setAttribute('allowtransparency','true');iframe.setAttribute('sandbox','allow-scripts allow-same-origin');iframe.setAttribute('title','Nice button');container.appendChild(iframe);script.parentNode.insertBefore(container,script.nextSibling);window.addEventListener('message',function(event){if(event.origin!==EMBED_BASE)return;try{const data=event.data;if(data.type==='nice-resize'&&data.buttonId===buttonId){iframe.style.width=data.width+'px';iframe.style.height=data.height+'px'}}catch(e){}})}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}})();`;
+export function renderEmbedScript(embedBase = "https://api.nice.sbs"): string {
+  return `(function(){'use strict';const EMBED_BASE='${embedBase}';const SIZES={xs:{w:70,h:28},sm:{w:85,h:32},md:{w:100,h:36},lg:{w:120,h:44},xl:{w:140,h:52}};function init(){document.querySelectorAll('script[data-button]').forEach(createEmbed)}function createEmbed(script){const buttonId=script.getAttribute('data-button');if(!buttonId)return;const theme=script.getAttribute('data-theme')||'light';const size=script.getAttribute('data-size')||'md';const dims=SIZES[size]||SIZES.md;const container=document.createElement('div');container.className='nice-embed';container.style.cssText='display:inline-block;vertical-align:middle;';const iframe=document.createElement('iframe');iframe.src=EMBED_BASE+'/embed/'+buttonId+'?theme='+encodeURIComponent(theme)+'&size='+encodeURIComponent(size);iframe.style.cssText='background:transparent;border:none;overflow:hidden;width:'+dims.w+'px;height:'+dims.h+'px;display:block;';iframe.setAttribute('scrolling','no');iframe.setAttribute('frameborder','0');iframe.setAttribute('allowtransparency','true');iframe.setAttribute('sandbox','allow-scripts allow-same-origin');iframe.setAttribute('title','Nice button');container.appendChild(iframe);script.parentNode.insertBefore(container,script.nextSibling);window.addEventListener('message',function(event){if(event.origin!==EMBED_BASE)return;try{const data=event.data;if(data.type==='nice-resize'&&data.buttonId===buttonId){iframe.style.width=data.width+'px';iframe.style.height=data.height+'px'}}catch(e){}})}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}})();`;
 }
 ```
 
@@ -313,6 +334,15 @@ export async function serveEmbedScript(request: Request): Promise<Response> {
 }
 ```
 
+The default `renderEmbedScript()` output must preserve existing production behavior:
+
+```ts
+expect(renderEmbedScript()).toContain("const EMBED_BASE='https://api.nice.sbs'");
+expect(renderEmbedScript()).not.toContain("const EMBED_BASE='https://nice.sbs'");
+expect(renderEmbedScript()).toContain("background:transparent;border:none;overflow:hidden");
+expect(renderEmbedScript()).toContain("display:block");
+```
+
 Update the start of `serveEmbedPage` to use helpers:
 
 ```ts
@@ -351,11 +381,40 @@ const html = renderEmbedHtml({
 });
 ```
 
-- [ ] **Step 3: Add e2e assertions for exported route behavior**
+- [ ] **Step 3: Reuse shared dimensions in button snippets**
+
+In `src/routes/buttons.ts`, import the shared embed dimensions:
+
+```ts
+import { EMBED_DIMENSIONS, type EmbedSize } from "./embed";
+```
+
+Then replace the local `dimensions` object inside `generateEmbedSnippets()` with:
+
+```ts
+const dim = EMBED_DIMENSIONS[size as EmbedSize] || EMBED_DIMENSIONS.md;
+```
+
+This keeps API-generated iframe snippets aligned with the embed route and visual tests.
+
+- [ ] **Step 4: Add e2e assertions for exported route behavior**
+
+Update the imports at the top of `test/e2e/embed.test.ts`:
+
+```ts
+import { renderEmbedScript } from "../../src/routes/embed";
+```
 
 Append this test to `test/e2e/embed.test.ts` inside the top-level `describe("Embed", () => {` block, before its closing `});`:
 
 ```ts
+it("should serve the shared embed script byte-for-byte", async () => {
+  const res = await SELF.fetch("https://api.nice.sbs/embed.js");
+
+  expect(res.status).toBe(200);
+  expect(await res.text()).toBe(renderEmbedScript());
+});
+
 it("should keep supported themes and sizes rendering through shared helpers", async () => {
   const res = await SELF.fetch("https://api.nice.sbs/embed/n_abc123456789?theme=mono-light&size=sm");
 
@@ -365,7 +424,9 @@ it("should keep supported themes and sizes rendering through shared helpers", as
 });
 ```
 
-- [ ] **Step 4: Run focused tests**
+Also preserve the existing `/embed.js` e2e assertions that verify the API host and transparent iframe styles. Those tests are the regression guard for the render helper extraction.
+
+- [ ] **Step 5: Run focused tests**
 
 Run:
 
@@ -379,7 +440,7 @@ Expected:
 Test Files  1 passed
 ```
 
-- [ ] **Step 5: Run typecheck**
+- [ ] **Step 6: Run typecheck**
 
 Run:
 
@@ -389,12 +450,12 @@ npm run typecheck
 
 Expected exit code: 0.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 Run:
 
 ```bash
-git add src/routes/embed.ts test/e2e/embed.test.ts
+git add src/routes/embed.ts src/routes/buttons.ts test/e2e/embed.test.ts
 git commit -m "refactor: share embed rendering helpers"
 ```
 
@@ -411,11 +472,11 @@ git commit -m "refactor: share embed rendering helpers"
 
 **Interfaces:**
 - Produces: `VISUAL_BUTTON_ID = "n_visual0001"`.
-- Produces: `VISUAL_PRIVATE_ID = "ns_visual000000000001"`.
+- Produces: `VISUAL_PRIVATE_ID = "ns_visual00000000000001"`.
 - Produces: `mockButtonStats(overrides?: Partial<VisualButtonStats>): VisualButtonStats`.
 - Produces: `startVisualServer(): Promise<VisualServer>`.
 - Produces: `installNiceApiMocks(page: Page, options?: NiceApiMockOptions): Promise<void>`.
-- Produces: `screenshotPaddedLocator(locator: Locator, name: string): Promise<void>`.
+- Produces: `screenshotPaddedLocator(locator: Locator, name: string, padding?: number): Promise<void>`.
 - Consumes: `renderEmbedHtml`, `renderDemoEmbedHtml`, `renderEmbedScript` from `src/routes/embed.ts`.
 - Consumes: `generateBadge` from `src/lib/badge.ts`.
 
@@ -425,7 +486,7 @@ Create `test/visual/fixtures/data.ts`:
 
 ```ts
 export const VISUAL_BUTTON_ID = "n_visual0001";
-export const VISUAL_PRIVATE_ID = "ns_visual000000000001";
+export const VISUAL_PRIVATE_ID = "ns_visual00000000000001";
 export const VISUAL_URL = "https://example.com/articles/visual-button";
 export const VISUAL_CREATED_AT = "2026-06-27T12:00:00.000Z";
 
@@ -608,6 +669,18 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
   const count = options.count ?? 42;
   const multiNice = options.multiNice ?? false;
 
+  await page.route(/https:\/\/fonts\.googleapis\.com\/.*/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "text/css; charset=utf-8",
+      body: "/* visual tests use harness-controlled deterministic fonts */",
+    });
+  });
+
+  await page.route(/https:\/\/fonts\.gstatic\.com\/.*/, async (route) => {
+    await route.abort();
+  });
+
   await page.route("https://api.nice.sbs/embed.js", async (route) => {
     await route.fulfill({
       status: 200,
@@ -655,6 +728,10 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
     });
   });
 
+  await page.route(/https:\/\/api\.nice\.sbs\/api\/v1\/nice\/[^/]+\/multi$/, async (route) => {
+    await fulfillJson(route, { success: true, count: count + 1 });
+  });
+
   await page.route("https://api.nice.sbs/api/v1/buttons", async (route) => {
     await fulfillJson(route, mockCreateButtonResponse({ count, multi_nice: multiNice }));
   });
@@ -686,14 +763,29 @@ export async function stabilizePage(page: Page): Promise<void> {
         transition-duration: 0s !important;
         caret-color: transparent !important;
       }
+      body, button, input, textarea, select, pre, code {
+        font-family: Arial, sans-serif !important;
+      }
     `,
   });
   await page.evaluate(() => document.fonts?.ready);
 }
 
-export async function screenshotPaddedLocator(locator: Locator, name: string): Promise<void> {
-  await expect(locator).toHaveScreenshot(name, {
+export async function screenshotPaddedLocator(locator: Locator, name: string, padding = 8): Promise<void> {
+  const page = locator.page();
+  const box = await locator.boundingBox();
+  if (!box) {
+    throw new Error(`Cannot screenshot ${name}: locator has no bounding box`);
+  }
+
+  await expect(page).toHaveScreenshot(name, {
     animations: "disabled",
+    clip: {
+      x: Math.max(0, Math.floor(box.x - padding)),
+      y: Math.max(0, Math.floor(box.y - padding)),
+      width: Math.ceil(box.width + padding * 2),
+      height: Math.ceil(box.height + padding * 2),
+    },
     scale: "css",
   });
 }
@@ -1072,6 +1164,20 @@ for (const viewport of viewports) {
     await screenshotPaddedLocator(page.locator("body"), `website/create-empty-${viewport.name}.png`);
   });
 
+  test(`create live preview combinations ${viewport.name}`, async ({ page }) => {
+    await openPage(page, "/create", viewport);
+
+    await page.locator("#themeOptions .option").filter({ hasText: "Mono Lt" }).click();
+    await page.locator("#sizeOptions .option").filter({ hasText: "XL" }).click();
+    await expect(page.locator("#previewFrame")).toHaveAttribute("src", /theme=mono-light&size=xl/);
+    await screenshotPaddedLocator(page.locator("#previewContainer"), `website/create-preview-mono-light-xl-${viewport.name}.png`);
+
+    await page.locator("#themeOptions .option").filter({ hasText: "Light" }).click();
+    await page.locator("#sizeOptions .option").filter({ hasText: "XS" }).click();
+    await expect(page.locator("#previewFrame")).toHaveAttribute("src", /theme=light&size=xs/);
+    await screenshotPaddedLocator(page.locator("#previewContainer"), `website/create-preview-light-xs-${viewport.name}.png`);
+  });
+
   test(`create result ${viewport.name}`, async ({ page }) => {
     await openPage(page, "/create", viewport);
     await page.locator("#urlInput").fill("example.com/articles/visual-button");
@@ -1249,7 +1355,17 @@ npm run typecheck
 
 Expected exit code: 0.
 
-- [ ] **Step 2: Run unit tests**
+- [ ] **Step 2: Run visual typecheck**
+
+Run:
+
+```bash
+npm run typecheck:visual
+```
+
+Expected exit code: 0.
+
+- [ ] **Step 3: Run unit tests**
 
 Run:
 
@@ -1263,7 +1379,7 @@ Expected:
 All unit test files passed.
 ```
 
-- [ ] **Step 3: Run worker e2e tests**
+- [ ] **Step 4: Run worker e2e tests**
 
 Run:
 
@@ -1277,7 +1393,7 @@ Expected:
 All e2e test files passed.
 ```
 
-- [ ] **Step 4: Regenerate all visual screenshots**
+- [ ] **Step 5: Regenerate all visual screenshots**
 
 Run:
 
@@ -1291,7 +1407,7 @@ Expected:
 passed
 ```
 
-- [ ] **Step 5: Compare all visual screenshots**
+- [ ] **Step 6: Compare all visual screenshots locally**
 
 Run:
 
@@ -1305,7 +1421,9 @@ Expected:
 passed
 ```
 
-- [ ] **Step 6: Review generated PNG footprint**
+This remains a local sanity check for committed baselines. Do not wire it into CI until the later CI verification phase.
+
+- [ ] **Step 7: Review generated PNG footprint**
 
 Run:
 
@@ -1315,7 +1433,7 @@ find test/visual/screenshots -type f -name '*.png' -print0 | xargs -0 du -ch | t
 
 Expected: total size is small enough for normal git review. If total size is unexpectedly large, inspect for accidental full-page captures in embed or badge screenshots.
 
-- [ ] **Step 7: Review git status**
+- [ ] **Step 8: Review git status**
 
 Run:
 
@@ -1325,7 +1443,7 @@ git status --short
 
 Expected: only intentional implementation files and generated screenshots are modified or untracked.
 
-- [ ] **Step 8: Commit any remaining final fixes**
+- [ ] **Step 9: Commit any remaining final fixes**
 
 If Task 8 produced final corrections, commit them:
 
