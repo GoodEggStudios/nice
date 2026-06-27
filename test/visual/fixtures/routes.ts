@@ -22,18 +22,6 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
   const count = options.count ?? 42;
   const multiNice = options.multiNice ?? false;
 
-  await page.route(/https:\/\/fonts\.googleapis\.com\/.*/, async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "text/css; charset=utf-8",
-      body: "/* visual tests use harness-controlled deterministic fonts */",
-    });
-  });
-
-  await page.route(/https:\/\/fonts\.gstatic\.com\/.*/, async (route) => {
-    await route.abort();
-  });
-
   await page.route("https://api.nice.sbs/embed.js", async (route) => {
     await route.fulfill({
       status: 200,
