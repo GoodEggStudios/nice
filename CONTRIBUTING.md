@@ -57,7 +57,8 @@ bruno/                # API collection (Bruno)
 test/
 ├── lib/              # Unit tests for src/lib utilities
 └── e2e/              # End-to-end API route tests
-docs/                 # Documentation (archived specs in docs/archive/)
+docs/                 # Active docs (API, deploy, security)
+├── archive/          # Completed plans and historical specs
 ```
 
 ## Making Changes
