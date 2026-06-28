@@ -24,8 +24,15 @@ Response:
   "public_id": "n_x7Kf9mQ2Ab3Z",
   "private_id": "ns_4vK9mPq8wL2nRt5xYz7bC",
   "url": "https://example.com/my-article",
+  "restriction": "url",
+  "multi_nice": false,
+  "theme": "light",
+  "size": "md",
+  "count": 0,
+  "created_at": "2026-02-18T10:00:00Z",
   "embed": {
-    "iframe": "<iframe src=\"...\" ...></iframe>"
+    "iframe": "<iframe src=\"...\" ...></iframe>",
+    "script": "<script src=\"...\" ...></script>"
   }
 }
 ```
@@ -46,7 +53,8 @@ Content-Type: application/json
   "url": "https://example.com/my-article",
   "theme": "light",
   "size": "md",
-  "restriction": "url"
+  "restriction": "url",
+  "multi_nice": false
 }
 ```
 
@@ -57,6 +65,7 @@ Content-Type: application/json
 | `url` | string | Yes | Content URL where the button will be embedded |
 | `theme` | string | No | `light` (default), `dark`, `minimal`, `mono-dark`, `mono-light` |
 | `size` | string | No | `xs`, `sm`, `md` (default), `lg`, `xl` |
+| `restriction` | string | No | `url` (default), `domain`, `global` |
 | `multi_nice` | boolean | No | Enable clap-style multi-nice (default: `false`) |
 
 **Response (201 Created):**
@@ -65,12 +74,14 @@ Content-Type: application/json
   "public_id": "n_x7Kf9mQ2Ab3Z",
   "private_id": "ns_4vK9mPq8wL2nRt5xYz7bC",
   "url": "https://example.com/my-article",
+  "restriction": "url",
+  "multi_nice": false,
   "theme": "light",
   "size": "md",
   "count": 0,
   "created_at": "2026-02-18T10:00:00Z",
   "embed": {
-    "iframe": "<iframe src=\"https://api.nice.sbs/e/n_x7Kf9mQ2Ab3Z?theme=light&size=md\" style=\"border:none;width:100px;height:36px;\" title=\"Nice button\"></iframe>",
+    "iframe": "<iframe src=\"https://api.nice.sbs/e/n_x7Kf9mQ2Ab3Z?theme=light&size=md\" style=\"background:transparent;border:none;overflow:hidden;display:block;color-scheme:normal;width:100px;height:36px;\" scrolling=\"no\" frameborder=\"0\" allowtransparency=\"true\" title=\"Nice button\"></iframe>",
     "script": "<script src=\"https://api.nice.sbs/embed.js\" data-button=\"n_x7Kf9mQ2Ab3Z\" data-theme=\"light\" data-size=\"md\" async></script>"
   }
 }
@@ -91,6 +102,8 @@ Get button statistics. Requires the private ID.
 {
   "id": "n_x7Kf9mQ2Ab3Z",
   "url": "https://example.com/my-article",
+  "restriction": "url",
+  "multi_nice": false,
   "count": 42,
   "theme": "light",
   "size": "md",
@@ -129,6 +142,7 @@ Update button settings. Requires the private ID.
   "id": "n_x7Kf9mQ2Ab3Z",
   "url": "https://example.com/my-article",
   "restriction": "global",
+  "multi_nice": false,
   "count": 42,
   "theme": "light",
   "size": "md",
@@ -168,9 +182,8 @@ Record a "nice" using the private ID. **Owner only** — no restrictions.
 Unlike the public nice endpoint:
 - No referrer check
 - No IP deduplication
-- No rate limiting
 
-Use this for programmatic nice recording.
+This endpoint is still rate-limited by IP to prevent abuse. Use it for programmatic nice recording when you control the private ID.
 
 **Response (200 OK):**
 ```json
@@ -194,6 +207,14 @@ POST /api/v1/nice/:public_id
 ```
 
 Record a "nice" on a button.
+
+**Request Body (optional):**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `fingerprint` | string | No | Device fingerprint used with IP and daily salt for deduplication |
+| `referrer` | string | No | Parent page URL checked against the button restriction |
+| `pow_solution` | object | No | Proof-of-work response when rate limiting requires one |
 
 **Response (200 OK) - Success:**
 ```json
@@ -272,7 +293,8 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
   "count": 43,
   "button_id": "n_x7Kf9mQ2",
   "has_niced": true,
-  "multi_nice": false
+  "multi_nice": false,
+  "url": "https://example.com/my-article"
 }
 ```
 
@@ -280,8 +302,9 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 |-------|-------------|
 | `count` | Total nice count |
 | `button_id` | The button ID |
-| `has_niced` | Whether the current visitor has already niced (always `false` for multi-nice buttons) |
+| `has_niced` | Whether the current visitor has already niced. Multi-nice buttons still use this for clicked-state styling. |
 | `multi_nice` | Whether this button allows multiple nices per visitor |
+| `url` | Button content URL when the button exists |
 
 ---
 
@@ -338,8 +361,14 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 | `INVALID_SIZE` | 400 | Invalid size value |
 | `INVALID_RESTRICTION` | 400 | Invalid restriction mode |
 | `NOT_FOUND` | 404 | Button not found |
+| `INVALID_BUTTON_ID` | 400 | Public button ID format invalid |
+| `BUTTON_NOT_FOUND` | 404 | Public button not found |
 | `REFERRER_DENIED` | 403 | Nice not allowed from this referrer |
 | `MULTI_NICE_DISABLED` | 403 | Multi-nice endpoint called on a single-nice button |
+| `POW_REQUIRED` | 429 | Proof-of-work challenge required before retrying |
+| `INVALID_POW` | 400 | Proof-of-work solution invalid |
+| `HOURLY_LIMIT` | 429 | Hourly button creation limit exceeded |
+| `DAILY_LIMIT` | 429 | Daily button creation limit exceeded |
 | `IP_LIMIT` | 429 | Rate limit exceeded |
 | `BUTTON_LIMIT` | 429 | Button rate limit exceeded |
 
@@ -349,6 +378,8 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 
 | Scope | Limit | Window |
 |-------|-------|--------|
+| Per IP (button creation) | 10 buttons | 1 hour |
+| Per IP (button creation) | 50 buttons | 1 day |
 | Per IP (nice) | 20 requests | 1 minute |
 | Per Button (nice) | 100 requests | 1 minute |
 
@@ -404,4 +435,3 @@ https://api.nice.sbs/badge/:public_id.svg
 Badges are cached for 60 seconds (browser) / 5 minutes (CDN). Counts are snapshots, not real-time.
 
 ---
-
