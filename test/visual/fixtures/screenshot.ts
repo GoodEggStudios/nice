@@ -9,6 +9,22 @@ function stablePageHeight(height: number): number {
   return Math.ceil(height / 256) * 256;
 }
 
+function centeredPaddedClip(
+  box: { x: number; y: number; width: number; height: number },
+  padding: number,
+  viewport: { width: number; height: number },
+): { x: number; y: number; width: number; height: number } {
+  const width = Math.min(stableClipSize(box.width + padding * 2), viewport.width);
+  const height = Math.min(stableClipSize(box.height + padding * 2), viewport.height);
+  const centerX = box.x + box.width / 2;
+  const centerY = box.y + box.height / 2;
+  let x = Math.round(centerX - width / 2);
+  let y = Math.round(centerY - height / 2);
+  x = Math.max(0, Math.min(x, viewport.width - width));
+  y = Math.max(0, Math.min(y, viewport.height - height));
+  return { x, y, width, height };
+}
+
 async function measureStableScrollHeight(page: Page): Promise<number> {
   let previous = -1;
   let stableReads = 0;
@@ -95,14 +111,11 @@ export async function screenshotWebsitePaddedLocator(locator: Locator, name: str
     throw new Error(`Cannot screenshot ${name}: page has no viewport size`);
   }
 
-  const x = Math.max(0, Math.floor(box.x - padding));
-  const y = Math.max(0, Math.floor(box.y - padding));
-  const width = Math.min(stableClipSize(box.width + padding * 2), viewport.width - x);
-  const height = Math.min(stableClipSize(box.height + padding * 2), viewport.height - y);
+  const clip = centeredPaddedClip(box, padding, viewport);
 
   await expect(page).toHaveScreenshot(name, {
     animations: "disabled",
-    clip: { x, y, width, height },
+    clip,
     scale: "css",
     omitBackground: false,
   });
@@ -120,14 +133,11 @@ export async function screenshotPaddedLocator(locator: Locator, name: string, pa
     throw new Error(`Cannot screenshot ${name}: page has no viewport size`);
   }
 
-  const x = Math.max(0, Math.floor(box.x - padding));
-  const y = Math.max(0, Math.floor(box.y - padding));
-  const width = Math.min(stableClipSize(box.width + padding * 2), viewport.width - x);
-  const height = Math.min(stableClipSize(box.height + padding * 2), viewport.height - y);
+  const clip = centeredPaddedClip(box, padding, viewport);
 
   await expect(page).toHaveScreenshot(name, {
     animations: "disabled",
-    clip: { x, y, width, height },
+    clip,
     scale: "css",
     omitBackground: true,
   });
