@@ -45,7 +45,7 @@
     // Create iframe
     const iframe = document.createElement('iframe');
     iframe.src = `${EMBED_BASE}/embed/${buttonId}?theme=${encodeURIComponent(theme)}&size=${encodeURIComponent(size)}`;
-    iframe.style.cssText = `background:transparent;border:none;overflow:hidden;width:${dims.w}px;height:${dims.h}px;display:block;`;
+    iframe.style.cssText = `background:transparent;border:none;overflow:hidden;width:${dims.w}px;height:${dims.h}px;display:block;color-scheme:normal;`;
     iframe.setAttribute('scrolling', 'no');
     iframe.setAttribute('frameborder', '0');
     iframe.setAttribute('allowtransparency', 'true');

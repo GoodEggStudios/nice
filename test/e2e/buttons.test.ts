@@ -55,6 +55,7 @@ describe("Button API", () => {
 
       expect(embed.iframe).toContain(data.public_id as string);
       expect(embed.iframe).toContain("<iframe");
+      expect(embed.iframe).toContain("color-scheme:normal");
       expect(embed.script).toContain(data.public_id as string);
       expect(embed.script).toContain("<script");
     });

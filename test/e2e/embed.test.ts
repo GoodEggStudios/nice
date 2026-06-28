@@ -46,6 +46,7 @@ describe("Embed", () => {
 
       expect(body).toContain("background:transparent;border:none;overflow:hidden");
       expect(body).toContain("display:block");
+      expect(body).toContain("color-scheme:normal");
     });
   });
 
