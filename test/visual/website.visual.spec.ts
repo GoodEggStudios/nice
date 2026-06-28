@@ -113,6 +113,8 @@ test("script tag insertion host page", async ({ page }) => {
   await installNiceApiMocks(page);
   await page.goto(`${server.origin}/visual/host-script.html`);
   await stabilizeWebsitePage(page);
+  const iframe = page.locator("iframe[title='Nice button']");
   await expect(page.frameLocator("iframe[title='Nice button']").locator("#niceBtn")).toBeVisible();
+  await expect(iframe).toHaveCSS("color-scheme", "normal");
   await screenshotWebsitePaddedLocator(page.locator(".host"), "website/script-tag-host.png");
 });
