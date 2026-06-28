@@ -98,6 +98,7 @@ Before deployment-oriented changes, remember that `npm run deploy` is guarded by
 - Keep changes focused and avoid mixing unrelated cleanup with feature or fix work.
 - Start work from the latest fresh changes from `origin`; fetch first and branch from the current remote base so local work is not built on stale history.
 - Before opening or updating a PR, rebase the branch on the latest `origin/main` and resolve conflicts locally so the PR is current.
+- When a PR's commits or scope change, update the PR description to match the work in progress so it stays in sync with the branch.
 - Use conventional commit prefixes such as `feat:`, `fix:`, `docs:`, `test:`, `ci:`, `refactor:`, and `chore:`.
 - Never add AI, assistant, or tool attribution anywhere in project history or collaboration surfaces. This includes commit messages, commit bodies, PR titles, PR descriptions, PR comments, review comments, changelog entries, release notes, and generated metadata.
 - Respect existing uncommitted work; do not overwrite or revert changes you did not make without explicit instruction.
