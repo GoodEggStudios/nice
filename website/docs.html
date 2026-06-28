@@ -185,6 +185,7 @@
       <a href="#quickstart">Quick Start</a>
       <a href="#create">Create Button</a>
       <a href="#stats">Get Stats</a>
+      <a href="#update">Update Button</a>
       <a href="#delete">Delete Button</a>
       <a href="#nice">Record Nice</a>
       <a href="#count">Get Count</a>
@@ -202,8 +203,15 @@
   "public_id": "n_x7Kf9mQ2",
   "private_id": "ns_4vK9mPq8wL2nRt5xYz7bC",
   "url": "https://example.com/my-article",
+  "restriction": "url",
+  "multi_nice": false,
+  "theme": "light",
+  "size": "md",
+  "count": 0,
+  "created_at": "2026-02-18T10:00:00Z",
   "embed": {
-    "iframe": "&lt;iframe src=\"...\" ...&gt;&lt;/iframe&gt;"
+    "iframe": "&lt;iframe src=\"...\" ...&gt;&lt;/iframe&gt;",
+    "script": "&lt;script src=\"...\" ...&gt;&lt;/script&gt;"
   }
 }</code></pre>
     
@@ -226,6 +234,8 @@
       <tr><td><code>url</code></td><td>string</td><td>Yes</td><td>Content URL where the button will be embedded</td></tr>
       <tr><td><code>theme</code></td><td>string</td><td>No</td><td>Button theme: <code>light</code> (default), <code>dark</code>, <code>minimal</code>, <code>mono-dark</code>, <code>mono-light</code></td></tr>
       <tr><td><code>size</code></td><td>string</td><td>No</td><td>Button size: <code>xs</code>, <code>sm</code>, <code>md</code> (default), <code>lg</code>, <code>xl</code></td></tr>
+      <tr><td><code>restriction</code></td><td>string</td><td>No</td><td>Where nices are allowed from: <code>url</code> (default), <code>domain</code>, <code>global</code></td></tr>
+      <tr><td><code>multi_nice</code></td><td>boolean</td><td>No</td><td>Enable clap-style multi-nice. Default: <code>false</code></td></tr>
     </table>
     
     <h3>Response</h3>
@@ -233,12 +243,14 @@
   "public_id": "n_x7Kf9mQ2Ab3Z",
   "private_id": "ns_4vK9mPq8wL2nRt5xYz7bC",
   "url": "https://example.com/my-article",
+  "restriction": "url",
+  "multi_nice": false,
   "theme": "light",
   "size": "md",
   "count": 0,
   "created_at": "2026-02-18T10:00:00Z",
   "embed": {
-    "iframe": "&lt;iframe src=\"https://api.nice.sbs/e/n_x7Kf9mQ2Ab3Z?theme=light&size=md\" style=\"border:none;width:100px;height:36px;\" title=\"Nice button\"&gt;&lt;/iframe&gt;",
+    "iframe": "&lt;iframe src=\"https://api.nice.sbs/e/n_x7Kf9mQ2Ab3Z?theme=light&size=md\" style=\"background:transparent;border:none;overflow:hidden;display:block;color-scheme:normal;width:100px;height:36px;\" scrolling=\"no\" frameborder=\"0\" allowtransparency=\"true\" title=\"Nice button\"&gt;&lt;/iframe&gt;",
     "script": "&lt;script src=\"https://api.nice.sbs/embed.js\" data-button=\"n_x7Kf9mQ2Ab3Z\" data-theme=\"light\" data-size=\"md\" async&gt;&lt;/script&gt;"
   }
 }</code></pre>
@@ -256,6 +268,8 @@
     <pre><code>{
   "id": "n_x7Kf9mQ2Ab3Z",
   "url": "https://example.com/my-article",
+  "restriction": "url",
+  "multi_nice": false,
   "count": 42,
   "theme": "light",
   "size": "md",
@@ -263,6 +277,37 @@
   "embed": { ... }
 }</code></pre>
     
+    <h2 id="update">Update Button</h2>
+
+    <div class="endpoint">
+      <span class="method post">PATCH</span>
+      <span class="path">/api/v1/buttons/<span class="param">:private_id</span></span>
+    </div>
+
+    <p>Update button settings. Requires the private ID.</p>
+
+    <h3>Request Body</h3>
+    <table>
+      <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+      <tr><td><code>restriction</code></td><td>string</td><td>No</td><td><code>url</code>, <code>domain</code>, <code>global</code></td></tr>
+      <tr><td><code>theme</code></td><td>string</td><td>No</td><td><code>light</code>, <code>dark</code>, <code>minimal</code>, <code>mono-dark</code>, <code>mono-light</code></td></tr>
+      <tr><td><code>size</code></td><td>string</td><td>No</td><td><code>xs</code>, <code>sm</code>, <code>md</code>, <code>lg</code>, <code>xl</code></td></tr>
+      <tr><td><code>multi_nice</code></td><td>boolean</td><td>No</td><td>Enable or disable clap-style multi-nice</td></tr>
+    </table>
+
+    <h3>Response</h3>
+    <pre><code>{
+  "id": "n_x7Kf9mQ2Ab3Z",
+  "url": "https://example.com/my-article",
+  "restriction": "global",
+  "multi_nice": true,
+  "count": 42,
+  "theme": "dark",
+  "size": "lg",
+  "created_at": "2026-02-18T10:00:00Z",
+  "embed": { ... }
+}</code></pre>
+
     <h2 id="delete">Delete Button</h2>
     
     <div class="endpoint">
@@ -287,7 +332,7 @@
     
     <p>Record a "nice" using the private ID. <strong>Owner only</strong> — no restrictions.</p>
     
-    <p>Unlike the public endpoint: no referrer check, no IP deduplication, no rate limiting.</p>
+    <p>Unlike the public endpoint: no referrer check and no IP deduplication. This endpoint is still rate-limited by IP to prevent abuse.</p>
     
     <h3>Response</h3>
     <pre><code>{
@@ -304,6 +349,14 @@
     </div>
     
     <p>Record a "nice" on a button. Public endpoint, no auth required.</p>
+
+    <h3>Request Body (Optional)</h3>
+    <table>
+      <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+      <tr><td><code>fingerprint</code></td><td>string</td><td>No</td><td>Device fingerprint used with IP and daily salt for deduplication</td></tr>
+      <tr><td><code>referrer</code></td><td>string</td><td>No</td><td>Parent page URL checked against the button restriction</td></tr>
+      <tr><td><code>pow_solution</code></td><td>object</td><td>No</td><td>Proof-of-work response when rate limiting requires one</td></tr>
+    </table>
     
     <h3>Response</h3>
     <pre><code>{
@@ -330,7 +383,10 @@
     <h3>Response</h3>
     <pre><code>{
   "count": 43,
-  "button_id": "n_x7Kf9mQ2"
+  "button_id": "n_x7Kf9mQ2",
+  "has_niced": true,
+  "multi_nice": false,
+  "url": "https://example.com/my-article"
 }</code></pre>
     
     <h2 id="embed">Embed Options</h2>
@@ -392,9 +448,27 @@
       <tr><td><code>INVALID_URL</code></td><td>400</td><td>URL format is invalid</td></tr>
       <tr><td><code>INVALID_THEME</code></td><td>400</td><td>Invalid theme value</td></tr>
       <tr><td><code>INVALID_SIZE</code></td><td>400</td><td>Invalid size value</td></tr>
+      <tr><td><code>INVALID_RESTRICTION</code></td><td>400</td><td>Invalid restriction mode</td></tr>
+      <tr><td><code>INVALID_BUTTON_ID</code></td><td>400</td><td>Public button ID format invalid</td></tr>
       <tr><td><code>NOT_FOUND</code></td><td>404</td><td>Button not found</td></tr>
+      <tr><td><code>BUTTON_NOT_FOUND</code></td><td>404</td><td>Public button not found</td></tr>
       <tr><td><code>REFERRER_DENIED</code></td><td>403</td><td>Nice not allowed from this referrer</td></tr>
+      <tr><td><code>MULTI_NICE_DISABLED</code></td><td>403</td><td>Multi-nice endpoint called on a single-nice button</td></tr>
+      <tr><td><code>POW_REQUIRED</code></td><td>429</td><td>Proof-of-work challenge required before retrying</td></tr>
+      <tr><td><code>INVALID_POW</code></td><td>400</td><td>Proof-of-work solution invalid</td></tr>
+      <tr><td><code>HOURLY_LIMIT</code></td><td>429</td><td>Hourly button creation limit exceeded</td></tr>
+      <tr><td><code>DAILY_LIMIT</code></td><td>429</td><td>Daily button creation limit exceeded</td></tr>
       <tr><td><code>IP_LIMIT</code></td><td>429</td><td>Rate limit exceeded</td></tr>
+      <tr><td><code>BUTTON_LIMIT</code></td><td>429</td><td>Button rate limit exceeded</td></tr>
+    </table>
+
+    <h3>Rate Limits</h3>
+    <table>
+      <tr><th>Scope</th><th>Limit</th><th>Window</th></tr>
+      <tr><td>Per IP (button creation)</td><td>10 buttons</td><td>1 hour</td></tr>
+      <tr><td>Per IP (button creation)</td><td>50 buttons</td><td>1 day</td></tr>
+      <tr><td>Per IP (nice)</td><td>20 requests</td><td>1 minute</td></tr>
+      <tr><td>Per Button (nice)</td><td>100 requests</td><td>1 minute</td></tr>
     </table>
     
   </div>
