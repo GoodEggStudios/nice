@@ -2,7 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 import { EMBED_DIMENSIONS, EMBED_SIZES, EMBED_THEMES, type EmbedSize, type EmbedTheme } from "../../src/routes/embed";
 import { VISUAL_BUTTON_ID } from "./fixtures/data";
 import { installNiceApiMocks } from "./fixtures/routes";
-import { screenshotPaddedLocator, stabilizePage } from "./fixtures/screenshot";
+import { screenshotPaddedLocator, stabilizePage, stableComponentClip } from "./fixtures/screenshot";
 import { startVisualServer, type VisualServer } from "./fixtures/server";
 
 let server: VisualServer;
@@ -81,7 +81,11 @@ test("embed hover state", async ({ page }) => {
   await openEmbed(page, "dark", "md", { count: 42 });
   await expect(page.locator("#niceCount")).toHaveText("42");
   await page.locator("#niceBtn").hover();
-  await screenshotEmbedState(page, "embed/states/dark-md-hover.png", "md", 6);
+  const minClip = stableComponentClip(EMBED_DIMENSIONS.md, 6, 1.05);
+  await screenshotPaddedLocator(page.locator("#niceBtn"), "embed/states/dark-md-hover.png", 6, {
+    minWidth: minClip.width,
+    minHeight: minClip.height,
+  });
 });
 
 test("embed focus state", async ({ page }) => {

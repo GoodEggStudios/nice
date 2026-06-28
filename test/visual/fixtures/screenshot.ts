@@ -32,10 +32,27 @@ async function centerPageContent(page: Page): Promise<void> {
   });
 }
 
+export interface ComponentClipBounds {
+  minWidth?: number;
+  minHeight?: number;
+}
+
+export function stableComponentClip(
+  element: { w: number; h: number },
+  padding: number,
+  scale = 1,
+): { width: number; height: number } {
+  return {
+    width: stableClipSize(Math.ceil(element.w * scale) + padding * 2),
+    height: stableClipSize(Math.ceil(element.h * scale) + padding * 2),
+  };
+}
+
 async function prepareCenteredComponentClip(
   page: Page,
   locator: Locator,
   padding: number,
+  bounds: ComponentClipBounds = {},
 ): Promise<{ x: number; y: number; width: number; height: number }> {
   const margin = 4;
   let box = await locator.boundingBox();
@@ -44,6 +61,8 @@ async function prepareCenteredComponentClip(
   }
 
   let { width, height } = paddedClipDimensions(box, padding);
+  if (bounds.minWidth) width = Math.max(width, bounds.minWidth);
+  if (bounds.minHeight) height = Math.max(height, bounds.minHeight);
   await centerPageContent(page);
   await page.setViewportSize({ width: width + margin * 2, height: height + margin * 2 });
 
@@ -53,6 +72,8 @@ async function prepareCenteredComponentClip(
   }
 
   ({ width, height } = paddedClipDimensions(box, padding));
+  if (bounds.minWidth) width = Math.max(width, bounds.minWidth);
+  if (bounds.minHeight) height = Math.max(height, bounds.minHeight);
   await page.setViewportSize({ width: width + margin * 2, height: height + margin * 2 });
 
   return { x: margin, y: margin, width, height };
@@ -167,9 +188,14 @@ export async function screenshotWebsitePaddedLocator(locator: Locator, name: str
   });
 }
 
-export async function screenshotPaddedLocator(locator: Locator, name: string, padding = 2): Promise<void> {
+export async function screenshotPaddedLocator(
+  locator: Locator,
+  name: string,
+  padding = 2,
+  bounds: ComponentClipBounds = {},
+): Promise<void> {
   const page = locator.page();
-  const clip = await prepareCenteredComponentClip(page, locator, padding);
+  const clip = await prepareCenteredComponentClip(page, locator, padding, bounds);
 
   await expect(page).toHaveScreenshot(name, {
     animations: "disabled",
