@@ -12,7 +12,7 @@ The Cloudflare Worker API lives under `src/`:
 - `src/embed/` contains the iframe/embed template and script assets served by the Worker.
 - `src/types/` contains Worker environment and shared TypeScript types.
 
-The public static site lives in `website/`. API docs, deploy/security notes, and planning/spec material live in `docs/` and `openspec/`. Bruno API collections live in `bruno/`.
+The public static site lives in `website/`. API docs, deploy/security notes, and archived planning/spec material live in `docs/`. Bruno API collections live in `bruno/`.
 
 ## Development Commands
 
