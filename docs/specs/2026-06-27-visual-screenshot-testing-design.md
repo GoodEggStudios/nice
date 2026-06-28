@@ -1,0 +1,211 @@
+# Visual Screenshot Testing Design
+
+## Purpose
+
+Nice has several small visual surfaces that can regress without breaking API tests: embedded buttons, SVG badges, and website pages that show or generate those buttons. We will add screenshot testing support that makes those surfaces easy to review in git first, then promote stable scenarios into automated verification later.
+
+## Goals
+
+- Generate small PNG screenshots for every supported way Nice buttons, badges, and website placements can appear.
+- Commit generated screenshots to the repository so visual changes are visible in ordinary code review.
+- Keep visual tests separate from the existing Vitest and Cloudflare worker API tests.
+- Use deterministic fixtures and mocked API responses so screenshots do not depend on production data, timing, or external state.
+- Build the catalog in phases, while preserving the intent that all button, badge, and website placements are eventually covered.
+
+## Non-Goals
+
+- Do not upload screenshot artifacts in the initial workflow.
+- Do not require Git LFS for baselines.
+- Do not make visual comparison a blocking CI gate in the first phase.
+- Do not replace existing unit or worker e2e tests.
+
+## Proposed Approach
+
+Add a Playwright-based visual testing layer with two main commands:
+
+- `npm run test:visual:update`: regenerate committed PNG screenshots.
+- `npm run test:visual`: compare current rendering to committed screenshots once verification is enabled.
+
+Phase 1 will focus on generating and committing screenshots. Reviewers will inspect changed PNGs directly in the worktree or pull request. Local comparison against freshly generated baselines is allowed as a developer sanity check, but CI gating stays deferred until the fixture catalog has stabilized.
+
+Playwright is the preferred browser layer because it can capture focused locator screenshots instead of full pages. Button and badge screenshots should capture a small wrapper around the visual element with deliberate padding, not the whole viewport.
+
+## Visual Surfaces
+
+### Embed Buttons
+
+Cover the real embedded button rendering from `/embed/:id` and `/e/:id`.
+
+Theme coverage:
+
+- `light`
+- `dark`
+- `minimal`
+- `mono-dark`
+- `mono-light`
+
+Size coverage:
+
+- `xs`
+- `sm`
+- `md`
+- `lg`
+- `xl`
+
+State coverage:
+
+- default empty count
+- visible count
+- niced state
+- single-nice mode
+- multi-nice mode
+- representative hover and focus states where they are stable
+- disabled or unavailable state if supported by the route behavior
+
+The full theme x size matrix should be covered for the default state. Other states can use representative theme and size combinations unless a state changes layout or color per theme.
+
+### Badges
+
+Cover `/badge/:publicId.svg` output rendered as screenshots.
+
+Theme coverage:
+
+- `default`
+- `dark`
+- `rich`
+- `rich-inverted`
+- `rich-mono`
+- `rich-mono-inverted`
+
+Count coverage:
+
+- `0`
+- `1`
+- `999`
+- `1.2k`
+- `1.2M`
+- at least one long-width case that exercises badge dimension changes
+
+### Website Placements
+
+Cover static site pages and button placements that users actually see.
+
+Initial page scenarios:
+
+- homepage inline iframe placement
+- create page empty form
+- create page live preview combinations
+- create page result state after a successful create response
+- public button page loaded with a valid button
+- public button page missing or invalid button state
+- stats page loaded with a valid private ID
+- stats page missing or invalid private ID state
+- script-tag insertion behavior that creates an iframe in a host page
+
+Desktop and mobile widths should be included for website pages. The small embed and badge surfaces can use content-sized screenshots to keep PNGs compact.
+
+## Architecture
+
+### Test Location
+
+Place visual test code under `test/visual/`.
+
+Expected structure:
+
+```text
+test/visual/
+  fixtures/
+  screenshots/
+  visual.test.ts
+```
+
+The exact file split can evolve during implementation, but scenario definitions should stay in code rather than in manually maintained screenshot-only pages.
+
+### Local Server
+
+Use a deterministic local server for visual tests. The server should be able to:
+
+- serve existing static files from `website/`
+- serve route-derived embed and badge content
+- provide mocked JSON responses for API calls used by website pages
+- avoid calls to production APIs during screenshots
+
+Use Playwright's built-in request interception for API calls made by static website pages, because those pages currently reference `https://api.nice.sbs` directly. This keeps production files unchanged while allowing tests to provide deterministic JSON, SVG, embed HTML, and script responses.
+
+Small generated assets that are useful both in production routes and tests should live in source files rather than duplicated inline strings. In particular, reusable SVG or HTML snippets can be exported from source modules, served by API routes, and imported by the visual harness.
+
+### Baselines
+
+Generated PNGs should be committed under `test/visual/screenshots/`. Names should encode the surface, variant, and viewport where relevant, for example:
+
+```text
+embed/default/light-md.png
+embed/states/dark-md-niced.png
+badge/rich-1_2k.png
+website/home-desktop.png
+website/create-result-mobile.png
+```
+
+Naming should follow Playwright snapshot conventions where practical so future `toHaveScreenshot()` verification can reuse the same files without a migration.
+
+Screenshots should remain small:
+
+- capture a padded wrapper around the button or badge for compact embed surfaces
+- use representative viewport screenshots for full website pages
+- disable or stabilize animation where possible
+- use deterministic fonts or wait for fonts to load before capture
+
+## Phasing
+
+### Phase 1: Generate Review Screenshots
+
+- Add Playwright and screenshot generation scripts.
+- Build the visual scenario catalog for embed buttons first.
+- Commit generated screenshots.
+- Keep the workflow manually triggered by `npm run test:visual:update`.
+
+### Phase 2: Complete Surface Coverage
+
+- Add badge screenshots.
+- Add website placement screenshots.
+- Add script-tag insertion scenarios.
+- Document how to review and intentionally update screenshots.
+
+### Phase 3: Local Visual Verification
+
+- Enable `npm run test:visual` to compare current screenshots against committed baselines.
+- Decide tolerances after observing real rendering stability.
+- Keep failures local and review-driven unless explicitly promoted.
+
+### Phase 4: CI Verification
+
+- Add CI execution for `npm run test:visual`.
+- Start with a stable smoke subset if the full matrix is noisy.
+- Promote broader coverage once it is reliable.
+
+## Review Workflow
+
+When visual behavior changes intentionally:
+
+1. Run `npm run test:visual:update`.
+2. Review changed PNGs in `test/visual/screenshots/`.
+3. Commit the code and screenshot changes together.
+
+When visual behavior changes unintentionally:
+
+1. Inspect the changed PNGs.
+2. Fix the rendering issue.
+3. Regenerate screenshots only after the visual output is correct.
+
+## Risks And Mitigations
+
+- Font loading can make screenshots flaky. Wait for fonts to load and prefer deterministic local or cached font behavior where practical.
+- Animations can cause unstable captures. Disable animations in the visual harness or capture after stable states.
+- Production API calls can make website screenshots flaky. Mock API responses for visual scenarios.
+- Full matrix coverage can grow quickly. Cover all theme and size combinations for the default embed state, then use representative combinations for state variants unless the state has theme-specific rendering.
+- Browser rendering differences can create noisy diffs. Use a pinned Playwright browser version through package lock and document the update workflow.
+
+## Open Decisions For Implementation Planning
+
+- The exact screenshot naming convention after the first catalog is implemented.
+- The first stable subset to promote into CI during Phase 4.

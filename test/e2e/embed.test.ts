@@ -6,6 +6,7 @@
 
 import { describe, it, expect } from "vitest";
 import { SELF } from "cloudflare:test";
+import { EMBED_DIMENSIONS, EMBED_SIZES, renderEmbedScript } from "../../src/routes/embed";
 
 describe("Embed", () => {
   describe("GET /embed.js", () => {
@@ -29,6 +30,23 @@ describe("Embed", () => {
 
       expect(body).toContain("nice-embed");
       expect(body).toContain("data-button");
+    });
+
+    it("should point iframe embeds back to the API host", async () => {
+      const res = await SELF.fetch("https://api.nice.sbs/embed.js");
+      const body = await res.text();
+
+      expect(body).toContain("const EMBED_BASE='https://api.nice.sbs'");
+      expect(body).not.toContain("const EMBED_BASE='https://nice.sbs'");
+    });
+
+    it("should style generated iframes as transparent", async () => {
+      const res = await SELF.fetch("https://api.nice.sbs/embed.js");
+      const body = await res.text();
+
+      expect(body).toContain("background:transparent;border:none;overflow:hidden");
+      expect(body).toContain("display:block");
+      expect(body).toContain("color-scheme:normal");
     });
   });
 
@@ -80,6 +98,23 @@ describe("Embed", () => {
       }
     });
 
+    it("should render the root document with a transparent background", async () => {
+      const res = await SELF.fetch("https://api.nice.sbs/embed/n_abc123456789");
+      const body = await res.text();
+
+      expect(body).toContain("html,body{background:transparent}");
+    });
+
+    it("should size the iframe to the padded transparent document", async () => {
+      const res = await SELF.fetch("https://api.nice.sbs/embed/n_abc123456789");
+      const body = await res.text();
+
+      expect(body).toContain("justify-content:center;padding:2px");
+      expect(body).toContain("const root=document.documentElement;");
+      expect(body).toContain("width:Math.ceil(root.scrollWidth),height:Math.ceil(root.scrollHeight)");
+      expect(body).not.toContain("width:Math.ceil(rect.width)+8,height:Math.ceil(rect.height)+8");
+    });
+
     it("should return 400 for invalid button ID", async () => {
       const res = await SELF.fetch("https://api.nice.sbs/embed/not_valid");
 
@@ -93,6 +128,43 @@ describe("Embed", () => {
 
       // Should still serve successfully with defaults
       expect(res.status).toBe(200);
+    });
+  });
+
+  describe("shared embed helpers", () => {
+    it("should serve the shared embed script byte-for-byte", async () => {
+      const res = await SELF.fetch("https://api.nice.sbs/embed.js");
+
+      expect(res.status).toBe(200);
+      expect(await res.text()).toBe(renderEmbedScript());
+      expect(renderEmbedScript()).toContain("const EMBED_BASE='https://api.nice.sbs'");
+    });
+
+    it("should escape custom embed bases in the generated script literal", async () => {
+      const customBase = "https://exa'mple.test/a\\b\nc";
+      const script = renderEmbedScript(customBase);
+
+      expect(script).toContain("const EMBED_BASE='https://exa\\'mple.test/a\\\\b\\nc'");
+      expect(script).not.toContain(customBase);
+    });
+
+    it("should generate script sizes from shared embed dimensions", async () => {
+      const expectedSizes = `{${EMBED_SIZES.map((size) => {
+        const dim = EMBED_DIMENSIONS[size];
+        return `${size}:{w:${dim.w},h:${dim.h}}`;
+      }).join(",")}}`;
+
+      expect(renderEmbedScript()).toContain(`const SIZES=${expectedSizes};`);
+    });
+
+    it("should keep supported themes and sizes rendering through shared helpers", async () => {
+      const res = await SELF.fetch(
+        "https://api.nice.sbs/embed/n_abc123456789?theme=mono-light&size=sm"
+      );
+
+      expect(res.status).toBe(200);
+      const body = await res.text();
+      expect(body).toContain('class="theme-mono-light size-sm"');
     });
   });
 

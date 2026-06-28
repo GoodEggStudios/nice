@@ -2,7 +2,7 @@
  * Nice Embed Script
  * 
  * Usage:
- * <script src="https://nice.sbs/embed.js" data-button="n_xxx" async></script>
+ * <script src="https://api.nice.sbs/embed.js" data-button="n_xxx" async></script>
  * 
  * Options (data attributes):
  * - data-button: Button ID (required)
@@ -12,7 +12,7 @@
 (function() {
   'use strict';
 
-  const EMBED_BASE = 'https://nice.sbs';
+  const EMBED_BASE = 'https://api.nice.sbs';
   
   // Default iframe sizes per size variant
   const SIZES = {
@@ -45,7 +45,7 @@
     // Create iframe
     const iframe = document.createElement('iframe');
     iframe.src = `${EMBED_BASE}/embed/${buttonId}?theme=${encodeURIComponent(theme)}&size=${encodeURIComponent(size)}`;
-    iframe.style.cssText = `border:none;overflow:hidden;width:${dims.w}px;height:${dims.h}px;`;
+    iframe.style.cssText = `background:transparent;border:none;overflow:hidden;width:${dims.w}px;height:${dims.h}px;display:block;color-scheme:normal;`;
     iframe.setAttribute('scrolling', 'no');
     iframe.setAttribute('frameborder', '0');
     iframe.setAttribute('allowtransparency', 'true');

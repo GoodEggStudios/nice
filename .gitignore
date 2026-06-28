@@ -25,3 +25,6 @@ test-results/
 # Logs
 *.log
 npm-debug.log*
+
+# Playwright output
+playwright-report/

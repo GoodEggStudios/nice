@@ -55,8 +55,18 @@ describe("Button API", () => {
 
       expect(embed.iframe).toContain(data.public_id as string);
       expect(embed.iframe).toContain("<iframe");
+      expect(embed.iframe).toContain("color-scheme:normal");
       expect(embed.script).toContain(data.public_id as string);
       expect(embed.script).toContain("<script");
+    });
+
+    it("should size iframe snippets using shared embed dimensions", async () => {
+      const data = await createButton("https://example.com/small-button", {
+        size: "sm",
+      });
+      const embed = data.embed as { iframe: string };
+
+      expect(embed.iframe).toContain("width:85px;height:32px");
     });
 
     it("should reject missing URL", async () => {
