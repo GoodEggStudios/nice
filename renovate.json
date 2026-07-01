@@ -1,16 +1,78 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
+    "config:recommended",
+    "security:minimumReleaseAgeNpm",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)"
   ],
-  "dependencyDashboard": true,
+  "timezone": "Europe/London",
   "labels": ["dependencies"],
   "rangeStrategy": "bump",
   "recreateWhen": "always",
+  "enabledManagers": ["npm", "github-actions", "custom.regex"],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 5am on monday"]
+  },
+  "prConcurrentLimit": 5,
+  "branchConcurrentLimit": 5,
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github\\/workflows\\/[^/]+\\.ya?ml$/"],
+      "matchStrings": [
+        "node-version:\\s*['\"]?(?<currentValue>\\d+\\.\\d+\\.\\d+)['\"]?"
+      ],
+      "depNameTemplate": "node",
+      "datasourceTemplate": "node-version",
+      "versioningTemplate": "node"
+    }
+  ],
   "packageRules": [
     {
-      "matchUpdateTypes": ["minor", "patch"],
+      "description": "Automerge low-risk updates after CI succeeds.",
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "automerge": true
+    },
+    {
+      "description": "Keep the Vitest worker test stack together.",
+      "matchPackageNames": [
+        "@cloudflare/vitest-pool-workers",
+        "@vitest/coverage-v8",
+        "vitest"
+      ],
+      "groupName": "Vitest test stack"
+    },
+    {
+      "description": "Group routine GitHub Actions updates.",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "groupName": "GitHub Actions"
+    },
+    {
+      "description": "Keep Cloudflare Worker tooling updates together for compatibility review.",
+      "matchPackageNames": [
+        "@cloudflare/workers-types",
+        "cloudflare/wrangler-action",
+        "wrangler"
+      ],
+      "groupName": "Cloudflare Worker tooling",
+      "automerge": false
+    },
+    {
+      "description": "Keep Playwright visible because visual snapshots may need review.",
+      "matchPackageNames": ["@playwright/test"],
+      "groupName": "Playwright",
+      "automerge": false
+    },
+    {
+      "description": "Update the Node.js version pinned in GitHub Actions workflows.",
+      "matchManagers": ["custom.regex"],
+      "matchPackageNames": ["node"],
+      "groupName": "Node.js CI runtime",
+      "automerge": false
     }
   ]
 }
