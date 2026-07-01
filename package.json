@@ -19,13 +19,13 @@
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.12.12",
-    "@cloudflare/workers-types": "^4.20260410.1",
+    "@cloudflare/workers-types": "^4.20260628.1",
     "@playwright/test": "^1.61.1",
     "@types/node": "^26.1.0",
     "@vitest/coverage-v8": "^3.2.6",
     "typescript": "^5.9.3",
     "vitest": "^3.2.6",
-    "wrangler": "^4.0.0"
+    "wrangler": "^4.105.0"
   },
   "license": "Apache-2.0",
   "repository": {
