@@ -28,3 +28,6 @@ npm-debug.log*
 
 # Playwright output
 playwright-report/
+
+# Git worktrees
+.worktrees/

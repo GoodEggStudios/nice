@@ -166,6 +166,39 @@ describe("Embed", () => {
       const body = await res.text();
       expect(body).toContain('class="theme-mono-light size-sm"');
     });
+
+    describe("host-page confetti (data-confetti)", () => {
+      it("should include confetti-related code in the served embed script", async () => {
+        const res = await SELF.fetch("https://api.nice.sbs/embed.js");
+        const body = await res.text();
+
+        expect(body).toContain("data-confetti");
+        expect(body).toContain("confettiAttr");
+        expect(body).toContain("enableConfetti");
+        expect(body).toContain("launchConfetti");
+        expect(body).toContain("nice-clicked");
+        expect(body).toContain("nice-recorded");
+      });
+
+      it("should opt in only when data-confetti is present and not disabled", () => {
+        const script = renderEmbedScript();
+
+        expect(script).toContain("confettiAttr=script.getAttribute('data-confetti')");
+        expect(script).toContain(
+          "enableConfetti=confettiAttr!==null&&confettiAttr!=='false'&&confettiAttr!=='0'"
+        );
+      });
+
+      it("should gate confetti message handlers on enableConfetti", () => {
+        const script = renderEmbedScript();
+
+        expect(script).toContain("if(enableConfetti&&data.buttonId===buttonId)");
+        expect(script).toContain("data.type==='nice-clicked'");
+        expect(script).toContain("data.type==='nice-recorded'&&!isMultiNice&&!hasConfettied");
+        expect(script).toContain("isMultiNice=true;launchConfetti()");
+        expect(script).toContain("launchConfetti();hasConfettied=true");
+      });
+    });
   });
 
   describe("GET /e/:button_id (short URL)", () => {

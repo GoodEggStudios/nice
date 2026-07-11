@@ -92,6 +92,12 @@ Customise the look with `theme` and `size` parameters:
 
 **Sizes:** `xs` · `sm` · `md` · `lg` · `xl`
 
+**Host-page confetti (script embed only):** Add `data-confetti` to opt in to a confetti celebration on the host page when someone nices. Off by default — omit the attribute to disable. Set to `false` or `0` to explicitly disable.
+
+```html
+<script src="https://nice.sbs/embed.js" data-button="n_xxxx" data-confetti async></script>
+```
+
 ## Button Stats
 
 Check how many nice's your button has:
