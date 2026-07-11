@@ -95,10 +95,15 @@ Before deployment-oriented changes, remember that `npm run deploy` is guarded by
 
 ## Git And Commits
 
-- Keep changes focused and avoid mixing unrelated cleanup with feature or fix work.
+- Use focused branches and PRs; keep unrelated local changes out of commits.
 - Start work from the latest fresh changes from `origin`; fetch first and branch from the current remote base so local work is not built on stale history.
 - Before opening or updating a PR, rebase the branch on the latest `origin/main` and resolve conflicts locally so the PR is current.
 - When a PR's commits or scope change, update the PR description to match the work in progress so it stays in sync with the branch.
-- Use conventional commit prefixes such as `feat:`, `fix:`, `docs:`, `test:`, `ci:`, `refactor:`, and `chore:`.
-- Never add AI, assistant, or tool attribution anywhere in project history or collaboration surfaces. This includes commit messages, commit bodies, PR titles, PR descriptions, PR comments, review comments, changelog entries, release notes, and generated metadata.
+- Use conventional commit messages such as `feat:`, `fix:`, `docs:`, `ci:`, `test:`, and `chore:`.
+- Prefer small commits that explain the intent of the change.
+- No AI or tool attribution anywhere in git history. Commits and PR titles must read as human-authored work only.
+- Do not add `Co-authored-by`, `Signed-off-by`, or any other trailer that credits an AI assistant, agent, or coding tool (Codex, Cursor, Claude, Copilot, etc.).
+- Do not prefix commit messages or PR titles with tool markers such as `[codex]`, `[cursor]`, `[claude]`, or similar tags.
+- Do not mention which tool drafted, reviewed, or generated the change in commit bodies, PR descriptions, or squash-merge messages unless a maintainer explicitly asks for that context outside git metadata.
+- If a tool auto-inserts attribution, remove it before committing or opening a PR. Squash merges must not reintroduce attribution from branch commits.
 - Respect existing uncommitted work; do not overwrite or revert changes you did not make without explicit instruction.
