@@ -138,7 +138,7 @@
 
     // Listen for resize and confetti messages from iframe
     window.addEventListener('message', function(event) {
-      if (event.origin !== EMBED_BASE) return;
+      if (event.origin !== EMBED_BASE || event.source !== iframe.contentWindow) return;
       
       try {
         const data = event.data;
@@ -151,8 +151,8 @@
             isMultiNice = true;
             launchConfetti();
           } else if (data.type === 'nice-recorded' && !isMultiNice && !hasConfettied) {
-            launchConfetti();
             hasConfettied = true;
+            launchConfetti();
           }
         }
       } catch (e) {

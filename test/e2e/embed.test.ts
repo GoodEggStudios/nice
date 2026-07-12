@@ -189,6 +189,14 @@ describe("Embed", () => {
         );
       });
 
+      it("should scope message handlers to the embed iframe source", () => {
+        const script = renderEmbedScript();
+
+        expect(script).toContain(
+          "if(event.origin!==EMBED_BASE||event.source!==iframe.contentWindow)return"
+        );
+      });
+
       it("should gate confetti message handlers on enableConfetti", () => {
         const script = renderEmbedScript();
 
@@ -196,7 +204,7 @@ describe("Embed", () => {
         expect(script).toContain("data.type==='nice-clicked'");
         expect(script).toContain("data.type==='nice-recorded'&&!isMultiNice&&!hasConfettied");
         expect(script).toContain("isMultiNice=true;launchConfetti()");
-        expect(script).toContain("launchConfetti();hasConfettied=true");
+        expect(script).toContain("hasConfettied=true;launchConfetti()");
       });
     });
   });
