@@ -42,7 +42,7 @@ export function mockCreateButtonResponse(overrides: Partial<VisualButtonStats> =
     created_at: stats.created_at,
     embed: {
       iframe: `<iframe src="https://api.nice.sbs/e/${stats.id}?theme=${stats.theme}&size=${stats.size}" style="border:none;width:100px;height:36px;" title="Nice button"></iframe>`,
-      script: `<script src="https://api.nice.sbs/embed.js" data-button="${stats.id}" data-theme="${stats.theme}" data-size="${stats.size}" async></script>`,
+      script: `<script src="https://api.nice.sbs/embed.js" data-button="${stats.id}" data-theme="${stats.theme}" data-size="${stats.size}"${stats.multi_nice ? ' data-multi="1"' : ''} async></script>`,
     },
   };
 }

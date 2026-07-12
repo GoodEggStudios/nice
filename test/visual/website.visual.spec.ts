@@ -45,7 +45,7 @@ for (const viewport of viewports) {
   test(`create empty ${viewport.name}`, async ({ page }) => {
     await openPage(page, "/create", viewport);
     await expect(page.locator("#createForm")).toBeVisible();
-    await expectEmbedFrameReady(page, "#previewFrame");
+    await expect(page.locator("#previewButton")).toBeVisible();
     await screenshotWebsiteFullPage(page, `website/create-empty-${viewport.name}.png`);
   });
 
@@ -54,24 +54,31 @@ for (const viewport of viewports) {
 
     await page.locator("#themeOptions .option").filter({ hasText: "Mono Lt" }).click();
     await page.locator("#sizeOptions .option").filter({ hasText: "XL" }).click();
-    await expect(page.locator("#previewFrame")).toHaveAttribute("src", /theme=mono-light&size=xl/);
-    await expectEmbedFrameReady(page, "#previewFrame");
-    await expect(page.frameLocator("#previewFrame").locator("#niceCount")).toHaveText("42");
+    await expect(page.locator("#previewButton")).toHaveClass(/theme-mono-light/);
+    await expect(page.locator("#previewButton")).toHaveClass(/size-xl/);
+    await expect(page.locator("#previewCount")).toHaveText("42");
     await screenshotWebsitePaddedLocator(page.locator("#previewContainer"), `website/create-preview-mono-light-xl-${viewport.name}.png`);
 
     await page.locator("#themeOptions .option").filter({ hasText: "Light" }).click();
     await page.locator("#sizeOptions .option").filter({ hasText: "XS" }).click();
-    await expect(page.locator("#previewFrame")).toHaveAttribute("src", /theme=light&size=xs/);
-    await expectEmbedFrameReady(page, "#previewFrame");
+    await page.locator("#multiNice").check();
+    await page.locator("#confetti").check();
+    await expect(page.locator("#previewButton")).toHaveClass(/theme-light/);
+    await expect(page.locator("#previewButton")).toHaveClass(/size-xs/);
+    await expect(page.locator("#previewNote")).toContainText("script embeds");
     await screenshotWebsitePaddedLocator(page.locator("#previewContainer"), `website/create-preview-light-xs-${viewport.name}.png`);
   });
 
   test(`create result ${viewport.name}`, async ({ page }) => {
     await openPage(page, "/create", viewport);
     await page.locator("#urlInput").fill("example.com/articles/visual-button");
+    await page.locator("#multiNice").check();
+    await page.locator("#confetti").check();
     await page.locator("#submitBtn").click();
     await expect(page.locator("#result")).toHaveClass(/show/);
     await expectEmbedFrameReady(page, "#resultPreview iframe");
+    await expect(page.locator("#snippet")).toContainText('data-confetti="1"');
+    await expect(page.locator("#snippet")).toContainText('data-multi="1"');
     await expect(page.locator("#badgePreview img")).toBeVisible();
     await screenshotWebsiteFullPage(page, `website/create-result-${viewport.name}.png`);
   });
