@@ -13,6 +13,8 @@
 (function() {
   'use strict';
 
+  window.__NICE_EMBED_CONFETTI__ = 1;
+
   const EMBED_BASE = 'https://api.nice.sbs';
   
   // Default iframe sizes per size variant

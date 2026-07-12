@@ -220,5 +220,111 @@
     <div class="footer">
         built with ❤️ by <a href="https://bsky.app/profile/daio.io" target="_blank" rel="noopener">Dai</a>
     </div>
+
+    <script>
+    (function () {
+        'use strict';
+
+        const embedScript = document.querySelector('script[data-confetti][data-button]');
+        if (!embedScript) return;
+
+        const buttonId = embedScript.getAttribute('data-button');
+        const confettiAttr = embedScript.getAttribute('data-confetti');
+        if (!buttonId || confettiAttr === 'false' || confettiAttr === '0') return;
+
+        let installed = false;
+        let isMultiNice = false;
+        let hasConfettied = false;
+
+        function launchConfetti() {
+            const anchor = document.querySelector('.nice-inline .nice-embed') || document.querySelector('.nice-inline');
+            const canvas = document.createElement('canvas');
+            canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1000';
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            document.body.appendChild(canvas);
+            const ctx = canvas.getContext('2d');
+
+            const rect = anchor
+                ? anchor.getBoundingClientRect()
+                : { left: canvas.width / 2 - 60, width: 120, top: canvas.height / 2 };
+            const originX = rect.left + rect.width / 2;
+            const originY = rect.top;
+            const colors = ['#fbbf24', '#f59e0b', '#fcd34d', '#fde68a', '#fff'];
+            const particles = [];
+
+            for (let i = 0; i < 35; i++) {
+                const angle = -Math.PI / 2 + (Math.random() - 0.5) * 1.2;
+                const speed = 6 + Math.random() * 8;
+                particles.push({
+                    x: originX + (Math.random() - 0.5) * rect.width * 0.6,
+                    y: originY,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    w: 4 + Math.random() * 5,
+                    h: 3 + Math.random() * 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rotation: Math.random() * 360,
+                    rotSpeed: (Math.random() - 0.5) * 12,
+                    opacity: 1,
+                });
+            }
+
+            let frame = 0;
+            function tick() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let alive = false;
+
+                for (const p of particles) {
+                    p.vy += 0.12;
+                    p.vx *= 0.98;
+                    p.vy *= 0.98;
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.rotation += p.rotSpeed;
+                    if (p.vy > 0 && frame > 20) p.opacity -= 0.008;
+                    if (p.opacity <= 0 || p.y > canvas.height) continue;
+                    alive = true;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rotation * Math.PI / 180);
+                    ctx.globalAlpha = p.opacity;
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    ctx.restore();
+                }
+
+                frame++;
+                if (alive && frame < 300) requestAnimationFrame(tick);
+                else canvas.remove();
+            }
+            requestAnimationFrame(tick);
+        }
+
+        function installFallbackConfetti() {
+            if (installed || window.__NICE_EMBED_CONFETTI__) return;
+            installed = true;
+
+            window.addEventListener('message', function (event) {
+                if (!event.origin.includes('nice.sbs')) return;
+                const data = event.data;
+                if (!data || data.buttonId !== buttonId) return;
+
+                if (data.type === 'nice-clicked') {
+                    isMultiNice = true;
+                    launchConfetti();
+                } else if (data.type === 'nice-recorded' && !isMultiNice && !hasConfettied) {
+                    launchConfetti();
+                    hasConfettied = true;
+                }
+            });
+        }
+
+        embedScript.addEventListener('load', function () {
+            setTimeout(installFallbackConfetti, 0);
+        });
+        setTimeout(installFallbackConfetti, 500);
+    })();
+    </script>
 </body>
 </html>

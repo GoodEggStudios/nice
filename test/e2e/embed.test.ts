@@ -178,6 +178,7 @@ describe("Embed", () => {
         expect(body).toContain("launchConfetti");
         expect(body).toContain("nice-clicked");
         expect(body).toContain("nice-recorded");
+        expect(body).toContain("__NICE_EMBED_CONFETTI__");
       });
 
       it("should opt in only when data-confetti is present and not disabled", () => {
