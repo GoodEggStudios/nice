@@ -45,11 +45,18 @@ curl -X POST https://api.nice.sbs/api/v1/buttons \
 
 ### Embed it
 
-**Option 1: Script tag**
+**Option 1: Script tag (Recommended)**
 
 ```html
-<script src="https://nice.sbs/embed.js" data-button="n_xxxx" async></script>
+<script
+  src="https://api.nice.sbs/embed.js"
+  data-button="n_xxxx"
+  data-confetti="true"
+  async>
+</script>
 ```
+
+The script tag creates the iframe for you and can show confetti on the host page. Remove `data-confetti="true"` to use the button without confetti.
 
 **Option 2: Iframe**
 
@@ -60,6 +67,8 @@ curl -X POST https://api.nice.sbs/api/v1/buttons \
   title="Nice button">
 </iframe>
 ```
+
+Use the iframe when a platform allows HTML but blocks `<script>` tags. A standalone iframe cannot draw confetti outside its own rectangle.
 
 That's it! 🎉
 
@@ -79,23 +88,28 @@ Customise the look with `theme` and `size` parameters:
 
 ```html
 <!-- Dark theme, medium size (default) -->
-<script src="https://nice.sbs/embed.js" data-button="n_xxxx" data-theme="dark" async></script>
+<script src="https://api.nice.sbs/embed.js" data-button="n_xxxx" data-theme="dark" async></script>
 
 <!-- Minimal (transparent background) -->
-<script src="https://nice.sbs/embed.js" data-button="n_xxxx" data-theme="minimal" async></script>
+<script src="https://api.nice.sbs/embed.js" data-button="n_xxxx" data-theme="minimal" async></script>
 
 <!-- Mono dark / Mono light -->
-<script src="https://nice.sbs/embed.js" data-button="n_xxxx" data-theme="mono-dark" async></script>
+<script src="https://api.nice.sbs/embed.js" data-button="n_xxxx" data-theme="mono-dark" async></script>
 ```
 
 **Themes:** `light` · `dark` · `minimal` · `mono-dark` · `mono-light`
 
 **Sizes:** `xs` · `sm` · `md` · `lg` · `xl`
 
-**Host-page confetti (script embed only):** Add `data-confetti` to opt in to a confetti celebration on the host page when someone nices. Off by default — omit the attribute to disable. Set to `false` or `0` to explicitly disable.
+**Host-page confetti (script embed only):** Add `data-confetti="true"` to opt in to a confetti celebration on the host page when someone nices. It is off by default. A standalone iframe cannot draw outside its own rectangle.
 
 ```html
-<script src="https://nice.sbs/embed.js" data-button="n_xxxx" data-confetti async></script>
+<script
+  src="https://api.nice.sbs/embed.js"
+  data-button="n_xxxx"
+  data-confetti="true"
+  async>
+</script>
 ```
 
 ## Button Stats

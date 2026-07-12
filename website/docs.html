@@ -391,29 +391,34 @@
     
     <h2 id="embed">Embed Options</h2>
     
-    <h3>iframe (Recommended)</h3>
+    <h3>Script tag (Recommended)</h3>
+    <p>The script tag creates the iframe and can show effects on the host page, such as confetti:</p>
+    <pre><code>&lt;script
+  src="https://api.nice.sbs/embed.js"
+  data-button="<span class="param">:public_id</span>"
+  data-theme="light"
+  data-size="md"
+  data-confetti="true"
+  async&gt;&lt;/script&gt;</code></pre>
+
+    <p><strong>Data attributes:</strong></p>
+    <table>
+      <tr><th>Attribute</th><th>Default</th><th>Description</th></tr>
+      <tr><td><code>data-button</code></td><td>—</td><td>Public button ID (required)</td></tr>
+      <tr><td><code>data-theme</code></td><td><code>light</code></td><td>Button theme</td></tr>
+      <tr><td><code>data-size</code></td><td><code>md</code></td><td>Button size</td></tr>
+      <tr><td><code>data-confetti</code></td><td><code>false</code></td><td>Set to <code>true</code> to show confetti on the host page after a nice</td></tr>
+    </table>
+    <p>Remove <code>data-confetti="true"</code> to keep the button without confetti. This setting belongs to the embed placement and is not stored on the button.</p>
+
+    <h3>iframe</h3>
+    <p>Use the iframe when a platform allows HTML but blocks external scripts. A standalone iframe cannot draw outside its own rectangle, so it cannot provide host-page confetti.</p>
     <pre><code>&lt;iframe 
   src="https://api.nice.sbs/e/<span class="param">:public_id</span>?theme=light&size=md"
   style="border:none;width:100px;height:36px;"
   title="Nice button"&gt;
 &lt;/iframe&gt;</code></pre>
 
-    <h3>Script tag</h3>
-    <pre><code>&lt;script
-  src="https://api.nice.sbs/embed.js"
-  data-button="<span class="param">:public_id</span>"
-  data-theme="light"
-  data-size="md"
-  async&gt;&lt;/script&gt;</code></pre>
-
-    <table>
-      <tr><th>Attribute</th><th>Default</th><th>Description</th></tr>
-      <tr><td><code>data-button</code></td><td>—</td><td>Public button ID (required)</td></tr>
-      <tr><td><code>data-theme</code></td><td><code>light</code></td><td>Button theme</td></tr>
-      <tr><td><code>data-size</code></td><td><code>md</code></td><td>Button size</td></tr>
-      <tr><td><code>data-confetti</code></td><td>off</td><td>Opt-in host-page confetti when someone nices. Off by default — omit to disable. Any value enables it except <code>false</code> or <code>0</code>.</td></tr>
-    </table>
-    
     <h3>Themes</h3>
     <table>
       <tr><th>Theme</th><th>Description</th></tr>
