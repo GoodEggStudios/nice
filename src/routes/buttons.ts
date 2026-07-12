@@ -52,7 +52,7 @@ function generateEmbedSnippets(
   const dim = EMBED_DIMENSIONS[size as EmbedSize] || EMBED_DIMENSIONS.md;
 
   const iframe = `<iframe src="${embedUrl}" style="background:transparent;border:none;overflow:hidden;display:block;color-scheme:normal;width:${dim.w}px;height:${dim.h}px;" scrolling="no" frameborder="0" allowtransparency="true" title="Nice button"></iframe>`;
-  const script = `<script src="${baseUrl}/embed.js" data-button="${publicId}" data-theme="${theme}" data-size="${size}" async></script>`;
+  const script = `<script src="${baseUrl}/embed.js" data-button="${publicId}" data-theme="${theme}" data-size="${size}"${multiNice ? ' data-multi="1"' : ''} async></script>`;
 
   return { iframe, script };
 }

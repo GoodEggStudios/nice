@@ -20,7 +20,7 @@ test("visual harness serves static pages and intercepts API routes", async ({ pa
   await stabilizePage(page);
 
   await expect(page.locator("h1")).toHaveText("CREATE BUTTON");
-  await expect(page.locator("#previewFrame")).toBeVisible();
+  await expect(page.locator("#previewButton")).toBeVisible();
 
   await page.locator("#urlInput").fill("example.com/articles/visual-button");
   await page.locator("#submitBtn").click();

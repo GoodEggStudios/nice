@@ -60,6 +60,15 @@ describe("Button API", () => {
       expect(embed.script).toContain("<script");
     });
 
+    it("should include data-multi in script snippets for multi nice buttons", async () => {
+      const data = await createButton("https://example.com/claps", {
+        multi_nice: "true",
+      });
+      const embed = data.embed as { script: string };
+
+      expect(embed.script).toContain('data-multi="1"');
+    });
+
     it("should size iframe snippets using shared embed dimensions", async () => {
       const data = await createButton("https://example.com/small-button", {
         size: "sm",

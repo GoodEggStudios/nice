@@ -268,9 +268,85 @@
     .preview-container {
       display: flex;
       justify-content: center;
+      align-items: center;
+      min-height: 88px;
       padding: 1rem;
       background: #0f0f0f;
       border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .preview-note {
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: #888;
+      text-align: center;
+    }
+
+    .preview-note.show {
+      color: #fbbf24;
+    }
+
+    .preview-demo {
+      position: relative;
+      min-width: 140px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .preview-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .demo-button {
+      display: inline-flex;
+      align-items: center;
+      border: none;
+      font-family: 'Bungee', cursive;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .demo-button:hover {
+      transform: scale(1.05);
+    }
+
+    .demo-button:active {
+      transform: scale(0.95);
+    }
+
+    .demo-button.size-xs { gap: 4px; padding: 4px 8px; border-radius: 4px; font-size: 10px; }
+    .demo-button.size-sm { gap: 5px; padding: 5px 10px; border-radius: 5px; font-size: 11px; }
+    .demo-button.size-md { gap: 6px; padding: 6px 12px; border-radius: 6px; font-size: 12px; }
+    .demo-button.size-lg { gap: 7px; padding: 7px 14px; border-radius: 7px; font-size: 14px; }
+    .demo-button.size-xl { gap: 8px; padding: 8px 16px; border-radius: 8px; font-size: 16px; }
+
+    .demo-button.theme-light { background: #f3f4f6; color: #374151; }
+    .demo-button.theme-light.niced { background: #fef3c7; color: #92400e; }
+    .demo-button.theme-dark { background: #374151; color: #f3f4f6; }
+    .demo-button.theme-dark.niced { background: #fbbf24; color: #000; }
+    .demo-button.theme-minimal { background: transparent; color: #f5f5f5; border: 2px solid currentColor; opacity: 0.7; }
+    .demo-button.theme-minimal.niced { opacity: 1; border-color: #fbbf24; color: #fbbf24; }
+    .demo-button.theme-mono-dark { background: #000; color: #fff; border: 1px solid #333; }
+    .demo-button.theme-mono-dark.niced { background: #fff; color: #000; border-color: #fff; }
+    .demo-button.theme-mono-light { background: #fff; color: #000; border: 1px solid #ddd; }
+    .demo-button.theme-mono-light.niced { background: #000; color: #fff; border-color: #000; }
+
+    .demo-count {
+      opacity: 0.8;
     }
     
     .badge-preview {
@@ -488,12 +564,26 @@
           <span>Allow multiple nices per person (clap-style)</span>
         </label>
       </div>
+
+      <div class="form-group">
+        <label for="confetti" style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 0;">
+          <input type="checkbox" id="confetti" style="width:18px;height:18px;accent-color:#fbbf24;cursor:pointer;">
+          <span>Enable confetti for script embeds</span>
+        </label>
+      </div>
       
       <div class="preview-section">
         <div class="preview-label">Preview</div>
         <div class="preview-container" id="previewContainer">
-          <iframe id="previewFrame" src="https://api.nice.sbs/embed/demo?theme=dark&size=md" style="border:none;width:100px;height:36px;" title="Preview"></iframe>
+          <div class="preview-demo" id="previewDemo">
+            <canvas class="preview-canvas" id="previewCanvas"></canvas>
+            <button type="button" class="demo-button theme-dark size-md" id="previewButton" aria-label="Preview Nice button">
+              <span id="previewText">Nice</span>
+              <span class="demo-count" id="previewCount">42</span>
+            </button>
+          </div>
         </div>
+        <div class="preview-note" id="previewNote">Preview updates live as you change theme, size, multi nice, and confetti.</div>
       </div>
       
       <div class="form-group">
@@ -585,6 +675,7 @@
           <pre class="snippet" id="snippet"></pre>
           <button type="button" class="btn-copy" id="copyBtn" aria-label="Copy embed snippet">Copy</button>
         </div>
+        <div class="preview-note" id="snippetNote"></div>
       </div>
       
       <div class="result-row">
@@ -610,10 +701,17 @@
     const urlInput = document.getElementById('urlInput');
     const protocolBtn = document.getElementById('protocolBtn');
     const urlError = document.getElementById('urlError');
-    const previewFrame = document.getElementById('previewFrame');
+    const previewButton = document.getElementById('previewButton');
+    const previewText = document.getElementById('previewText');
+    const previewCount = document.getElementById('previewCount');
+    const previewCanvas = document.getElementById('previewCanvas');
+    const previewNote = document.getElementById('previewNote');
     const submitBtn = document.getElementById('submitBtn');
     const errorBox = document.getElementById('errorBox');
     const resultDiv = document.getElementById('result');
+    const multiNiceInput = document.getElementById('multiNice');
+    const confettiInput = document.getElementById('confetti');
+    const snippetNote = document.getElementById('snippetNote');
     
     // Protocol state
     let protocol = 'https://';
@@ -689,6 +787,11 @@
       lg: { w: 120, h: 44 },
       xl: { w: 140, h: 52 }
     };
+    const previewState = {
+      count: 42,
+      hasNiced: false,
+      confettiLock: false
+    };
     
     // Restriction descriptions
     const restrictionDescs = {
@@ -714,17 +817,181 @@
         updateRestrictionDesc();
       });
     });
+
+    [multiNiceInput, confettiInput].forEach(input => {
+      input.addEventListener('change', updatePreview);
+    });
+
+    function buildIframeSnippet(publicId, theme, size, multiNice) {
+      const dims = SIZES[size];
+      const multiParam = multiNice ? '&multi=1' : '';
+      return '<iframe src="https://api.nice.sbs/e/' + publicId + '?theme=' + theme + '&size=' + size + multiParam + '" ' +
+        'style="background:transparent;border:none;overflow:hidden;display:block;color-scheme:normal;width:' + dims.w + 'px;height:' + dims.h + 'px;" ' +
+        'scrolling="no" frameborder="0" allowtransparency="true" title="Nice button"></iframe>';
+    }
+
+    function buildScriptSnippet(publicId, theme, size, multiNice, confetti) {
+      const attrs = [
+        'src="https://api.nice.sbs/embed.js"',
+        'data-button="' + publicId + '"',
+        'data-theme="' + theme + '"',
+        'data-size="' + size + '"'
+      ];
+      if (multiNice) attrs.push('data-multi="1"');
+      if (confetti) attrs.push('data-confetti="1"');
+      attrs.push('async');
+      return '<script ' + attrs.join(' ') + '><\\/script>';
+    }
+
+    function setSnippetDetails(theme, size, publicId) {
+      const multiNice = multiNiceInput.checked;
+      const confetti = confettiInput.checked;
+      const snippet = confetti
+        ? buildScriptSnippet(publicId, theme, size, multiNice, confetti)
+        : buildIframeSnippet(publicId, theme, size, multiNice);
+      document.getElementById('snippet').textContent = snippet;
+      snippetNote.textContent = confetti
+        ? 'Confetti requires the script embed. Direct iframe embeds do not trigger confetti.'
+        : 'Direct iframe embed shown. Turn on confetti to generate the script embed instead.';
+      snippetNote.classList.toggle('show', confetti);
+    }
+
+    function updatePreviewButtonClasses(theme, size) {
+      previewButton.className = 'demo-button theme-' + theme + ' size-' + size;
+      if (previewState.hasNiced) {
+        previewButton.classList.add('niced');
+      }
+    }
+
+    function resetPreviewState() {
+      previewState.count = 42;
+      previewState.hasNiced = false;
+      previewState.confettiLock = false;
+      previewText.textContent = 'Nice';
+      previewCount.textContent = '42';
+      previewButton.classList.remove('niced');
+      const ctx = previewCanvas.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+      }
+    }
+
+    function launchPreviewConfetti() {
+      const ctx = previewCanvas.getContext('2d');
+      if (!ctx) return;
+
+      const canvasRect = previewCanvas.getBoundingClientRect();
+      previewCanvas.width = Math.max(Math.ceil(canvasRect.width), 1);
+      previewCanvas.height = Math.max(Math.ceil(canvasRect.height), 1);
+
+      const buttonRect = previewButton.getBoundingClientRect();
+      const originX = buttonRect.left - canvasRect.left + buttonRect.width / 2;
+      const originY = buttonRect.top - canvasRect.top + Math.min(buttonRect.height, 12);
+      const colors = ['#fbbf24', '#f59e0b', '#fcd34d', '#fde68a', '#fff'];
+      const particles = [];
+
+      for (let i = 0; i < 35; i++) {
+        const angle = -Math.PI / 2 + (Math.random() - 0.5) * 1.2;
+        const speed = 5 + Math.random() * 7;
+        particles.push({
+          x: originX + (Math.random() - 0.5) * buttonRect.width * 0.5,
+          y: originY,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          w: 4 + Math.random() * 4,
+          h: 3 + Math.random() * 5,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rotation: Math.random() * Math.PI * 2,
+          rotSpeed: (Math.random() - 0.5) * 0.25,
+          opacity: 1
+        });
+      }
+
+      let frame = 0;
+      function tick() {
+        ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+        let alive = false;
+
+        particles.forEach((particle) => {
+          particle.vy += 0.12;
+          particle.vx *= 0.98;
+          particle.vy *= 0.98;
+          particle.x += particle.vx;
+          particle.y += particle.vy;
+          particle.rotation += particle.rotSpeed;
+
+          if (particle.vy > 0 && frame > 20) {
+            particle.opacity -= 0.01;
+          }
+
+          if (particle.opacity <= 0 || particle.y > previewCanvas.height) {
+            return;
+          }
+
+          alive = true;
+          ctx.save();
+          ctx.translate(particle.x, particle.y);
+          ctx.rotate(particle.rotation);
+          ctx.globalAlpha = particle.opacity;
+          ctx.fillStyle = particle.color;
+          ctx.fillRect(-particle.w / 2, -particle.h / 2, particle.w, particle.h);
+          ctx.restore();
+        });
+
+        frame += 1;
+        if (alive && frame < 240) {
+          requestAnimationFrame(tick);
+        } else {
+          ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+        }
+      }
+
+      requestAnimationFrame(tick);
+    }
     
     // Update preview on changes
     function updatePreview() {
       const theme = document.querySelector('input[name="theme"]:checked').value;
       const size = document.querySelector('input[name="size"]:checked').value;
-      const dims = SIZES[size];
-      
-      previewFrame.src = 'https://api.nice.sbs/embed/demo?theme=' + theme + '&size=' + size;
-      previewFrame.style.width = dims.w + 'px';
-      previewFrame.style.height = dims.h + 'px';
+      const confetti = confettiInput.checked;
+      updatePreviewButtonClasses(theme, size);
+      resetPreviewState();
+      previewNote.textContent = confetti
+        ? 'Confetti is available for script embeds. Direct iframe embeds stay confetti-free.'
+        : 'Preview updates live as you change theme, size, multi nice, and confetti.';
+      previewNote.classList.toggle('show', confetti);
     }
+
+    previewButton.addEventListener('click', () => {
+      const multiNice = multiNiceInput.checked;
+      const confetti = confettiInput.checked;
+
+      if (multiNice) {
+        previewState.count += 1;
+        previewState.hasNiced = true;
+        previewButton.classList.add('niced');
+        previewText.textContent = 'Nice';
+        previewCount.textContent = String(previewState.count);
+        if (confetti) {
+          launchPreviewConfetti();
+        }
+        return;
+      }
+
+      if (previewState.hasNiced) {
+        return;
+      }
+
+      previewState.count += 1;
+      previewState.hasNiced = true;
+      previewButton.classList.add('niced');
+      previewText.textContent = "Nice'd";
+      previewCount.textContent = String(previewState.count);
+      if (confetti && !previewState.confettiLock) {
+        launchPreviewConfetti();
+        previewState.confettiLock = true;
+      }
+    });
     
     // Form submission
     form.addEventListener('submit', async (e) => {
@@ -745,12 +1012,13 @@
       const theme = document.querySelector('input[name="theme"]:checked').value;
       const size = document.querySelector('input[name="size"]:checked').value;
       const restriction = document.querySelector('input[name="restriction"]:checked').value;
+      const multiNice = multiNiceInput.checked;
       
       try {
         const response = await fetch('https://api.nice.sbs/api/v1/buttons', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url, theme, size, restriction, multi_nice: document.getElementById('multiNice').checked })
+          body: JSON.stringify({ url, theme, size, restriction, multi_nice: multiNice })
         });
         
         const data = await response.json();
@@ -762,7 +1030,7 @@
         // Show result
         document.getElementById('publicId').textContent = data.public_id;
         document.getElementById('privateId').textContent = data.private_id;
-        document.getElementById('snippet').textContent = data.embed.iframe;
+        setSnippetDetails(theme, size, data.public_id);
         
         // Badge snippet
         const badgeUrl = 'https://api.nice.sbs/badge/' + data.public_id + '.svg';
@@ -772,10 +1040,8 @@
         document.getElementById('badgePreview').innerHTML = '<a href="' + buttonPageUrl + '" target="_blank"><img src="' + badgeUrl + '" alt="Nice badge"></a>';
         
         // Show preview of actual button
-        const dims = SIZES[size];
         document.getElementById('resultPreview').innerHTML = 
-          '<iframe src="https://api.nice.sbs/e/' + data.public_id + '?theme=' + theme + '&size=' + size + '" ' +
-          'style="border:none;width:' + dims.w + 'px;height:' + dims.h + 'px;" title="Nice button"></iframe>';
+          buildIframeSnippet(data.public_id, theme, size, multiNice);
         
         // Set manage link with pretty URL
         document.getElementById('manageLink').href = '/stats?id=' + data.private_id;
@@ -839,6 +1105,9 @@
         }, 2000);
       });
     });
+
+    updatePreview();
+    updateRestrictionDesc();
   </script>
 </body>
 </html>

@@ -8,6 +8,7 @@
  * - data-button: Button ID (required)
  * - data-theme: "light" | "dark" | "minimal" | "mono-dark" | "mono-light" (default: "light")
  * - data-size: "xs" | "sm" | "md" | "lg" | "xl" (default: "md")
+ * - data-multi: opt-in multi-nice mode for the embed (any value except "false" or "0")
  * - data-confetti: opt-in host-page confetti on nice (any value except "false" or "0")
  */
 (function() {
@@ -36,6 +37,8 @@
 
     const theme = script.getAttribute('data-theme') || 'light';
     const size = script.getAttribute('data-size') || 'md';
+    const multiAttr = script.getAttribute('data-multi');
+    const isMultiAttr = multiAttr !== null && multiAttr !== 'false' && multiAttr !== '0';
     const confettiAttr = script.getAttribute('data-confetti');
     const enableConfetti = confettiAttr !== null && confettiAttr !== 'false' && confettiAttr !== '0';
     const dims = SIZES[size] || SIZES.md;
@@ -47,7 +50,7 @@
 
     // Create iframe
     const iframe = document.createElement('iframe');
-    iframe.src = `${EMBED_BASE}/embed/${buttonId}?theme=${encodeURIComponent(theme)}&size=${encodeURIComponent(size)}`;
+    iframe.src = `${EMBED_BASE}/embed/${buttonId}?theme=${encodeURIComponent(theme)}&size=${encodeURIComponent(size)}${isMultiAttr ? '&multi=1' : ''}`;
     iframe.style.cssText = `background:transparent;border:none;overflow:hidden;width:${dims.w}px;height:${dims.h}px;display:block;color-scheme:normal;`;
     iframe.setAttribute('scrolling', 'no');
     iframe.setAttribute('frameborder', '0');
@@ -60,7 +63,7 @@
     // Insert after script tag
     script.parentNode.insertBefore(container, script.nextSibling);
 
-    let isMultiNice = false;
+    let isMultiNice = isMultiAttr;
     let hasConfettied = false;
 
     function launchConfetti() {
