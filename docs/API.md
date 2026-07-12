@@ -328,6 +328,26 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 | `size` | `md` | Button size |
 | `multi` | `0` | Set to `1` for multi-nice (clap) mode |
 
+### Script tag
+
+```html
+<script
+  src="https://api.nice.sbs/embed.js"
+  data-button=":public_id"
+  data-theme="light"
+  data-size="md"
+  async></script>
+```
+
+**Data attributes:**
+
+| Attribute | Default | Description |
+|-----------|---------|-------------|
+| `data-button` | — | Public button ID (required) |
+| `data-theme` | `light` | Button theme |
+| `data-size` | `md` | Button size |
+| `data-confetti` | off | Opt-in host-page confetti when someone nices. Off by default — omit to disable. Any value enables it except `false` or `0`. |
+
 ### Themes
 
 | Theme | Description |
