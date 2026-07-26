@@ -344,15 +344,23 @@ describe("Button API", () => {
     });
 
     it("should rate limit after 20 requests per IP", async () => {
+      // Rate keys use calendar minutes. Wait out a near rollover so all 21
+      // requests stay in one bucket (CI failed at :59 with expected 429 → 200).
+      const msIntoMinute = Date.now() % 60_000;
+      if (msIntoMinute > 50_000) {
+        await new Promise((r) => setTimeout(r, 60_000 - msIntoMinute + 100));
+      }
+
       const button = await createButton("https://example.com/rate-test", {
         restriction: "global",
       });
+      const headers = { "CF-Connecting-IP": "203.0.113.50" };
 
       // Fire 20 requests (IP limit)
       for (let i = 0; i < 20; i++) {
         const res = await SELF.fetch(
           `https://api.nice.sbs/api/v1/buttons/${button.private_id}/nice`,
-          { method: "POST" }
+          { method: "POST", headers }
         );
         expect(res.status).toBe(200);
       }
@@ -360,7 +368,7 @@ describe("Button API", () => {
       // 21st should be rate limited
       const res = await SELF.fetch(
         `https://api.nice.sbs/api/v1/buttons/${button.private_id}/nice`,
-        { method: "POST" }
+        { method: "POST", headers }
       );
       expect(res.status).toBe(429);
       const data = await res.json() as { code: string };
