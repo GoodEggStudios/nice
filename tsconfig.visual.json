@@ -1,10 +1,22 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "lib": ["ES2022", "DOM"],
-    "types": ["node", "@playwright/test", "@cloudflare/workers-types"],
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
+    "types": [
+      "node",
+      "@playwright/test",
+      "@cloudflare/workers-types"
+    ],
     "noEmit": true
   },
-  "include": ["playwright.config.ts", "test/visual/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "playwright.config.ts",
+    "test/visual/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

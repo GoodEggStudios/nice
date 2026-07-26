@@ -18,13 +18,13 @@
     "typecheck:visual": "tsc -p tsconfig.visual.json --noEmit"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.12.12",
+    "@cloudflare/vitest-pool-workers": "^0.18.7",
     "@cloudflare/workers-types": "^5.20260722.1",
     "@playwright/test": "^1.61.1",
     "@types/node": "^26.1.1",
-    "@vitest/coverage-v8": "^3.2.7",
+    "@vitest/coverage-v8": "^4.1.10",
     "typescript": "^7.0.2",
-    "vitest": "^3.2.7",
+    "vitest": "^4.1.10",
     "wrangler": "^4.113.0"
   },
   "license": "Apache-2.0",
