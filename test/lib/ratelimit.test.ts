@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   checkCreateRateLimit,
+  checkRateLimit,
   createRateLimitResponse,
 } from "../../src/lib/ratelimit";
 
@@ -26,6 +27,56 @@ describe("Rate Limiting", () => {
     mockKV = createMockKV();
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-02-18T12:00:00Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  describe("checkRateLimit", () => {
+    it("should allow 20 requests then deny the 21st in the same minute", async () => {
+      for (let i = 0; i < 20; i++) {
+        const result = await checkRateLimit(
+          mockKV as unknown as KVNamespace,
+          "203.0.113.50",
+          "btn_test"
+        );
+        expect(result.allowed).toBe(true);
+      }
+
+      const denied = await checkRateLimit(
+        mockKV as unknown as KVNamespace,
+        "203.0.113.50",
+        "btn_test"
+      );
+      expect(denied.allowed).toBe(false);
+      expect(denied.reason).toBe("ip_limit");
+    });
+
+    it("should reset the IP limit when the minute bucket rolls over", async () => {
+      for (let i = 0; i < 20; i++) {
+        await checkRateLimit(
+          mockKV as unknown as KVNamespace,
+          "203.0.113.50",
+          "btn_test"
+        );
+      }
+
+      const denied = await checkRateLimit(
+        mockKV as unknown as KVNamespace,
+        "203.0.113.50",
+        "btn_test"
+      );
+      expect(denied.allowed).toBe(false);
+
+      vi.setSystemTime(new Date("2026-02-18T12:01:00Z"));
+      const allowed = await checkRateLimit(
+        mockKV as unknown as KVNamespace,
+        "203.0.113.50",
+        "btn_test"
+      );
+      expect(allowed.allowed).toBe(true);
+    });
   });
 
   describe("checkCreateRateLimit", () => {
