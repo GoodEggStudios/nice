@@ -1,16 +1,18 @@
-import { defineWorkersConfig } from "@cloudflare/vitest-pool-workers/config";
+import { cloudflareTest } from "@cloudflare/vitest-pool-workers";
+import { defineConfig } from "vitest/config";
 
-export default defineWorkersConfig({
+export default defineConfig({
+  plugins: [
+    cloudflareTest({
+      wrangler: { configPath: "./wrangler.toml" },
+      miniflare: {
+        kvNamespaces: ["NICE_KV"],
+      },
+    }),
+  ],
   test: {
     globals: true,
     include: ["test/{lib,e2e}/**/*.test.ts"],
-    poolOptions: {
-      workers: {
-        wrangler: { configPath: "./wrangler.toml" },
-        miniflare: {
-          kvNamespaces: ["NICE_KV"],
-        },
-      },
-    },
+    setupFiles: ["./test/setup.ts"],
   },
 });
