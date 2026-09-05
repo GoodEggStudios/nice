@@ -308,7 +308,9 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
   "button_id": "n_x7Kf9mQ2",
   "has_niced": true,
   "multi_nice": false,
-  "url": "https://example.com/my-article"
+  "url": "https://example.com/my-article",
+  "label": "Nice",
+  "pressed_label": "Nice'd"
 }
 ```
 
@@ -319,6 +321,8 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 | `has_niced` | Whether the current visitor has already niced. Multi-nice buttons still use this for clicked-state styling. |
 | `multi_nice` | Whether this button allows multiple nices per visitor |
 | `url` | Button content URL when the button exists |
+| `label` | Current idle-state button label |
+| `pressed_label` | Current pressed-state label for single-nice buttons |
 
 ---
 

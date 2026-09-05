@@ -49,13 +49,20 @@ function generateEmbedSnippets(
   baseUrl: string,
   theme: string,
   size: string,
-  multiNice?: boolean
+  multiNice?: boolean,
+  label?: string,
+  pressedLabel?: string
 ): { iframe: string; script: string } {
   const embedUrl = `${baseUrl}/e/${publicId}?theme=${theme}&size=${size}${multiNice ? '&multi=1' : ''}`;
 
   const dim = EMBED_DIMENSIONS[size as EmbedSize] || EMBED_DIMENSIONS.md;
+  const labelWidth = Math.max(
+    Array.from(label ?? DEFAULT_BUTTON_LABEL).length,
+    Array.from(pressedLabel ?? DEFAULT_PRESSED_BUTTON_LABEL).length
+  ) * 12 + 24;
+  const iframeWidth = Math.max(dim.w, labelWidth);
 
-  const iframe = `<iframe src="${embedUrl}" style="background:transparent;border:none;overflow:hidden;display:block;color-scheme:normal;width:${dim.w}px;height:${dim.h}px;" scrolling="no" frameborder="0" allowtransparency="true" title="Nice button"></iframe>`;
+  const iframe = `<iframe src="${embedUrl}" style="background:transparent;border:none;overflow:hidden;display:block;color-scheme:normal;width:${iframeWidth}px;height:${dim.h}px;" scrolling="no" frameborder="0" allowtransparency="true" title="Nice button"></iframe>`;
   const script = `<script src="${baseUrl}/embed.js" data-button="${publicId}" data-theme="${theme}" data-size="${size}"${multiNice ? ' data-multi="1"' : ''} async></script>`;
 
   return { iframe, script };
@@ -187,7 +194,7 @@ export async function createButton(
   // Generate embed snippets
   const url = new URL(request.url);
   const baseUrl = `${url.protocol}//${url.host}`;
-  const embed = generateEmbedSnippets(publicId, baseUrl, theme, size, button.multiNice);
+  const embed = generateEmbedSnippets(publicId, baseUrl, theme, size, button.multiNice, button.label, button.pressedLabel);
 
   // Return response with both IDs (private shown only once!)
   return Response.json(
@@ -254,7 +261,10 @@ export async function getButtonStats(
     publicId,
     baseUrl,
     button.theme || "light",
-    button.size || "md"
+    button.size || "md",
+    button.multiNice,
+    button.label,
+    button.pressedLabel
   );
 
   const label = normalizeStoredButtonLabel(
@@ -407,7 +417,10 @@ export async function updateButton(
     publicId,
     baseUrl,
     button.theme || "light",
-    button.size || "md"
+    button.size || "md",
+    button.multiNice,
+    button.label,
+    button.pressedLabel
   );
 
   const label = normalizeStoredButtonLabel(

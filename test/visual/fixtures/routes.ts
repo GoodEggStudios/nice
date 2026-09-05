@@ -50,6 +50,8 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
           theme,
           size,
           multiNice: url.searchParams.get("multi") === "1" || multiNice,
+          label: stats.label,
+          pressedLabel: stats.pressed_label,
         });
     await route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body });
   });

@@ -51,7 +51,10 @@ function escapeSingleQuotedJsString(value: string): string {
     .replace(/\r/g, "\\r")
     .replace(/\n/g, "\\n")
     .replace(/\u2028/g, "\\u2028")
-    .replace(/\u2029/g, "\\u2029");
+    .replace(/\u2029/g, "\\u2029")
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
 }
 
 function escapeHtmlText(value: string): string {
@@ -281,19 +284,17 @@ export function renderDemoEmbedHtml(options: RenderDemoEmbedHtmlOptions): string
 
 export function renderEmbedHtml(options: RenderEmbedHtmlOptions): string {
   const safeButtonId = options.buttonId.replace(/[<>"'&]/g, "");
-  const label = escapeSingleQuotedJsString(
-    normalizeStoredButtonLabel(options.label, DEFAULT_BUTTON_LABEL)
-  );
-  const pressedLabel = escapeSingleQuotedJsString(
-    normalizeStoredButtonLabel(options.pressedLabel, DEFAULT_PRESSED_BUTTON_LABEL)
-  );
+  const rawLabel = normalizeStoredButtonLabel(options.label, DEFAULT_BUTTON_LABEL);
+  const rawPressedLabel = normalizeStoredButtonLabel(options.pressedLabel, DEFAULT_PRESSED_BUTTON_LABEL);
+  const label = escapeSingleQuotedJsString(rawLabel);
+  const pressedLabel = escapeSingleQuotedJsString(rawPressedLabel);
   return EMBED_HTML
     .replace(/\{\{API_BASE\}\}/g, options.apiBase)
     .replace(/\{\{BUTTON_ID\}\}/g, safeButtonId)
     .replace(/\{\{THEME\}\}/g, options.theme)
     .replace(/\{\{SIZE\}\}/g, options.size)
     .replace(/\{\{MULTI_NICE\}\}/g, options.multiNice ? "1" : "0")
-    .replace(/\{\{LABEL_HTML\}\}/g, () => escapeHtmlText(label))
+    .replace(/\{\{LABEL_HTML\}\}/g, () => escapeHtmlText(rawLabel))
     .replace(/\{\{LABEL\}\}/g, () => label)
     .replace(/\{\{PRESSED_LABEL\}\}/g, () => pressedLabel);
 }
