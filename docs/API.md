@@ -71,8 +71,8 @@ Content-Type: application/json
 | `size` | string | No | `xs`, `sm`, `md` (default), `lg`, `xl` |
 | `restriction` | string | No | `url` (default), `domain`, `global` |
 | `multi_nice` | boolean | No | Enable clap-style multi-nice (default: `false`) |
-| `label` | string | No | Visible idle label, and label for every state of a multi-nice button. Defaults to `Nice`. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. |
-| `pressed_label` | string | No | Visible label after interaction with a single-nice button. Defaults to `Nice'd`. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. |
+| `label` | string | No | Visible idle label, and label for every state of a multi-nice button. Defaults to `Nice`. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) are rejected. |
+| `pressed_label` | string | No | Visible label after interaction with a single-nice button. Defaults to `Nice'd`. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) are rejected. |
 
 **Response (201 Created):**
 ```json
@@ -145,8 +145,8 @@ Update button settings. Requires the private ID.
 | `theme` | string | No | `light`, `dark`, `minimal`, `mono-dark`, `mono-light` |
 | `size` | string | No | `xs`, `sm`, `md`, `lg`, `xl` |
 | `multi_nice` | boolean | No | Enable/disable clap-style multi-nice. **Note:** toggling this changes the deduplication model — single-nice enforces one per visitor per day, multi-nice allows unlimited. |
-| `label` | string | No | Update the visible idle label. Defaults are returned for legacy records when this field is absent. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. |
-| `pressed_label` | string | No | Update the visible single-nice pressed-state label. It is retained when `multi_nice` changes. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. |
+| `label` | string | No | Update the visible idle label. Defaults are returned for legacy records when this field is absent. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) are rejected. |
+| `pressed_label` | string | No | Update the visible single-nice pressed-state label. It is retained when `multi_nice` changes. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) are rejected. |
 
 **Response (200 OK):**
 ```json
@@ -401,6 +401,8 @@ Use the iframe when a platform allows HTML but blocks external scripts. A standa
 | `INVALID_THEME` | 400 | Invalid theme value |
 | `INVALID_SIZE` | 400 | Invalid size value |
 | `INVALID_RESTRICTION` | 400 | Invalid restriction mode |
+| `INVALID_LABEL` | 400 | Invalid or empty `label` |
+| `INVALID_PRESSED_LABEL` | 400 | Invalid or empty `pressed_label` |
 | `NOT_FOUND` | 404 | Button not found |
 | `INVALID_BUTTON_ID` | 400 | Public button ID format invalid |
 | `BUTTON_NOT_FOUND` | 404 | Public button not found |
