@@ -153,7 +153,7 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 </style>
 </head>
 <body class="theme-{{THEME}} size-{{SIZE}}">
-<button class="nice-button" id="niceBtn" aria-label="Nice this" aria-pressed="false">
+<button class="nice-button" id="niceBtn" aria-label="{{LABEL_HTML}}" aria-pressed="false">
 <span class="nice-text" id="niceText">{{LABEL_HTML}}</span>
 <span class="nice-count" id="niceCount" aria-live="polite"></span>
 </button>
@@ -190,6 +190,7 @@ btn.classList.remove('niced');
 btn.setAttribute('aria-pressed','false');
 textEl.textContent=LABEL;
 }
+btn.setAttribute('aria-label', IS_MULTI || !hasNiced ? LABEL : PRESSED_LABEL);
 notifyResize();
 }
 function notifyResize(){

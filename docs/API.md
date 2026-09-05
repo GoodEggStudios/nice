@@ -131,7 +131,9 @@ PATCH /api/v1/buttons/:private_id
 Content-Type: application/json
 
 {
-  "restriction": "global"
+  "restriction": "global",
+  "label": "Recommend",
+  "pressed_label": "Recommended"
 }
 ```
 
@@ -145,8 +147,8 @@ Update button settings. Requires the private ID.
 | `theme` | string | No | `light`, `dark`, `minimal`, `mono-dark`, `mono-light` |
 | `size` | string | No | `xs`, `sm`, `md`, `lg`, `xl` |
 | `multi_nice` | boolean | No | Enable/disable clap-style multi-nice. **Note:** toggling this changes the deduplication model — single-nice enforces one per visitor per day, multi-nice allows unlimited. |
-| `label` | string | No | Update the visible idle label. Defaults are returned for legacy records when this field is absent. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) are rejected. |
-| `pressed_label` | string | No | Update the visible single-nice pressed-state label. It is retained when `multi_nice` changes. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) are rejected. |
+| `label` | string | No | Update the visible idle label. Defaults are returned for legacy records when this field is absent. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) and angle brackets (`<`, `>`) are rejected. |
+| `pressed_label` | string | No | Update the visible single-nice pressed-state label. It is retained when `multi_nice` changes. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) and angle brackets (`<`, `>`) are rejected. |
 
 **Response (200 OK):**
 ```json

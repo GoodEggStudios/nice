@@ -621,12 +621,16 @@
 
     function setLabelError(input, errorElement, message) {
       input.classList.add('error');
+      input.setAttribute('aria-invalid', 'true');
+      input.setAttribute('aria-errormessage', errorElement.id);
       errorElement.textContent = message;
       errorElement.classList.add('show');
     }
 
     function clearLabelError(input, errorElement) {
       input.classList.remove('error');
+      input.removeAttribute('aria-invalid');
+      input.removeAttribute('aria-errormessage');
       errorElement.textContent = '';
       errorElement.classList.remove('show');
     }
@@ -636,6 +640,10 @@
       const trimmed = value.trim();
       if (!trimmed) {
         setLabelError(input, errorElement, labelName + ' is required');
+        return false;
+      }
+      if (/[<>]/.test(value)) {
+        setLabelError(input, errorElement, labelName + ' cannot contain angle brackets');
         return false;
       }
       if (/[\u0000-\u001F\u007F]/.test(value)) {
@@ -802,8 +810,6 @@
         clearLabelError(pressedLabelInput, document.getElementById('pressedLabelError'));
         status.textContent = 'Saved';
       } catch (error) {
-        labelInput.value = confirmedLabels.label;
-        pressedLabelInput.value = confirmedLabels.pressed_label;
         status.textContent = error.message;
         status.classList.add('error');
         if (error.code === 'INVALID_PRESSED_LABEL') {

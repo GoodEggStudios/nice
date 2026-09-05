@@ -186,7 +186,7 @@ test("stats saves labels, refreshes the server embed, and rolls back failures", 
   await page.locator("#saveLabelsBtn").click();
   await expect(page.locator("#labelSaveStatus")).toHaveText("Saved");
   await expect(page.locator("#snippet")).toContainText("<iframe");
-  await expect(page.frameLocator("#preview iframe").locator("#niceText")).toHaveText("Nice");
+  await expect(page.frameLocator("#preview iframe").locator("#niceText")).toHaveText("Recommend");
 
   await installNiceApiMocks(page, {
     buttonPatchStatus: 400,
@@ -197,8 +197,8 @@ test("stats saves labels, refreshes the server embed, and rolls back failures", 
   await page.locator("#pressedLabelInput").fill("Unsaved pressed");
   await page.locator("#saveLabelsBtn").click();
   await expect(page.locator("#labelSaveStatus")).toContainText("Invalid button label");
-  await expect(page.locator("#labelInput")).toHaveValue("Recommend");
-  await expect(page.locator("#pressedLabelInput")).toHaveValue("Recommended");
+  await expect(page.locator("#labelInput")).toHaveValue("Unsaved");
+  await expect(page.locator("#pressedLabelInput")).toHaveValue("Unsaved pressed");
   await expect(page.locator("#labelInput")).toBeFocused();
 });
 
