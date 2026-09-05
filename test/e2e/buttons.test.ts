@@ -95,10 +95,22 @@ describe("Button API", () => {
     it("should size iframe snippets using shared embed dimensions", async () => {
       const data = await createButton("https://example.com/small-button", {
         size: "sm",
+        label: "Hi",
+        pressed_label: "Ok",
       });
       const embed = data.embed as { iframe: string };
 
       expect(embed.iframe).toContain("width:85px;height:32px");
+    });
+
+    it("should widen iframe snippets for longer default labels", async () => {
+      const data = await createButton("https://example.com/default-label-width", {
+        size: "sm",
+      });
+      const embed = data.embed as { iframe: string };
+
+      // Default pressed label "Nice'd" exceeds sm base width (6*12+24=96)
+      expect(embed.iframe).toContain("width:96px;height:32px");
     });
 
     it("should reject missing URL", async () => {
