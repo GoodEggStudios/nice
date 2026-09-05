@@ -375,6 +375,8 @@ Use the iframe when a platform allows HTML but blocks external scripts. A standa
 </iframe>
 ```
 
+`100px × 36px` is the default-label baseline. For custom labels, use the generated iframe snippet, whose width is calculated from the stored labels.
+
 **Query Parameters:**
 
 | Param | Default | Description |

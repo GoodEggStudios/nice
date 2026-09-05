@@ -13,11 +13,9 @@ export interface NiceApiMockOptions {
   createStatus?: number;
   createErrorCode?: string;
   createError?: string;
-  createFailure?: "network" | "server";
   buttonPatchStatus?: number;
   buttonPatchErrorCode?: string;
   buttonPatchError?: string;
-  buttonPatchFailure?: "network" | "server";
 }
 
 async function fulfillJson(route: Route, value: unknown, status = 200) {
@@ -105,15 +103,7 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
   });
 
   await page.route("https://api.nice.sbs/api/v1/buttons", async (route) => {
-    if (options.createFailure === "network") {
-      await route.abort("failed");
-      return;
-    }
     const status = options.createStatus ?? 201;
-    if (options.createFailure === "server") {
-      await fulfillJson(route, { error: "Server failure", code: "INTERNAL_ERROR" }, 500);
-      return;
-    }
     if (status !== 201) {
       await fulfillJson(route, {
         error: options.createError ?? "Failed to create button",
@@ -142,14 +132,6 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
     }
     if (method !== "PATCH") {
       await route.continue();
-      return;
-    }
-    if (options.buttonPatchFailure === "network") {
-      await route.abort("failed");
-      return;
-    }
-    if (options.buttonPatchFailure === "server") {
-      await fulfillJson(route, { error: "Server failure", code: "INTERNAL_ERROR" }, 500);
       return;
     }
     const status = options.buttonPatchStatus ?? 200;
