@@ -21,6 +21,8 @@ export interface Button {
   multiNice?: boolean; // Allow multiple nices per visitor (clap-style)
   theme?: string; // Default theme
   size?: string; // Default size
+  label?: string; // Visible idle button label
+  pressedLabel?: string; // Visible single-nice pressed label
   createdAt: string;
 }
 

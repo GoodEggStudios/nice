@@ -28,6 +28,8 @@ Response:
   "multi_nice": false,
   "theme": "light",
   "size": "md",
+  "label": "Nice",
+  "pressed_label": "Nice'd",
   "count": 0,
   "created_at": "2026-02-18T10:00:00Z",
   "embed": {
@@ -54,7 +56,9 @@ Content-Type: application/json
   "theme": "light",
   "size": "md",
   "restriction": "url",
-  "multi_nice": false
+  "multi_nice": false,
+  "label": "Nice",
+  "pressed_label": "Nice'd"
 }
 ```
 
@@ -67,6 +71,8 @@ Content-Type: application/json
 | `size` | string | No | `xs`, `sm`, `md` (default), `lg`, `xl` |
 | `restriction` | string | No | `url` (default), `domain`, `global` |
 | `multi_nice` | boolean | No | Enable clap-style multi-nice (default: `false`) |
+| `label` | string | No | Visible idle label, and label for every state of a multi-nice button. Defaults to `Nice`. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. |
+| `pressed_label` | string | No | Visible label after interaction with a single-nice button. Defaults to `Nice'd`. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. |
 
 **Response (201 Created):**
 ```json
@@ -78,6 +84,8 @@ Content-Type: application/json
   "multi_nice": false,
   "theme": "light",
   "size": "md",
+  "label": "Nice",
+  "pressed_label": "Nice'd",
   "count": 0,
   "created_at": "2026-02-18T10:00:00Z",
   "embed": {
@@ -107,6 +115,8 @@ Get button statistics. Requires the private ID.
   "count": 42,
   "theme": "light",
   "size": "md",
+  "label": "Nice",
+  "pressed_label": "Nice'd",
   "created_at": "2026-02-18T10:00:00Z",
   "embed": { ... }
 }
@@ -135,6 +145,8 @@ Update button settings. Requires the private ID.
 | `theme` | string | No | `light`, `dark`, `minimal`, `mono-dark`, `mono-light` |
 | `size` | string | No | `xs`, `sm`, `md`, `lg`, `xl` |
 | `multi_nice` | boolean | No | Enable/disable clap-style multi-nice. **Note:** toggling this changes the deduplication model — single-nice enforces one per visitor per day, multi-nice allows unlimited. |
+| `label` | string | No | Update the visible idle label. Defaults are returned for legacy records when this field is absent. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. |
+| `pressed_label` | string | No | Update the visible single-nice pressed-state label. It is retained when `multi_nice` changes. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. |
 
 **Response (200 OK):**
 ```json
@@ -146,6 +158,8 @@ Update button settings. Requires the private ID.
   "count": 42,
   "theme": "light",
   "size": "md",
+  "label": "Nice",
+  "pressed_label": "Nice'd",
   "created_at": "2026-02-18T10:00:00Z",
   "embed": { ... }
 }

@@ -4,13 +4,13 @@
  * Tests the full request→response cycle through the worker.
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { SELF, env } from "cloudflare:test";
 
 // Helper to create a button and return both IDs
 async function createButton(
   url = "https://example.com/article",
-  opts: Record<string, string> = {}
+  opts: Record<string, unknown> = {}
 ): Promise<{ public_id: string; private_id: string; [key: string]: unknown }> {
   const res = await SELF.fetch("https://api.nice.sbs/api/v1/buttons", {
     method: "POST",
@@ -33,8 +33,31 @@ describe("Button API", () => {
       expect(data.theme).toBe("light");
       expect(data.size).toBe("md");
       expect(data.restriction).toBe("url");
+      expect(data.label).toBe("Nice");
+      expect(data.pressed_label).toBe("Nice'd");
       expect(data.embed).toBeDefined();
       expect(data.created_at).toBeTruthy();
+    });
+
+    it("should create and return custom labels", async () => {
+      const data = await createButton("https://example.com/custom-labels", {
+        label: "  Recommend  ",
+        pressed_label: "  Recommended  ",
+      });
+
+      expect(data.label).toBe("Recommend");
+      expect(data.pressed_label).toBe("Recommended");
+
+      const stats = await SELF.fetch(
+        `https://api.nice.sbs/api/v1/buttons/stats/${data.private_id}`
+      );
+      expect(stats.status).toBe(200);
+      const statsData = await stats.json() as {
+        label: string;
+        pressed_label: string;
+      };
+      expect(statsData.label).toBe("Recommend");
+      expect(statsData.pressed_label).toBe("Recommended");
     });
 
     it("should create a button with custom theme, size, and restriction", async () => {
@@ -167,10 +190,38 @@ describe("Button API", () => {
       );
 
       expect(res.status).toBe(200);
-      const data = await res.json() as { id: string; url: string; count: number };
+      const data = await res.json() as {
+        id: string;
+        url: string;
+        count: number;
+        label: string;
+        pressed_label: string;
+      };
       expect(data.id).toBe(button.public_id);
       expect(data.url).toBe("https://example.com/stats-test");
       expect(data.count).toBe(0);
+      expect(data.label).toBe("Nice");
+      expect(data.pressed_label).toBe("Nice'd");
+    });
+
+    it("should return defaults for a pre-feature record without labels", async () => {
+      const button = await createButton("https://example.com/legacy-labels");
+      const stored = await env.NICE_KV.get(`btn:${button.public_id}`);
+      expect(stored).toBeTruthy();
+
+      const legacyButton = JSON.parse(stored as string) as Record<string, unknown>;
+      delete legacyButton.label;
+      delete legacyButton.pressedLabel;
+      await env.NICE_KV.put(`btn:${button.public_id}`, JSON.stringify(legacyButton));
+
+      const res = await SELF.fetch(
+        `https://api.nice.sbs/api/v1/buttons/stats/${button.private_id}`
+      );
+
+      expect(res.status).toBe(200);
+      const data = await res.json() as { label: string; pressed_label: string };
+      expect(data.label).toBe("Nice");
+      expect(data.pressed_label).toBe("Nice'd");
     });
 
     it("should return 404 for unknown private ID", async () => {
@@ -271,6 +322,103 @@ describe("Button API", () => {
       expect(data.theme).toBe("minimal");
       expect(data.size).toBe("lg"); // preserved
       expect(data.restriction).toBe("domain"); // preserved
+    });
+
+    it("should update one label while preserving the other settings", async () => {
+      const button = await createButton("https://example.com/partial-label", {
+        label: "Recommend",
+        pressed_label: "Recommended",
+        theme: "dark",
+        size: "lg",
+        restriction: "domain",
+      });
+
+      const res = await SELF.fetch(
+        `https://api.nice.sbs/api/v1/buttons/${button.private_id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ label: "  Endorse  " }),
+        }
+      );
+
+      expect(res.status).toBe(200);
+      const data = await res.json() as {
+        label: string;
+        pressed_label: string;
+        theme: string;
+        size: string;
+        restriction: string;
+      };
+      expect(data.label).toBe("Endorse");
+      expect(data.pressed_label).toBe("Recommended");
+      expect(data.theme).toBe("dark");
+      expect(data.size).toBe("lg");
+      expect(data.restriction).toBe("domain");
+    });
+
+    it("should reject invalid labels without mutating the record", async () => {
+      const button = await createButton("https://example.com/invalid-labels", {
+        label: "Recommend",
+        pressed_label: "Recommended",
+      });
+      const cases = [
+        { field: "label", value: 42, code: "INVALID_LABEL" },
+        { field: "pressed_label", value: true, code: "INVALID_PRESSED_LABEL" },
+        { field: "label", value: "   ", code: "INVALID_LABEL" },
+        { field: "pressed_label", value: "\n\t", code: "INVALID_PRESSED_LABEL" },
+        {
+          field: "label",
+          value: "a".repeat(33),
+          code: "INVALID_LABEL",
+        },
+      ];
+
+      for (const testCase of cases) {
+        const res = await SELF.fetch(
+          `https://api.nice.sbs/api/v1/buttons/${button.private_id}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ [testCase.field]: testCase.value }),
+          }
+        );
+
+        expect(res.status).toBe(400);
+        const data = await res.json() as { code: string };
+        expect(data.code).toBe(testCase.code);
+      }
+
+      const stats = await SELF.fetch(
+        `https://api.nice.sbs/api/v1/buttons/stats/${button.private_id}`
+      );
+      const data = await stats.json() as { label: string; pressed_label: string };
+      expect(data.label).toBe("Recommend");
+      expect(data.pressed_label).toBe("Recommended");
+    });
+
+    it("should preserve pressed_label when enabling clap mode", async () => {
+      const button = await createButton("https://example.com/clap-label", {
+        label: "Recommend",
+        pressed_label: "Recommended",
+      });
+
+      const res = await SELF.fetch(
+        `https://api.nice.sbs/api/v1/buttons/${button.private_id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ multi_nice: true }),
+        }
+      );
+
+      expect(res.status).toBe(200);
+      const data = await res.json() as {
+        multi_nice: boolean;
+        pressed_label: string;
+      };
+      expect(data.multi_nice).toBe(true);
+      expect(data.pressed_label).toBe("Recommended");
     });
 
     it("should reject invalid restriction", async () => {
