@@ -17,6 +17,11 @@ import {
   normalizeUrl,
   extractUrlDomain,
 } from "../lib";
+import {
+  DEFAULT_BUTTON_LABEL,
+  DEFAULT_PRESSED_BUTTON_LABEL,
+  normalizeStoredButtonLabel,
+} from "../lib/button-labels";
 
 // KV key prefixes
 const BUTTON_PREFIX = "btn:"; // buttons (n_xxx)
@@ -47,6 +52,8 @@ interface CountResponse {
   has_niced?: boolean;
   multi_nice?: boolean;
   url?: string;
+  label?: string;
+  pressed_label?: string;
 }
 
 /**
@@ -253,12 +260,19 @@ export async function getNiceCount(
     let hasNiced = false;
     let isMultiNice = false;
     let buttonUrl: string | undefined;
+    let label = DEFAULT_BUTTON_LABEL;
+    let pressedLabel = DEFAULT_PRESSED_BUTTON_LABEL;
     if (buttonExists) {
       const buttonData = await env.NICE_KV.get(`${BUTTON_PREFIX}${buttonId}`);
       if (buttonData) {
         const button: Button = JSON.parse(buttonData);
         isMultiNice = !!button.multiNice;
         buttonUrl = button.url;
+        label = normalizeStoredButtonLabel(button.label, DEFAULT_BUTTON_LABEL);
+        pressedLabel = normalizeStoredButtonLabel(
+          button.pressedLabel,
+          DEFAULT_PRESSED_BUTTON_LABEL
+        );
       }
 
       // Check has_niced for both single and multi-nice (multi uses it for gold colour)
@@ -287,6 +301,8 @@ export async function getNiceCount(
       has_niced: hasNiced,
       multi_nice: isMultiNice,
       url: buttonUrl,
+      label,
+      pressed_label: pressedLabel,
     };
 
     return new Response(JSON.stringify(response), {

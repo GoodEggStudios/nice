@@ -482,13 +482,13 @@
       <div class="stat-card" id="labelSettings">
         <div class="label-field">
           <label for="labelInput">Button text</label>
-          <input type="text" id="labelInput" name="label" maxlength="32" required aria-describedby="labelHint labelError">
+          <input type="text" id="labelInput" name="label" maxlength="64" required aria-describedby="labelHint labelError">
           <div class="label-hint" id="labelHint">Text shown before someone clicks the button.</div>
           <div class="label-error" id="labelError" role="alert"></div>
         </div>
         <div class="label-field" id="pressedLabelField">
           <label for="pressedLabelInput">After-click text</label>
-          <input type="text" id="pressedLabelInput" name="pressed_label" maxlength="32" required aria-describedby="pressedLabelHint pressedLabelError">
+          <input type="text" id="pressedLabelInput" name="pressed_label" maxlength="64" required aria-describedby="pressedLabelHint pressedLabelError">
           <div class="label-hint" id="pressedLabelHint">Text shown after the first click. It applies only to single-nice buttons.</div>
           <div class="label-error" id="pressedLabelError" role="alert"></div>
         </div>
@@ -654,7 +654,7 @@
       const labelInput = document.getElementById('labelInput');
       const pressedLabelInput = document.getElementById('pressedLabelInput');
       const validLabel = validateLabelInput(labelInput, document.getElementById('labelError'), 'Button text');
-      const validPressedLabel = validateLabelInput(pressedLabelInput, document.getElementById('pressedLabelError'), 'After-click text');
+      const validPressedLabel = document.getElementById('multiNiceToggle').checked || validateLabelInput(pressedLabelInput, document.getElementById('pressedLabelError'), 'After-click text');
       if (!validLabel) {
         labelInput.focus();
         return false;

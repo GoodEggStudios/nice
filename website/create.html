@@ -602,14 +602,14 @@
 
       <div class="form-group">
         <label for="labelInput">Button text</label>
-        <input type="text" id="labelInput" name="label" value="Nice" maxlength="32" required aria-describedby="labelHint labelError">
+        <input type="text" id="labelInput" name="label" value="Nice" maxlength="64" required aria-describedby="labelHint labelError">
         <div class="input-hint" id="labelHint">Text shown before someone clicks the button.</div>
         <div class="field-error" id="labelError" role="alert"></div>
       </div>
 
       <div class="form-group" id="pressedLabelField">
         <label for="pressedLabelInput">After-click text</label>
-        <input type="text" id="pressedLabelInput" name="pressed_label" value="Nice'd" maxlength="32" required aria-describedby="pressedLabelHint pressedLabelError">
+        <input type="text" id="pressedLabelInput" name="pressed_label" value="Nice'd" maxlength="64" required aria-describedby="pressedLabelHint pressedLabelError">
         <div class="input-hint" id="pressedLabelHint">Text shown after the first click. It applies only to single-nice buttons.</div>
         <div class="field-error" id="pressedLabelError" role="alert"></div>
       </div>
@@ -911,7 +911,7 @@
 
     function validateLabels() {
       const validLabel = validateLabelInput(labelInput, labelError, 'Button text');
-      const validPressedLabel = validateLabelInput(pressedLabelInput, pressedLabelError, 'After-click text');
+      const validPressedLabel = multiNiceInput.checked || validateLabelInput(pressedLabelInput, pressedLabelError, 'After-click text');
       if (!validLabel) {
         labelInput.focus();
         return false;
