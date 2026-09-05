@@ -47,8 +47,23 @@ docs {
   | pressed_label | string | No | Visible pressed label; defaults to Nice'd; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters are rejected |
   
   ## Response
-  
-  Returns `public_id` (for embeds) and `private_id` (for management).
-  
+
+  ```json
+  {
+    "public_id": "n_x7Kf9mQ2Ab3Z",
+    "private_id": "ns_4vK9mPq8wL2nRt5xYz7bC",
+    "url": "https://example.com/my-article",
+    "restriction": "url",
+    "multi_nice": false,
+    "theme": "light",
+    "size": "md",
+    "label": "Nice",
+    "pressed_label": "Nice'd",
+    "count": 0,
+    "created_at": "2026-02-18T10:00:00Z",
+    "embed": { ... }
+  }
+  ```
+
   ⚠️ **Save your private_id!** It's only shown once.
 }
