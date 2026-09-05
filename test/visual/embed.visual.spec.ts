@@ -153,7 +153,9 @@ test("embed clap mode keeps the custom idle label after clicking", async ({ page
 
 for (const size of ["xs", "xl"] as const) {
   test(`embed maximum-length label fits at ${size}`, async ({ page }) => {
-    const label = "😀".repeat(32);
+    // Use Bungee-rendered glyphs, not emoji: color-emoji metrics differ on
+    // macOS vs Linux and break committed screenshot dimensions in CI.
+    const label = "W".repeat(32);
     await openEmbed(page, "dark", size, { label, pressedLabel: label });
 
     const dimensions = getEmbedInitialDimensions(size, label, label, false);
