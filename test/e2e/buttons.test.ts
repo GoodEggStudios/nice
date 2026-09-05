@@ -101,6 +101,21 @@ describe("Button API", () => {
       expect(embed.iframe).toContain("width:85px;height:32px");
     });
 
+    it("should widen iframe snippets for custom labels without adding labels to the URL", async () => {
+      const data = await createButton("https://example.com/long-label", {
+        size: "md",
+        label: "Recommend",
+        pressed_label: "Recommended",
+      });
+      const embed = data.embed as { iframe: string; script: string };
+
+      expect(embed.iframe).toContain("width:165px;height:36px");
+      expect(embed.iframe).not.toContain("Recommend");
+      expect(embed.iframe).not.toContain("Recommended");
+      expect(embed.script).not.toContain("Recommend");
+      expect(embed.script).not.toContain("Recommended");
+    });
+
     it("should reject missing URL", async () => {
       const res = await SELF.fetch("https://api.nice.sbs/api/v1/buttons", {
         method: "POST",

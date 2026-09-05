@@ -103,6 +103,8 @@ Customise the look with `theme` and `size` parameters:
 
 Button owners can configure the API-managed labels with optional `label` and `pressed_label` fields. They default to `Nice` and `Nice'd`, are limited to 32 Unicode code points, and are trimmed before storage. `pressed_label` is used after interaction for single-nice buttons and is retained when clap mode changes.
 
+Both embed forms load these persisted labels from the button record; `label` and `pressed_label` URL parameters are ignored. Script embeds resize after the Bungee font settles, and generated iframe snippets start with a conservative width for custom labels.
+
 **Host-page confetti (script embed only):** Add `data-confetti="true"` to opt in to a confetti celebration on the host page when someone nices. It is off by default. A standalone iframe cannot draw outside its own rectangle.
 
 ```html

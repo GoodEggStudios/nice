@@ -5,7 +5,12 @@
  * - GET /embed/:button_id - Embed iframe content
  */
 
-import type { Env } from "../types";
+import type { Button, Env } from "../types";
+import {
+  DEFAULT_BUTTON_LABEL,
+  DEFAULT_PRESSED_BUTTON_LABEL,
+  normalizeStoredButtonLabel,
+} from "../lib";
 import {
   EMBED_SIZES,
   EMBED_THEMES,
@@ -18,6 +23,8 @@ export {
   EMBED_DIMENSIONS,
   EMBED_SIZES,
   EMBED_THEMES,
+  EMBED_FONT_SIZE,
+  getEmbedInitialDimensions,
   type EmbedSize,
   type EmbedTheme,
 } from "./embed-constants";
@@ -28,14 +35,41 @@ export interface RenderEmbedHtmlOptions {
   theme: EmbedTheme;
   size: EmbedSize;
   multiNice?: boolean;
+  label?: string;
+  pressedLabel?: string;
 }
 
 export interface RenderDemoEmbedHtmlOptions {
   theme: EmbedTheme;
   size: EmbedSize;
+  label?: string;
+  pressedLabel?: string;
 }
 
 const DEFAULT_EMBED_BASE = "https://api.nice.sbs";
+
+function escapeHtmlText(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => {
+    switch (character) {
+      case "&":
+        return "&amp;";
+      case "<":
+        return "&lt;";
+      case ">":
+        return "&gt;";
+      case '"':
+        return "&quot;";
+      default:
+        return "&#39;";
+    }
+  });
+}
+
+function serializeInlineScriptString(value: string): string {
+  return JSON.stringify(value).replace(/[<>&\u2028\u2029]/g, (character) => {
+    return `\\u${character.charCodeAt(0).toString(16).padStart(4, "0")}`;
+  });
+}
 
 function escapeSingleQuotedJsString(value: string): string {
   return value
@@ -70,7 +104,7 @@ const EMBED_HTML = `<!DOCTYPE html>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{background:transparent}
 body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-content:center;padding:2px}
-.nice-button{display:inline-flex;align-items:center;border:none;font-family:'Bungee',cursive;cursor:pointer;transition:all .15s ease;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;text-transform:uppercase;letter-spacing:0.5px}
+.nice-button{display:inline-flex;align-items:center;border:none;font-family:'Bungee',cursive;cursor:pointer;transition:all .15s ease;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap}
 .nice-button:hover{transform:scale(1.05)}
 .nice-button:active{transform:scale(0.95)}
 .nice-button:focus-visible{outline:2px solid #fbbf24;outline-offset:2px}
@@ -121,7 +155,7 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 .theme-mono-light .nice-button:hover{background:#f5f5f5}
 .theme-mono-light .nice-button.niced{background:#000;color:#fff;border-color:#000}
 
-.nice-text{transition:all .15s ease}
+.nice-text{transition:all .15s ease;white-space:nowrap}
 .nice-count{opacity:0.8}
 
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
@@ -133,8 +167,8 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 </style>
 </head>
 <body class="theme-{{THEME}} size-{{SIZE}}">
-<button class="nice-button" id="niceBtn" aria-label="Nice this" aria-pressed="false">
-<span class="nice-text" id="niceText">Nice</span>
+<button class="nice-button" id="niceBtn" aria-label="{{LABEL_HTML}}" aria-pressed="false">
+<span class="nice-text" id="niceText">{{LABEL_HTML}}</span>
 <span class="nice-count" id="niceCount" aria-live="polite"></span>
 </button>
 <script>
@@ -142,6 +176,8 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 const API_BASE='{{API_BASE}}';
 const BUTTON_ID='{{BUTTON_ID}}';
 const IS_MULTI='{{MULTI_NICE}}'==='1';
+const LABEL={{LABEL_JS}};
+const PRESSED_LABEL={{PRESSED_LABEL_JS}};
 const STORAGE_KEY='nice:'+BUTTON_ID;
 const btn=document.getElementById('niceBtn');
 const textEl=document.getElementById('niceText');
@@ -162,12 +198,13 @@ if(count>0){countEl.textContent=formatCount(count);countEl.style.display='';}els
 if(hasNiced){
 btn.classList.add('niced');
 btn.setAttribute('aria-pressed','true');
-textEl.textContent=IS_MULTI?"Nice":"Nice'd";
+textEl.textContent=IS_MULTI?LABEL:PRESSED_LABEL;
 }else{
 btn.classList.remove('niced');
 btn.setAttribute('aria-pressed','false');
-textEl.textContent='Nice';
+textEl.textContent=LABEL;
 }
+btn.setAttribute('aria-label',textEl.textContent);
 notifyResize();
 }
 function notifyResize(){
@@ -240,6 +277,7 @@ catch(e){btn.classList.add('disabled');}
 btn.addEventListener('click',recordNice);
 if(IS_MULTI){window.addEventListener('beforeunload',flushMultiNice);}
 if(BUTTON_ID){checkButton();fetchCount();}else{btn.classList.add('disabled');}
+if(document.fonts&&document.fonts.ready){document.fonts.ready.then(notifyResize).catch(()=>{});}
 setTimeout(notifyResize,100);
 })();
 </script>
@@ -255,19 +293,31 @@ function normalizeSize(size: string | null): EmbedSize {
 }
 
 export function renderDemoEmbedHtml(options: RenderDemoEmbedHtmlOptions): string {
+  const label = options.label ?? DEFAULT_BUTTON_LABEL;
+  const pressedLabel = options.pressedLabel ?? DEFAULT_PRESSED_BUTTON_LABEL;
+
   return DEMO_HTML
     .replace(/\{\{THEME\}\}/g, options.theme)
-    .replace(/\{\{SIZE\}\}/g, options.size);
+    .replace(/\{\{SIZE\}\}/g, options.size)
+    .replace(/\{\{LABEL_HTML\}\}/g, () => escapeHtmlText(label))
+    .replace(/\{\{LABEL_JS\}\}/g, () => serializeInlineScriptString(label))
+    .replace(/\{\{PRESSED_LABEL_JS\}\}/g, () => serializeInlineScriptString(pressedLabel));
 }
 
 export function renderEmbedHtml(options: RenderEmbedHtmlOptions): string {
   const safeButtonId = options.buttonId.replace(/[<>"'&]/g, "");
+  const label = options.label ?? DEFAULT_BUTTON_LABEL;
+  const pressedLabel = options.pressedLabel ?? DEFAULT_PRESSED_BUTTON_LABEL;
+
   return EMBED_HTML
     .replace(/\{\{API_BASE\}\}/g, options.apiBase)
     .replace(/\{\{BUTTON_ID\}\}/g, safeButtonId)
     .replace(/\{\{THEME\}\}/g, options.theme)
     .replace(/\{\{SIZE\}\}/g, options.size)
-    .replace(/\{\{MULTI_NICE\}\}/g, options.multiNice ? "1" : "0");
+    .replace(/\{\{MULTI_NICE\}\}/g, options.multiNice ? "1" : "0")
+    .replace(/\{\{LABEL_HTML\}\}/g, () => escapeHtmlText(label))
+    .replace(/\{\{LABEL_JS\}\}/g, () => serializeInlineScriptString(label))
+    .replace(/\{\{PRESSED_LABEL_JS\}\}/g, () => serializeInlineScriptString(pressedLabel));
 }
 
 /**
@@ -298,7 +348,7 @@ const DEMO_HTML = `<!DOCTYPE html>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Bungee',cursive;background:transparent;display:flex;align-items:center;justify-content:center;padding:2px}
-.nice-button{display:inline-flex;align-items:center;border:none;font-family:'Bungee',cursive;cursor:pointer;transition:all .15s ease;-webkit-user-select:none;user-select:none;text-transform:uppercase;letter-spacing:0.5px}
+.nice-button{display:inline-flex;align-items:center;border:none;font-family:'Bungee',cursive;cursor:pointer;transition:all .15s ease;-webkit-user-select:none;user-select:none;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap}
 .nice-button:hover{transform:scale(1.05)}
 .nice-button:active{transform:scale(0.95)}
 .nice-button:focus-visible{outline:2px solid #fbbf24;outline-offset:2px}
@@ -330,21 +380,31 @@ body{font-family:'Bungee',cursive;background:transparent;display:flex;align-item
 </style>
 </head>
 <body class="theme-{{THEME}} size-{{SIZE}}">
-<button class="nice-button" id="niceBtn" aria-label="Nice this" aria-pressed="false">
-<span class="nice-text" id="niceText">Nice</span>
+<button class="nice-button" id="niceBtn" aria-label="{{LABEL_HTML}}" aria-pressed="false">
+<span class="nice-text" id="niceText">{{LABEL_HTML}}</span>
 <span class="nice-count" id="niceCount" aria-live="polite">42</span>
 </button>
 <script>
+const LABEL={{LABEL_JS}};
+const PRESSED_LABEL={{PRESSED_LABEL_JS}};
 const btn=document.getElementById('niceBtn');
 const textEl=document.getElementById('niceText');
 const countEl=document.getElementById('niceCount');
 let count=42,niced=false;
+function updateDisplay(){
+textEl.textContent=niced?PRESSED_LABEL:LABEL;
+countEl.textContent=count;
+btn.setAttribute('aria-label',textEl.textContent);
+btn.setAttribute('aria-pressed',String(niced));
+}
 btn.addEventListener('click',()=>{
 btn.classList.add('animating');
 setTimeout(()=>btn.classList.remove('animating'),300);
-if(niced){count--;niced=false;btn.classList.remove('niced');textEl.textContent='Nice';countEl.textContent=count;}
-else{count++;niced=true;btn.classList.add('niced');textEl.textContent="Nice'd";countEl.textContent=count;}
+if(niced){count--;niced=false;btn.classList.remove('niced');}
+else{count++;niced=true;btn.classList.add('niced');}
+updateDisplay();
 });
+updateDisplay();
 </script>
 </body>
 </html>`;
@@ -394,15 +454,26 @@ export async function serveEmbedPage(
     });
   }
 
-  // Check for multi-nice mode: query param takes priority, then look up button config from KV
-  let isMulti = url.searchParams.get("multi") === "1" ? "1" : "0";
-  if (isMulti === "0" && env?.NICE_KV) {
+  const multiParam = url.searchParams.get("multi");
+  let isMulti = multiParam === "1";
+  let label = DEFAULT_BUTTON_LABEL;
+  let pressedLabel = DEFAULT_PRESSED_BUTTON_LABEL;
+
+  // Stored configuration is used only when the query does not explicitly set multi mode.
+  if (env?.NICE_KV) {
     try {
       const buttonData = await env.NICE_KV.get(`btn:${buttonId}`);
       if (buttonData) {
-        const button = JSON.parse(buttonData);
-        if (button.multiNice) {
-          isMulti = "1";
+        const button = JSON.parse(buttonData) as Button;
+        if (button && typeof button === "object") {
+          label = normalizeStoredButtonLabel(button.label, DEFAULT_BUTTON_LABEL);
+          pressedLabel = normalizeStoredButtonLabel(
+            button.pressedLabel,
+            DEFAULT_PRESSED_BUTTON_LABEL
+          );
+          if (multiParam === null && button.multiNice === true) {
+            isMulti = true;
+          }
         }
       }
     } catch (e) {
@@ -417,7 +488,9 @@ export async function serveEmbedPage(
     buttonId,
     theme,
     size,
-    multiNice: isMulti === "1",
+    multiNice: isMulti,
+    label,
+    pressedLabel,
   });
 
   return new Response(html, {

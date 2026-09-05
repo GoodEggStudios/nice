@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { renderEmbedScript } from "../../src/routes/embed";
+import { renderEmbedHtml, renderEmbedScript } from "../../src/routes/embed";
 
 const EMBED_BASE = "https://api.nice.sbs";
 const BUTTON_ID = "n_abc123456789";
@@ -196,6 +196,19 @@ describe("renderEmbedScript runtime behavior", () => {
     expect(first.style.height).toBe("52px");
     expect(second.style.width).toBe("100px");
     expect(second.style.height).toBe("36px");
+  });
+
+  it("should retain immediate initialization and add a font-ready resize", () => {
+    const html = renderEmbedHtml({
+      apiBase: EMBED_BASE,
+      buttonId: BUTTON_ID,
+      theme: "light",
+      size: "md",
+    });
+
+    expect(html).toContain("setTimeout(notifyResize,100)");
+    expect(html).toContain("document.fonts&&document.fonts.ready");
+    expect(html).toContain("document.fonts.ready.then(notifyResize)");
   });
 
   it("should ignore messages from an unrelated window", () => {

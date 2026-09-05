@@ -328,6 +328,8 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 
 The script tag creates the iframe and can show effects on the host page, such as confetti:
 
+Embeds use the button owner's persisted `label` and `pressed_label` values. URL parameters with those names are ignored. Script embeds resize after the Bungee font settles; generated direct-iframe snippets include a conservative initial width for custom labels.
+
 ```html
 <script
   src="https://api.nice.sbs/embed.js"

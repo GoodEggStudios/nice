@@ -10,9 +10,9 @@
 
 import type { Env, Button, RestrictionMode } from "../types";
 import {
-  EMBED_DIMENSIONS,
   EMBED_SIZES,
   EMBED_THEMES,
+  getEmbedInitialDimensions,
   type EmbedSize,
   type EmbedTheme,
 } from "./embed-constants";
@@ -49,11 +49,14 @@ function generateEmbedSnippets(
   baseUrl: string,
   theme: string,
   size: string,
+  label: string,
+  pressedLabel: string,
   multiNice?: boolean
 ): { iframe: string; script: string } {
   const embedUrl = `${baseUrl}/e/${publicId}?theme=${theme}&size=${size}${multiNice ? '&multi=1' : ''}`;
 
-  const dim = EMBED_DIMENSIONS[size as EmbedSize] || EMBED_DIMENSIONS.md;
+  const embedSize = EMBED_SIZES.includes(size as EmbedSize) ? (size as EmbedSize) : "md";
+  const dim = getEmbedInitialDimensions(embedSize, label, pressedLabel, multiNice === true);
 
   const iframe = `<iframe src="${embedUrl}" style="background:transparent;border:none;overflow:hidden;display:block;color-scheme:normal;width:${dim.w}px;height:${dim.h}px;" scrolling="no" frameborder="0" allowtransparency="true" title="Nice button"></iframe>`;
   const script = `<script src="${baseUrl}/embed.js" data-button="${publicId}" data-theme="${theme}" data-size="${size}"${multiNice ? ' data-multi="1"' : ''} async></script>`;
@@ -187,7 +190,15 @@ export async function createButton(
   // Generate embed snippets
   const url = new URL(request.url);
   const baseUrl = `${url.protocol}//${url.host}`;
-  const embed = generateEmbedSnippets(publicId, baseUrl, theme, size, button.multiNice);
+  const embed = generateEmbedSnippets(
+    publicId,
+    baseUrl,
+    theme,
+    size,
+    labelResult.value,
+    pressedLabelResult.value,
+    button.multiNice
+  );
 
   // Return response with both IDs (private shown only once!)
   return Response.json(
@@ -247,16 +258,6 @@ export async function getButtonStats(
 
   const button: Button = JSON.parse(buttonData);
 
-  // Generate embed snippet for convenience
-  const url = new URL(request.url);
-  const baseUrl = `${url.protocol}//${url.host}`;
-  const embed = generateEmbedSnippets(
-    publicId,
-    baseUrl,
-    button.theme || "light",
-    button.size || "md"
-  );
-
   const label = normalizeStoredButtonLabel(
     button.label,
     DEFAULT_BUTTON_LABEL
@@ -264,6 +265,19 @@ export async function getButtonStats(
   const pressedLabel = normalizeStoredButtonLabel(
     button.pressedLabel,
     DEFAULT_PRESSED_BUTTON_LABEL
+  );
+
+  // Generate embed snippet for convenience
+  const url = new URL(request.url);
+  const baseUrl = `${url.protocol}//${url.host}`;
+  const embed = generateEmbedSnippets(
+    publicId,
+    baseUrl,
+    button.theme || "light",
+    button.size || "md",
+    label,
+    pressedLabel,
+    button.multiNice
   );
 
   return Response.json({
@@ -400,16 +414,6 @@ export async function updateButton(
   // Save updated button
   await env.NICE_KV.put(`btn:${publicId}`, JSON.stringify(button));
 
-  // Generate updated embed snippet
-  const url = new URL(request.url);
-  const baseUrl = `${url.protocol}//${url.host}`;
-  const embed = generateEmbedSnippets(
-    publicId,
-    baseUrl,
-    button.theme || "light",
-    button.size || "md"
-  );
-
   const label = normalizeStoredButtonLabel(
     button.label,
     DEFAULT_BUTTON_LABEL
@@ -417,6 +421,19 @@ export async function updateButton(
   const pressedLabel = normalizeStoredButtonLabel(
     button.pressedLabel,
     DEFAULT_PRESSED_BUTTON_LABEL
+  );
+
+  // Generate updated embed snippet
+  const url = new URL(request.url);
+  const baseUrl = `${url.protocol}//${url.host}`;
+  const embed = generateEmbedSnippets(
+    publicId,
+    baseUrl,
+    button.theme || "light",
+    button.size || "md",
+    label,
+    pressedLabel,
+    button.multiNice
   );
 
   return Response.json({
