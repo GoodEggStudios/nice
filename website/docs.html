@@ -196,7 +196,7 @@
     <p>Create a button with a single API call — no signup required:</p>
     <pre><code>curl -X POST https://api.nice.sbs/api/v1/buttons \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com/my-article"}'</code></pre>
+  -d '{"url": "https://example.com/my-article", "label": "Recommend", "pressed_label": "Recommended"}'</code></pre>
     
     <p>Response:</p>
     <pre><code>{
@@ -220,6 +220,11 @@
     <div class="note">
       <p>⚠️ <strong>Save your private_id!</strong> It's only shown once and is needed to manage your button.</p>
     </div>
+
+    <h2 id="labels">Button labels</h2>
+    <p>Owners can set <code>label</code> and <code>pressed_label</code> when creating a button or update either field later. They default to <code>Nice</code> and <code>Nice'd</code>. Values are trimmed, must contain at least one non-whitespace character, may contain at most 32 Unicode code points, and must not contain ASCII control characters (<code>U+0000</code>–<code>U+001F</code>, <code>U+007F</code>) or angle brackets (<code>&lt;</code>, <code>&gt;</code>). Invalid values return <code>INVALID_LABEL</code> or <code>INVALID_PRESSED_LABEL</code> with HTTP 400.</p>
+    <p><code>pressed_label</code> applies only to single-nice rendering. It is retained in clap mode and becomes active again when clap mode is disabled; clap mode keeps <code>label</code> active on every click. Missing or malformed labels in legacy KV records resolve to the defaults at read time.</p>
+    <p>Real embed URLs do not accept label overrides. Wording comes from stored button configuration, and both script embeds and generated iframe snippets use that configuration.</p>
     
     <h2 id="create">Create Button</h2>
     
@@ -404,7 +409,7 @@
     <h2 id="embed">Embed Options</h2>
     
     <h3>Script tag (Recommended)</h3>
-    <p>The script tag creates the iframe and can show effects on the host page, such as confetti:</p>
+    <p>The script tag creates the iframe and can show effects on the host page, such as confetti. It auto-resizes after the Bungee font settles:</p>
     <pre><code>&lt;script
   src="https://api.nice.sbs/embed.js"
   data-button="<span class="param">:public_id</span>"
@@ -419,12 +424,13 @@
       <tr><td><code>data-button</code></td><td>—</td><td>Public button ID (required)</td></tr>
       <tr><td><code>data-theme</code></td><td><code>light</code></td><td>Button theme</td></tr>
       <tr><td><code>data-size</code></td><td><code>md</code></td><td>Button size</td></tr>
+      <tr><td><code>data-multi</code></td><td><code>false</code></td><td>Set to <code>1</code> for clap-style multi-nice mode</td></tr>
       <tr><td><code>data-confetti</code></td><td><code>false</code></td><td>Set to <code>true</code> to show confetti on the host page after a nice</td></tr>
     </table>
     <p>Remove <code>data-confetti="true"</code> to keep the button without confetti. This setting belongs to the embed placement and is not stored on the button.</p>
 
     <h3>iframe</h3>
-    <p>Use the iframe when a platform allows HTML but blocks external scripts. A standalone iframe cannot draw outside its own rectangle, so it cannot provide host-page confetti.</p>
+    <p>Use the iframe when a platform allows HTML but blocks external scripts. A standalone iframe cannot draw outside its own rectangle, so it cannot provide host-page confetti. Generated snippets use a label-aware initial width; standalone iframes cannot auto-resize after a label change.</p>
     <pre><code>&lt;iframe 
   src="https://api.nice.sbs/e/<span class="param">:public_id</span>?theme=light&size=md"
   style="border:none;width:100px;height:36px;"

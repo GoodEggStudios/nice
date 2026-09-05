@@ -15,7 +15,14 @@ test.afterAll(async () => {
   await server.close();
 });
 
-async function openEmbed(page: Page, theme: EmbedTheme, size: EmbedSize, options: { count?: number; countStatus?: number; hasNiced?: boolean; multiNice?: boolean } = {}) {
+async function openEmbed(page: Page, theme: EmbedTheme, size: EmbedSize, options: {
+  count?: number;
+  countStatus?: number;
+  hasNiced?: boolean;
+  multiNice?: boolean;
+  label?: string;
+  pressedLabel?: string;
+} = {}) {
   await page.addInitScript(() => {
     try {
       localStorage.clear();
@@ -25,7 +32,7 @@ async function openEmbed(page: Page, theme: EmbedTheme, size: EmbedSize, options
   });
   await installNiceApiMocks(page, options);
   const multi = options.multiNice ? "&multi=1" : "";
-  await page.goto(`${server.origin}/e/${VISUAL_BUTTON_ID}?theme=${theme}&size=${size}${multi}`);
+  await page.goto(`https://api.nice.sbs/e/${VISUAL_BUTTON_ID}?theme=${theme}&size=${size}${multi}`);
   await page.evaluate((hasNiced) => {
     if (hasNiced) localStorage.setItem(`nice:${document.location.pathname.split("/").pop()}`, "1");
   }, options.hasNiced ?? false);
@@ -40,6 +47,22 @@ async function screenshotEmbedState(page: Page, name: string, size: EmbedSize = 
   const dims = EMBED_DIMENSIONS[size];
   await page.setViewportSize({ width: dims.w + 8, height: dims.h + 8 });
   await screenshotPaddedLocator(page.locator("#niceBtn"), name, padding);
+}
+
+async function expectButtonFitsEmbed(page: Page): Promise<void> {
+  const metrics = await page.locator("#niceBtn").evaluate((button) => {
+    const rect = button.getBoundingClientRect();
+    return {
+      left: rect.left,
+      right: rect.right,
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+    };
+  });
+
+  expect(metrics.left).toBeGreaterThanOrEqual(0);
+  expect(metrics.right).toBeLessThanOrEqual(metrics.clientWidth);
+  expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth);
 }
 
 test.describe("embed default theme and size matrix", () => {
@@ -100,3 +123,45 @@ test("embed unavailable state", async ({ page }) => {
   await expect(page.locator("#niceBtn")).toHaveClass(/disabled/);
   await screenshotEmbedState(page, "embed/states/dark-md-unavailable.png");
 });
+
+test("embed custom labels render idle and pressed wording", async ({ page }) => {
+  await openEmbed(page, "dark", "md", {
+    label: "Recommend",
+    pressedLabel: "Recommended",
+  });
+
+  await expect(page.locator("#niceText")).toHaveText("Recommend");
+  await screenshotEmbedState(page, "embed/labels/single-nice-idle.png");
+
+  await page.locator("#niceBtn").click();
+  await expect(page.locator("#niceText")).toHaveText("Recommended");
+  await screenshotEmbedState(page, "embed/labels/single-nice-pressed.png");
+});
+
+test("embed clap mode keeps the custom idle label after clicking", async ({ page }) => {
+  await openEmbed(page, "dark", "md", {
+    multiNice: true,
+    label: "Applaud",
+    pressedLabel: "Applauded",
+  });
+
+  await expect(page.locator("#niceText")).toHaveText("Applaud");
+  await page.locator("#niceBtn").click();
+  await expect(page.locator("#niceText")).toHaveText("Applaud");
+  await screenshotEmbedState(page, "embed/labels/clap-clicked.png");
+});
+
+for (const size of ["xs", "xl"] as const) {
+  test(`embed maximum-length label fits at ${size}`, async ({ page }) => {
+    const label = "😀".repeat(32);
+    await openEmbed(page, "dark", size, { label, pressedLabel: label });
+
+    const button = page.locator("#niceBtn");
+    const box = await button.boundingBox();
+    if (!box) throw new Error("Maximum-length button has no bounding box");
+    const dimensions = EMBED_DIMENSIONS[size];
+    await page.setViewportSize({ width: Math.ceil(box.width) + 8, height: dimensions.h + 8 });
+    await expectButtonFitsEmbed(page);
+    await screenshotEmbedState(page, `embed/labels/max-length-${size}.png`, size);
+  });
+}

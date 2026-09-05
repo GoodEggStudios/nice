@@ -8,12 +8,16 @@ export interface NiceApiMockOptions {
   countStatus?: number;
   hasNiced?: boolean;
   multiNice?: boolean;
+  label?: string;
+  pressedLabel?: string;
   createStatus?: number;
   createErrorCode?: string;
   createError?: string;
+  createFailure?: "network" | "server";
   buttonPatchStatus?: number;
   buttonPatchErrorCode?: string;
   buttonPatchError?: string;
+  buttonPatchFailure?: "network" | "server";
 }
 
 async function fulfillJson(route: Route, value: unknown, status = 200) {
@@ -27,7 +31,12 @@ async function fulfillJson(route: Route, value: unknown, status = 200) {
 export async function installNiceApiMocks(page: Page, options: NiceApiMockOptions = {}): Promise<void> {
   const count = options.count ?? 42;
   const multiNice = options.multiNice ?? false;
-  let stats = mockButtonStats({ count, multi_nice: multiNice });
+  let stats = mockButtonStats({
+    count,
+    multi_nice: multiNice,
+    ...(options.label === undefined ? {} : { label: options.label }),
+    ...(options.pressedLabel === undefined ? {} : { pressed_label: options.pressedLabel }),
+  });
 
   await page.route("https://api.nice.sbs/embed.js", async (route) => {
     await route.fulfill({
@@ -43,7 +52,12 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
     const theme = (url.searchParams.get("theme") ?? "light") as EmbedTheme;
     const size = (url.searchParams.get("size") ?? "md") as EmbedSize;
     const body = buttonId === "demo"
-      ? renderDemoEmbedHtml({ theme, size })
+      ? renderDemoEmbedHtml({
+          theme,
+          size,
+          label: stats.label,
+          pressedLabel: stats.pressed_label,
+        })
       : renderEmbedHtml({
           apiBase: "https://api.nice.sbs",
           buttonId,
@@ -91,7 +105,15 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
   });
 
   await page.route("https://api.nice.sbs/api/v1/buttons", async (route) => {
+    if (options.createFailure === "network") {
+      await route.abort("failed");
+      return;
+    }
     const status = options.createStatus ?? 201;
+    if (options.createFailure === "server") {
+      await fulfillJson(route, { error: "Server failure", code: "INTERNAL_ERROR" }, 500);
+      return;
+    }
     if (status !== 201) {
       await fulfillJson(route, {
         error: options.createError ?? "Failed to create button",
@@ -113,8 +135,21 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
   });
 
   await page.route(/https:\/\/api\.nice\.sbs\/api\/v1\/buttons\/ns_.*/, async (route) => {
-    if (route.request().method() !== "PATCH") {
+    const method = route.request().method();
+    if (method === "DELETE") {
       await fulfillJson(route, { success: true });
+      return;
+    }
+    if (method !== "PATCH") {
+      await route.continue();
+      return;
+    }
+    if (options.buttonPatchFailure === "network") {
+      await route.abort("failed");
+      return;
+    }
+    if (options.buttonPatchFailure === "server") {
+      await fulfillJson(route, { error: "Server failure", code: "INTERNAL_ERROR" }, 500);
       return;
     }
     const status = options.buttonPatchStatus ?? 200;
@@ -132,6 +167,8 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
       label: typeof body.label === "string" ? body.label : stats.label,
       pressed_label: typeof body.pressed_label === "string" ? body.pressed_label : stats.pressed_label,
       restriction: typeof body.restriction === "string" ? body.restriction as VisualButtonStats["restriction"] : stats.restriction,
+      theme: typeof body.theme === "string" ? body.theme as VisualButtonStats["theme"] : stats.theme,
+      size: typeof body.size === "string" ? body.size as VisualButtonStats["size"] : stats.size,
     });
     await fulfillJson(route, stats);
   });

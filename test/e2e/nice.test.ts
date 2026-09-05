@@ -138,6 +138,8 @@ describe("Nice API", () => {
       // has_niced depends on matching IP + fingerprint hash
       // In tests there's no CF-Connecting-IP so dedup uses "unknown" IP
       expect(typeof data.has_niced).toBe("boolean");
+      expect(data).not.toHaveProperty("label");
+      expect(data).not.toHaveProperty("pressed_label");
     });
 
     it("should return 0 for non-existent button (enumeration protection)", async () => {

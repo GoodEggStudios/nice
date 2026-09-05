@@ -1,3 +1,5 @@
+import { getEmbedInitialDimensions } from "../../../src/routes/embed-constants";
+
 export const VISUAL_BUTTON_ID = "n_visual0001";
 export const VISUAL_PRIVATE_ID = "ns_visual00000000000001";
 export const VISUAL_URL = "https://example.com/articles/visual-button";
@@ -19,8 +21,14 @@ export interface VisualButtonStats {
 
 function mockEmbed(stats: VisualButtonStats) {
   const multi = stats.multi_nice ? "&multi=1" : "";
+  const dimensions = getEmbedInitialDimensions(
+    stats.size,
+    stats.label,
+    stats.pressed_label,
+    stats.multi_nice,
+  );
   return {
-    iframe: `<iframe src="https://api.nice.sbs/e/${stats.id}?theme=${stats.theme}&size=${stats.size}${multi}" style="background:transparent;border:none;overflow:hidden;display:block;color-scheme:normal;width:100px;height:36px;" scrolling="no" frameborder="0" allowtransparency="true" title="Nice button"></iframe>`,
+    iframe: `<iframe src="https://api.nice.sbs/e/${stats.id}?theme=${stats.theme}&size=${stats.size}${multi}" style="background:transparent;border:none;overflow:hidden;display:block;color-scheme:normal;width:${dimensions.w}px;height:${dimensions.h}px;" scrolling="no" frameborder="0" allowtransparency="true" title="Nice button"></iframe>`,
     script: `<script src="https://api.nice.sbs/embed.js" data-button="${stats.id}" data-theme="${stats.theme}" data-size="${stats.size}"${stats.multi_nice ? ' data-multi="1"' : ""} async></script>`,
   };
 }
