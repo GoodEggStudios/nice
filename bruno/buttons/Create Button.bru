@@ -16,7 +16,9 @@ body:json {
     "theme": "light",
     "size": "md",
     "restriction": "url",
-    "multi_nice": false
+    "multi_nice": false,
+    "label": "Nice",
+    "pressed_label": "Nice'd"
   }
 }
 
@@ -41,6 +43,8 @@ docs {
   | size | string | No | xs, sm, md, lg, xl |
   | restriction | string | No | url (default), domain, global |
   | multi_nice | boolean | No | Enable clap-style multi-nice (default: false) |
+  | label | string | No | Visible idle label; defaults to Nice; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters are rejected |
+  | pressed_label | string | No | Visible pressed label; defaults to Nice'd; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters are rejected |
   
   ## Response
   

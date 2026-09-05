@@ -12,7 +12,9 @@ patch {
 
 body:json {
   {
-    "restriction": "global"
+    "restriction": "global",
+    "label": "Nice",
+    "pressed_label": "Nice'd"
   }
 }
 
@@ -37,6 +39,8 @@ docs {
   | theme | string | `light`, `dark`, `minimal`, `mono-dark`, `mono-light` |
   | size | string | `xs`, `sm`, `md`, `lg`, `xl` |
   | multi_nice | boolean | Enable/disable clap-style multi-nice |
+  | label | string | Visible idle label; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters are rejected |
+  | pressed_label | string | Visible pressed label; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters are rejected |
   
   ## Response
   
