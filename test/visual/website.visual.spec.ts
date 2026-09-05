@@ -125,3 +125,89 @@ test("script tag insertion host page", async ({ page }) => {
   await expect(iframe).toHaveCSS("color-scheme", "normal");
   await screenshotWebsitePaddedLocator(page.locator(".host"), "website/script-tag-host.png");
 });
+
+test("create labels drive the preview and clap mode", async ({ page }) => {
+  await openPage(page, "/create", viewports[0]);
+
+  await expect(page.locator("#labelInput")).toHaveValue("Nice");
+  await expect(page.locator("#pressedLabelInput")).toHaveValue("Nice'd");
+  await expect(page.locator("#previewText")).toHaveText("Nice");
+
+  await page.locator("#labelInput").fill("Recommend");
+  await page.locator("#pressedLabelInput").fill("Recommended");
+  await expect(page.locator("#previewText")).toHaveText("Recommend");
+  await page.locator("#previewButton").click();
+  await expect(page.locator("#previewText")).toHaveText("Recommended");
+  await expect(page.locator("#previewButton")).toHaveAttribute("aria-label", "Recommended");
+
+  await page.locator("#multiNice").check();
+  await expect(page.locator("#pressedLabelField")).toBeHidden();
+  await expect(page.locator("#pressedLabelInput")).toBeDisabled();
+  await page.locator("#previewButton").click();
+  await page.locator("#previewButton").click();
+  await expect(page.locator("#previewText")).toHaveText("Recommend");
+  await expect(page.locator("#pressedLabelInput")).toHaveValue("Recommended");
+});
+
+test("create sends normalized labels and keeps field errors local", async ({ page }) => {
+  await openPage(page, "/create", viewports[0]);
+  await page.locator("#urlInput").fill("example.com/labels");
+  await page.locator("#labelInput").fill("  Cheer  ");
+  await page.locator("#pressedLabelInput").fill("  Cheered  ");
+
+  const requestPromise = page.waitForRequest("https://api.nice.sbs/api/v1/buttons");
+  await page.locator("#submitBtn").click();
+  const request = await requestPromise;
+  expect(request.postDataJSON()).toMatchObject({ label: "Cheer", pressed_label: "Cheered" });
+
+  await expect(page.locator("#result")).toHaveClass(/show/);
+  await expect(page.locator("#snippet")).toContainText("<iframe");
+
+  await installNiceApiMocks(page, {
+    createStatus: 400,
+    createErrorCode: "INVALID_PRESSED_LABEL",
+    createError: "Invalid pressed label",
+  });
+  await page.reload();
+  await page.locator("#urlInput").fill("example.com/labels");
+  await page.locator("#pressedLabelInput").fill("Broken");
+  await page.locator("#submitBtn").click();
+  await expect(page.locator("#pressedLabelError")).toContainText("Invalid pressed label");
+  await expect(page.locator("#errorBox")).not.toHaveClass(/show/);
+});
+
+test("stats saves labels, refreshes the server embed, and rolls back failures", async ({ page }) => {
+  await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0]);
+  await expect(page.locator("#labelInput")).toHaveValue("Nice");
+  await expect(page.locator("#pressedLabelInput")).toHaveValue("Nice'd");
+
+  await page.locator("#labelInput").fill("Recommend");
+  await page.locator("#pressedLabelInput").fill("Recommended");
+  await page.locator("#saveLabelsBtn").click();
+  await expect(page.locator("#labelSaveStatus")).toHaveText("Saved");
+  await expect(page.locator("#snippet")).toContainText("<iframe");
+  await expect(page.frameLocator("#preview iframe").locator("#niceText")).toHaveText("Recommend");
+
+  await installNiceApiMocks(page, {
+    buttonPatchStatus: 400,
+    buttonPatchErrorCode: "INVALID_LABEL",
+    buttonPatchError: "Invalid button label",
+  });
+  await page.locator("#labelInput").fill("Unsaved");
+  await page.locator("#pressedLabelInput").fill("Unsaved pressed");
+  await page.locator("#saveLabelsBtn").click();
+  await expect(page.locator("#labelSaveStatus")).toContainText("Invalid button label");
+  await expect(page.locator("#labelInput")).toHaveValue("Unsaved");
+  await expect(page.locator("#pressedLabelInput")).toHaveValue("Unsaved pressed");
+  await expect(page.locator("#labelInput")).toBeFocused();
+});
+
+test("stats clap toggle hides and restores the pressed label", async ({ page }) => {
+  await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0]);
+  await page.locator("#pressedLabelInput").fill("Still here");
+  await page.locator("#multiNiceToggle").check();
+  await expect(page.locator("#pressedLabelField")).toBeHidden();
+  await page.locator("#multiNiceToggle").uncheck();
+  await expect(page.locator("#pressedLabelField")).toBeVisible();
+  await expect(page.locator("#pressedLabelInput")).toHaveValue("Still here");
+});

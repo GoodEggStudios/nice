@@ -1,13 +1,19 @@
 import type { Page, Route } from "@playwright/test";
 import { generateBadge, normalizeTheme } from "../../../src/lib/badge";
 import { renderEmbedHtml, renderDemoEmbedHtml, renderEmbedScript, type EmbedSize, type EmbedTheme } from "../../../src/routes/embed";
-import { mockButtonStats, mockCreateButtonResponse, VISUAL_BUTTON_ID } from "./data";
+import { mockButtonStats, mockCreateButtonResponse, VISUAL_BUTTON_ID, type VisualButtonStats } from "./data";
 
 export interface NiceApiMockOptions {
   count?: number;
   countStatus?: number;
   hasNiced?: boolean;
   multiNice?: boolean;
+  createStatus?: number;
+  createErrorCode?: string;
+  createError?: string;
+  buttonPatchStatus?: number;
+  buttonPatchErrorCode?: string;
+  buttonPatchError?: string;
 }
 
 async function fulfillJson(route: Route, value: unknown, status = 200) {
@@ -21,6 +27,7 @@ async function fulfillJson(route: Route, value: unknown, status = 200) {
 export async function installNiceApiMocks(page: Page, options: NiceApiMockOptions = {}): Promise<void> {
   const count = options.count ?? 42;
   const multiNice = options.multiNice ?? false;
+  let stats = mockButtonStats({ count, multi_nice: multiNice });
 
   await page.route("https://api.nice.sbs/embed.js", async (route) => {
     await route.fulfill({
@@ -43,6 +50,8 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
           theme,
           size,
           multiNice: url.searchParams.get("multi") === "1" || multiNice,
+          label: stats.label,
+          pressedLabel: stats.pressed_label,
         });
     await route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body });
   });
@@ -82,14 +91,48 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
   });
 
   await page.route("https://api.nice.sbs/api/v1/buttons", async (route) => {
-    await fulfillJson(route, mockCreateButtonResponse({ count, multi_nice: multiNice }));
+    const status = options.createStatus ?? 201;
+    if (status !== 201) {
+      await fulfillJson(route, {
+        error: options.createError ?? "Failed to create button",
+        code: options.createErrorCode ?? "INVALID_LABEL",
+      }, status);
+      return;
+    }
+    const body = route.request().postDataJSON() as Record<string, unknown>;
+    await fulfillJson(route, mockCreateButtonResponse({
+      count,
+      multi_nice: typeof body.multi_nice === "boolean" ? body.multi_nice : multiNice,
+      label: typeof body.label === "string" ? body.label : "Nice",
+      pressed_label: typeof body.pressed_label === "string" ? body.pressed_label : "Nice'd",
+    }), 201);
   });
 
   await page.route(/https:\/\/api\.nice\.sbs\/api\/v1\/buttons\/stats\/ns_.*/, async (route) => {
-    await fulfillJson(route, mockButtonStats({ count, multi_nice: multiNice }));
+    await fulfillJson(route, stats);
   });
 
   await page.route(/https:\/\/api\.nice\.sbs\/api\/v1\/buttons\/ns_.*/, async (route) => {
-    await fulfillJson(route, { success: true });
+    if (route.request().method() !== "PATCH") {
+      await fulfillJson(route, { success: true });
+      return;
+    }
+    const status = options.buttonPatchStatus ?? 200;
+    if (status !== 200) {
+      await fulfillJson(route, {
+        error: options.buttonPatchError ?? "Failed to update button",
+        code: options.buttonPatchErrorCode ?? "INVALID_LABEL",
+      }, status);
+      return;
+    }
+    const body = route.request().postDataJSON() as Record<string, unknown>;
+    stats = mockButtonStats({
+      ...stats,
+      multi_nice: typeof body.multi_nice === "boolean" ? body.multi_nice : stats.multi_nice,
+      label: typeof body.label === "string" ? body.label : stats.label,
+      pressed_label: typeof body.pressed_label === "string" ? body.pressed_label : stats.pressed_label,
+      restriction: typeof body.restriction === "string" ? body.restriction as VisualButtonStats["restriction"] : stats.restriction,
+    });
+    await fulfillJson(route, stats);
   });
 }

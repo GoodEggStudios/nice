@@ -9,7 +9,7 @@ function isValidButtonLabel(value: string): boolean {
   return (
     trimmed.length > 0 &&
     Array.from(trimmed).length <= MAX_BUTTON_LABEL_CODE_POINTS &&
-    !/[\u0000-\u001F\u007F]/.test(value)
+    !/[\u0000-\u001F\u007F<>]/.test(value)
   );
 }
 

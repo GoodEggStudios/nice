@@ -186,10 +186,13 @@ describe("Embed", () => {
       const res = await SELF.fetch(`https://api.nice.sbs/embed/${buttonId}`);
       const body = await res.text();
 
-      expect(body).toContain('<span class="nice-text" id="niceText">&lt;img src=x onerror=alert(1)&gt;</span>');
+      // Angle brackets are rejected by the label contract, so stored HTML
+      // payloads fall back to defaults rather than being rendered escaped.
+      expect(body).toContain('<span class="nice-text" id="niceText">Nice</span>');
+      expect(body).toContain('const LABEL="Nice";');
       expect(body).toContain('const PRESSED_LABEL="Nice\'d";');
-      expect(body).toContain('const LABEL="\\u003cimg src=x onerror=alert(1)\\u003e";');
       expect(body).not.toContain("<img src=x onerror=alert(1)>");
+      expect(body).not.toContain("onerror");
     });
   });
 
