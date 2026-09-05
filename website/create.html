@@ -156,6 +156,48 @@
     input[type="url"]::placeholder {
       color: #555;
     }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border: 2px solid #333;
+      border-radius: 8px;
+      background: #1a1a1a;
+      color: #fff;
+      font-family: 'Fira Code', monospace;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #fbbf24;
+    }
+
+    input[type="text"]:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    input[type="text"].error {
+      border-color: #ef4444;
+    }
+
+    .input-hint {
+      color: #888;
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .field-error {
+      color: #ef4444;
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    .field-error.show {
+      display: block;
+    }
     
     .options-grid {
       display: grid;
@@ -529,7 +571,7 @@
     <h1>CREATE BUTTON</h1>
     <p class="subtitle">Add a Nice button to any page</p>
     
-    <form id="createForm">
+    <form id="createForm" novalidate>
       <div class="form-group">
         <label for="urlInput">Content URL <span class="label-hint">(the page where this button will be embedded)</span></label>
         <div class="url-input-group">
@@ -559,6 +601,20 @@
       </div>
 
       <div class="form-group">
+        <label for="labelInput">Button text</label>
+        <input type="text" id="labelInput" name="label" value="Nice" maxlength="32" required aria-describedby="labelHint labelError">
+        <div class="input-hint" id="labelHint">Text shown before someone clicks the button.</div>
+        <div class="field-error" id="labelError" role="alert"></div>
+      </div>
+
+      <div class="form-group" id="pressedLabelField">
+        <label for="pressedLabelInput">After-click text</label>
+        <input type="text" id="pressedLabelInput" name="pressed_label" value="Nice'd" maxlength="32" required aria-describedby="pressedLabelHint pressedLabelError">
+        <div class="input-hint" id="pressedLabelHint">Text shown after the first click. It applies only to single-nice buttons.</div>
+        <div class="field-error" id="pressedLabelError" role="alert"></div>
+      </div>
+
+      <div class="form-group">
         <label for="multiNice" style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 0;">
           <input type="checkbox" id="multiNice" style="width:18px;height:18px;accent-color:#fbbf24;cursor:pointer;">
           <span>Allow multiple nices per person (clap-style)</span>
@@ -583,7 +639,7 @@
             </button>
           </div>
         </div>
-        <div class="preview-note" id="previewNote">Preview updates live as you change theme, size, multi nice, and confetti.</div>
+        <div class="preview-note" id="previewNote">Preview updates live as you change theme, size, labels, multi nice, and confetti.</div>
       </div>
       
       <div class="form-group">
@@ -712,6 +768,14 @@
     const multiNiceInput = document.getElementById('multiNice');
     const confettiInput = document.getElementById('confetti');
     const snippetNote = document.getElementById('snippetNote');
+    const labelInput = document.getElementById('labelInput');
+    const pressedLabelInput = document.getElementById('pressedLabelInput');
+    const pressedLabelField = document.getElementById('pressedLabelField');
+    const labelError = document.getElementById('labelError');
+    const pressedLabelError = document.getElementById('pressedLabelError');
+    const DEFAULT_LABEL = 'Nice';
+    const DEFAULT_PRESSED_LABEL = "Nice'd";
+    const MAX_LABEL_CODE_POINTS = 32;
     
     // Protocol state
     let protocol = 'https://';
@@ -779,14 +843,6 @@
     urlInput.addEventListener('input', validateUrl);
     urlInput.addEventListener('blur', validateUrl);
     
-    // Size dimensions for preview
-    const SIZES = {
-      xs: { w: 70, h: 28 },
-      sm: { w: 85, h: 32 },
-      md: { w: 100, h: 36 },
-      lg: { w: 120, h: 44 },
-      xl: { w: 140, h: 52 }
-    };
     const previewState = {
       count: 42,
       hasNiced: false,
@@ -822,38 +878,94 @@
       input.addEventListener('change', updatePreview);
     });
 
-    function buildIframeSnippet(publicId, theme, size, multiNice) {
-      const dims = SIZES[size];
-      const multiParam = multiNice ? '&multi=1' : '';
-      return '<iframe src="https://api.nice.sbs/e/' + publicId + '?theme=' + theme + '&size=' + size + multiParam + '" ' +
-        'style="background:transparent;border:none;overflow:hidden;display:block;color-scheme:normal;width:' + dims.w + 'px;height:' + dims.h + 'px;" ' +
-        'scrolling="no" frameborder="0" allowtransparency="true" title="Nice button"></iframe>';
+    function showLabelError(input, errorElement, message) {
+      input.classList.add('error');
+      errorElement.textContent = message;
+      errorElement.classList.add('show');
     }
 
-    function buildScriptSnippet(publicId, theme, size, multiNice, confetti) {
-      const attrs = [
-        'src="https://api.nice.sbs/embed.js"',
-        'data-button="' + publicId + '"',
-        'data-theme="' + theme + '"',
-        'data-size="' + size + '"'
-      ];
-      if (multiNice) attrs.push('data-multi="1"');
-      if (confetti) attrs.push('data-confetti="1"');
-      attrs.push('async');
-      return '<script ' + attrs.join(' ') + '><\\/script>';
+    function hideLabelError(input, errorElement) {
+      input.classList.remove('error');
+      errorElement.textContent = '';
+      errorElement.classList.remove('show');
     }
 
-    function setSnippetDetails(theme, size, publicId) {
-      const multiNice = multiNiceInput.checked;
-      const confetti = confettiInput.checked;
-      const snippet = confetti
-        ? buildScriptSnippet(publicId, theme, size, multiNice, confetti)
-        : buildIframeSnippet(publicId, theme, size, multiNice);
-      document.getElementById('snippet').textContent = snippet;
-      snippetNote.textContent = confetti
-        ? 'Confetti requires the script embed. Direct iframe embeds do not trigger confetti.'
-        : 'Direct iframe embed shown. Turn on confetti to generate the script embed instead.';
-      snippetNote.classList.toggle('show', confetti);
+    function validateLabelInput(input, errorElement, labelName) {
+      const value = input.value;
+      const trimmed = value.trim();
+      if (!trimmed) {
+        showLabelError(input, errorElement, labelName + ' is required');
+        return false;
+      }
+      if (/[\u0000-\u001F\u007F]/.test(value)) {
+        showLabelError(input, errorElement, labelName + ' cannot contain control characters');
+        return false;
+      }
+      if (Array.from(trimmed).length > MAX_LABEL_CODE_POINTS) {
+        showLabelError(input, errorElement, labelName + ' must be 32 characters or fewer');
+        return false;
+      }
+      hideLabelError(input, errorElement);
+      return true;
+    }
+
+    function validateLabels() {
+      const validLabel = validateLabelInput(labelInput, labelError, 'Button text');
+      const validPressedLabel = validateLabelInput(pressedLabelInput, pressedLabelError, 'After-click text');
+      if (!validLabel) {
+        labelInput.focus();
+        return false;
+      }
+      if (!validPressedLabel) {
+        pressedLabelInput.focus();
+        return false;
+      }
+      return true;
+    }
+
+    function updateLabelEditor() {
+      const isMultiNice = multiNiceInput.checked;
+      pressedLabelField.hidden = isMultiNice;
+      pressedLabelInput.disabled = isMultiNice;
+      document.getElementById('pressedLabelHint').textContent = isMultiNice
+        ? 'Clap-style buttons keep the same text on every click.'
+        : 'Text shown after the first click. It applies only to single-nice buttons.';
+    }
+
+    function getPreviewLabel() {
+      return labelInput.value.trim() || DEFAULT_LABEL;
+    }
+
+    function getPreviewPressedLabel() {
+      return pressedLabelInput.value.trim() || DEFAULT_PRESSED_LABEL;
+    }
+
+    function renderPreviewText() {
+      const text = previewState.hasNiced && !multiNiceInput.checked
+        ? getPreviewPressedLabel()
+        : getPreviewLabel();
+      previewText.textContent = text;
+      previewButton.setAttribute('aria-label', text);
+    }
+
+    [labelInput, pressedLabelInput].forEach((input) => {
+      input.addEventListener('input', () => {
+        renderPreviewText();
+        if (input === labelInput) {
+          hideLabelError(labelInput, labelError);
+        } else {
+          hideLabelError(pressedLabelInput, pressedLabelError);
+        }
+      });
+    });
+
+    function addConfettiToScript(script) {
+      const template = document.createElement('template');
+      template.innerHTML = script;
+      const scriptElement = template.content.querySelector('script');
+      if (!scriptElement) return script;
+      scriptElement.setAttribute('data-confetti', '1');
+      return scriptElement.outerHTML;
     }
 
     function updatePreviewButtonClasses(theme, size) {
@@ -867,8 +979,9 @@
       previewState.count = 42;
       previewState.hasNiced = false;
       previewState.confettiLock = false;
-      previewText.textContent = 'Nice';
+      renderPreviewText();
       previewCount.textContent = '42';
+      previewButton.setAttribute('aria-pressed', 'false');
       previewButton.classList.remove('niced');
       const ctx = previewCanvas.getContext('2d');
       if (ctx) {
@@ -957,9 +1070,14 @@
       updatePreviewButtonClasses(theme, size);
       resetPreviewState();
       previewNote.textContent = confetti
-        ? 'Confetti is available for script embeds. Direct iframe embeds stay confetti-free.'
-        : 'Preview updates live as you change theme, size, multi nice, and confetti.';
+        ? multiNiceInput.checked
+          ? 'Clap-style buttons keep the same text on every click. Confetti is available for script embeds.'
+          : 'Confetti is available for script embeds. Direct iframe embeds stay confetti-free.'
+        : multiNiceInput.checked
+          ? 'Clap-style buttons keep the same text on every click.'
+          : 'Preview updates live as you change theme, size, labels, multi nice, and confetti.';
       previewNote.classList.toggle('show', confetti);
+      updateLabelEditor();
     }
 
     previewButton.addEventListener('click', () => {
@@ -970,7 +1088,8 @@
         previewState.count += 1;
         previewState.hasNiced = true;
         previewButton.classList.add('niced');
-        previewText.textContent = 'Nice';
+        renderPreviewText();
+        previewButton.setAttribute('aria-pressed', 'true');
         previewCount.textContent = String(previewState.count);
         if (confetti) {
           launchPreviewConfetti();
@@ -985,7 +1104,8 @@
       previewState.count += 1;
       previewState.hasNiced = true;
       previewButton.classList.add('niced');
-      previewText.textContent = "Nice'd";
+      renderPreviewText();
+      previewButton.setAttribute('aria-pressed', 'true');
       previewCount.textContent = String(previewState.count);
       if (confetti && !previewState.confettiLock) {
         launchPreviewConfetti();
@@ -1002,6 +1122,10 @@
         urlInput.focus();
         return;
       }
+
+      if (!validateLabels()) {
+        return;
+      }
       
       submitBtn.disabled = true;
       submitBtn.textContent = 'Creating...';
@@ -1013,24 +1137,39 @@
       const size = document.querySelector('input[name="size"]:checked').value;
       const restriction = document.querySelector('input[name="restriction"]:checked').value;
       const multiNice = multiNiceInput.checked;
+      const label = labelInput.value.trim();
+      const pressedLabel = pressedLabelInput.value.trim();
       
       try {
         const response = await fetch('https://api.nice.sbs/api/v1/buttons', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url, theme, size, restriction, multi_nice: multiNice })
+          body: JSON.stringify({ url, theme, size, restriction, multi_nice: multiNice, label, pressed_label: pressedLabel })
         });
         
         const data = await response.json();
         
         if (!response.ok) {
-          throw new Error(data.error || 'Failed to create button');
+          const error = new Error(data.error || 'Failed to create button');
+          error.code = data.code;
+          throw error;
         }
+
+        labelInput.value = data.label || DEFAULT_LABEL;
+        pressedLabelInput.value = data.pressed_label || DEFAULT_PRESSED_LABEL;
+        resetPreviewState();
         
         // Show result
         document.getElementById('publicId').textContent = data.public_id;
         document.getElementById('privateId').textContent = data.private_id;
-        setSnippetDetails(theme, size, data.public_id);
+        const snippet = confettiInput.checked
+          ? addConfettiToScript(data.embed.script)
+          : data.embed.iframe;
+        document.getElementById('snippet').textContent = snippet;
+        snippetNote.textContent = confettiInput.checked
+          ? 'Confetti requires the script embed. Direct iframe embeds do not trigger confetti.'
+          : 'Direct iframe embed shown. Turn on confetti to generate the script embed instead.';
+        snippetNote.classList.toggle('show', confettiInput.checked);
         
         // Badge snippet
         const badgeUrl = 'https://api.nice.sbs/badge/' + data.public_id + '.svg';
@@ -1040,8 +1179,7 @@
         document.getElementById('badgePreview').innerHTML = '<a href="' + buttonPageUrl + '" target="_blank"><img src="' + badgeUrl + '" alt="Nice badge"></a>';
         
         // Show preview of actual button
-        document.getElementById('resultPreview').innerHTML = 
-          buildIframeSnippet(data.public_id, theme, size, multiNice);
+        document.getElementById('resultPreview').innerHTML = data.embed.iframe;
         
         // Set manage link with pretty URL
         document.getElementById('manageLink').href = '/stats?id=' + data.private_id;
@@ -1053,8 +1191,13 @@
         form.style.display = 'none';
         
       } catch (err) {
-        // Show URL errors in the URL field
-        if (err.message.toLowerCase().includes('url')) {
+        if (err.code === 'INVALID_LABEL') {
+          showLabelError(labelInput, labelError, err.message);
+          labelInput.focus();
+        } else if (err.code === 'INVALID_PRESSED_LABEL') {
+          showLabelError(pressedLabelInput, pressedLabelError, err.message);
+          pressedLabelInput.focus();
+        } else if (err.message.toLowerCase().includes('url')) {
           showUrlError(err.message);
         } else {
           errorBox.textContent = err.message;
