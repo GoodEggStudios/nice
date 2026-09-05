@@ -71,8 +71,8 @@ Content-Type: application/json
 | `size` | string | No | `xs`, `sm`, `md` (default), `lg`, `xl` |
 | `restriction` | string | No | `url` (default), `domain`, `global` |
 | `multi_nice` | boolean | No | Enable clap-style multi-nice (default: `false`) |
-| `label` | string | No | Visible idle label, and label for every state of a multi-nice button. Defaults to `Nice`. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) are rejected. |
-| `pressed_label` | string | No | Visible label after interaction with a single-nice button. Defaults to `Nice'd`. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) are rejected. |
+| `label` | string | No | Visible idle label, and label for every state of a multi-nice button. Defaults to `Nice`. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) and angle brackets (`<`, `>`) are rejected. |
+| `pressed_label` | string | No | Visible label after interaction with a single-nice button. Defaults to `Nice'd`. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) and angle brackets (`<`, `>`) are rejected. |
 
 **Response (201 Created):**
 ```json

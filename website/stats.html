@@ -550,7 +550,6 @@
     const DEFAULT_PRESSED_LABEL = "Nice'd";
     const MAX_LABEL_CODE_POINTS = 32;
     let currentSettings = null;
-    let confirmedLabels = { label: DEFAULT_LABEL, pressed_label: DEFAULT_PRESSED_LABEL };
     let labelSavePending = false;
     
     // Get private ID from URL path or query
@@ -690,16 +689,13 @@
       document.getElementById('preview').innerHTML = embed.iframe;
     }
 
-    function updateLabelValues(data, updateConfirmed = true) {
+    function updateLabelValues(data) {
       const labelInput = document.getElementById('labelInput');
       const pressedLabelInput = document.getElementById('pressedLabelInput');
       const label = data.label || DEFAULT_LABEL;
       const pressedLabel = data.pressed_label || DEFAULT_PRESSED_LABEL;
       labelInput.value = label;
       pressedLabelInput.value = pressedLabel;
-      if (updateConfirmed) {
-        confirmedLabels = { label, pressed_label: pressedLabel };
-      }
     }
 
     function createApiError(data, fallback) {
