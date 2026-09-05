@@ -13,6 +13,11 @@ import {
   type EmbedSize,
   type EmbedTheme,
 } from "./embed-constants";
+import {
+  DEFAULT_BUTTON_LABEL,
+  DEFAULT_PRESSED_BUTTON_LABEL,
+  normalizeStoredButtonLabel,
+} from "../lib/button-labels";
 
 export {
   EMBED_DIMENSIONS,
@@ -28,6 +33,8 @@ export interface RenderEmbedHtmlOptions {
   theme: EmbedTheme;
   size: EmbedSize;
   multiNice?: boolean;
+  label?: string;
+  pressedLabel?: string;
 }
 
 export interface RenderDemoEmbedHtmlOptions {
@@ -44,7 +51,20 @@ function escapeSingleQuotedJsString(value: string): string {
     .replace(/\r/g, "\\r")
     .replace(/\n/g, "\\n")
     .replace(/\u2028/g, "\\u2028")
-    .replace(/\u2029/g, "\\u2029");
+    .replace(/\u2029/g, "\\u2029")
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
+}
+
+function escapeHtmlText(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[character] ?? character);
 }
 
 export function renderEmbedScript(embedBase = DEFAULT_EMBED_BASE): string {
@@ -133,8 +153,8 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 </style>
 </head>
 <body class="theme-{{THEME}} size-{{SIZE}}">
-<button class="nice-button" id="niceBtn" aria-label="Nice this" aria-pressed="false">
-<span class="nice-text" id="niceText">Nice</span>
+<button class="nice-button" id="niceBtn" aria-label="{{LABEL_HTML}}" aria-pressed="false">
+<span class="nice-text" id="niceText">{{LABEL_HTML}}</span>
 <span class="nice-count" id="niceCount" aria-live="polite"></span>
 </button>
 <script>
@@ -142,6 +162,8 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 const API_BASE='{{API_BASE}}';
 const BUTTON_ID='{{BUTTON_ID}}';
 const IS_MULTI='{{MULTI_NICE}}'==='1';
+const LABEL='{{LABEL}}';
+const PRESSED_LABEL='{{PRESSED_LABEL}}';
 const STORAGE_KEY='nice:'+BUTTON_ID;
 const btn=document.getElementById('niceBtn');
 const textEl=document.getElementById('niceText');
@@ -162,12 +184,13 @@ if(count>0){countEl.textContent=formatCount(count);countEl.style.display='';}els
 if(hasNiced){
 btn.classList.add('niced');
 btn.setAttribute('aria-pressed','true');
-textEl.textContent=IS_MULTI?"Nice":"Nice'd";
+textEl.textContent=IS_MULTI?LABEL:PRESSED_LABEL;
 }else{
 btn.classList.remove('niced');
 btn.setAttribute('aria-pressed','false');
-textEl.textContent='Nice';
+textEl.textContent=LABEL;
 }
+btn.setAttribute('aria-label', IS_MULTI || !hasNiced ? LABEL : PRESSED_LABEL);
 notifyResize();
 }
 function notifyResize(){
@@ -262,12 +285,19 @@ export function renderDemoEmbedHtml(options: RenderDemoEmbedHtmlOptions): string
 
 export function renderEmbedHtml(options: RenderEmbedHtmlOptions): string {
   const safeButtonId = options.buttonId.replace(/[<>"'&]/g, "");
+  const rawLabel = normalizeStoredButtonLabel(options.label, DEFAULT_BUTTON_LABEL);
+  const rawPressedLabel = normalizeStoredButtonLabel(options.pressedLabel, DEFAULT_PRESSED_BUTTON_LABEL);
+  const label = escapeSingleQuotedJsString(rawLabel);
+  const pressedLabel = escapeSingleQuotedJsString(rawPressedLabel);
   return EMBED_HTML
     .replace(/\{\{API_BASE\}\}/g, options.apiBase)
     .replace(/\{\{BUTTON_ID\}\}/g, safeButtonId)
     .replace(/\{\{THEME\}\}/g, options.theme)
     .replace(/\{\{SIZE\}\}/g, options.size)
-    .replace(/\{\{MULTI_NICE\}\}/g, options.multiNice ? "1" : "0");
+    .replace(/\{\{MULTI_NICE\}\}/g, options.multiNice ? "1" : "0")
+    .replace(/\{\{LABEL_HTML\}\}/g, () => escapeHtmlText(rawLabel))
+    .replace(/\{\{LABEL\}\}/g, () => label)
+    .replace(/\{\{PRESSED_LABEL\}\}/g, () => pressedLabel);
 }
 
 /**
@@ -396,7 +426,9 @@ export async function serveEmbedPage(
 
   // Check for multi-nice mode: query param takes priority, then look up button config from KV
   let isMulti = url.searchParams.get("multi") === "1" ? "1" : "0";
-  if (isMulti === "0" && env?.NICE_KV) {
+  let label = DEFAULT_BUTTON_LABEL;
+  let pressedLabel = DEFAULT_PRESSED_BUTTON_LABEL;
+  if (env?.NICE_KV) {
     try {
       const buttonData = await env.NICE_KV.get(`btn:${buttonId}`);
       if (buttonData) {
@@ -404,6 +436,11 @@ export async function serveEmbedPage(
         if (button.multiNice) {
           isMulti = "1";
         }
+        label = normalizeStoredButtonLabel(button.label, DEFAULT_BUTTON_LABEL);
+        pressedLabel = normalizeStoredButtonLabel(
+          button.pressedLabel,
+          DEFAULT_PRESSED_BUTTON_LABEL
+        );
       }
     } catch (e) {
       // Fail open — default to single-nice
@@ -418,6 +455,8 @@ export async function serveEmbedPage(
     theme,
     size,
     multiNice: isMulti === "1",
+    label,
+    pressedLabel,
   });
 
   return new Response(html, {

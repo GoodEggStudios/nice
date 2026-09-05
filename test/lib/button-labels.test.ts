@@ -35,6 +35,8 @@ describe("button labels", () => {
       "tab\tcharacter",
       "null\u0000character",
       "delete\u007fcharacter",
+      "less<than",
+      "greater>than",
     ];
 
     for (const value of malformedValues) {

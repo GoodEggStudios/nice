@@ -71,8 +71,8 @@ Content-Type: application/json
 | `size` | string | No | `xs`, `sm`, `md` (default), `lg`, `xl` |
 | `restriction` | string | No | `url` (default), `domain`, `global` |
 | `multi_nice` | boolean | No | Enable clap-style multi-nice (default: `false`) |
-| `label` | string | No | Visible idle label, and label for every state of a multi-nice button. Defaults to `Nice`. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) are rejected. |
-| `pressed_label` | string | No | Visible label after interaction with a single-nice button. Defaults to `Nice'd`. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) are rejected. |
+| `label` | string | No | Visible idle label, and label for every state of a multi-nice button. Defaults to `Nice`. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) and angle brackets (`<`, `>`) are rejected. |
+| `pressed_label` | string | No | Visible label after interaction with a single-nice button. Defaults to `Nice'd`. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) and angle brackets (`<`, `>`) are rejected. |
 
 **Response (201 Created):**
 ```json
@@ -131,7 +131,9 @@ PATCH /api/v1/buttons/:private_id
 Content-Type: application/json
 
 {
-  "restriction": "global"
+  "restriction": "global",
+  "label": "Recommend",
+  "pressed_label": "Recommended"
 }
 ```
 
@@ -145,8 +147,8 @@ Update button settings. Requires the private ID.
 | `theme` | string | No | `light`, `dark`, `minimal`, `mono-dark`, `mono-light` |
 | `size` | string | No | `xs`, `sm`, `md`, `lg`, `xl` |
 | `multi_nice` | boolean | No | Enable/disable clap-style multi-nice. **Note:** toggling this changes the deduplication model — single-nice enforces one per visitor per day, multi-nice allows unlimited. |
-| `label` | string | No | Update the visible idle label. Defaults are returned for legacy records when this field is absent. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) are rejected. |
-| `pressed_label` | string | No | Update the visible single-nice pressed-state label. It is retained when `multi_nice` changes. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) are rejected. |
+| `label` | string | No | Update the visible idle label. Defaults are returned for legacy records when this field is absent. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) and angle brackets (`<`, `>`) are rejected. |
+| `pressed_label` | string | No | Update the visible single-nice pressed-state label. It is retained when `multi_nice` changes. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) and angle brackets (`<`, `>`) are rejected. |
 
 **Response (200 OK):**
 ```json
@@ -308,7 +310,9 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
   "button_id": "n_x7Kf9mQ2",
   "has_niced": true,
   "multi_nice": false,
-  "url": "https://example.com/my-article"
+  "url": "https://example.com/my-article",
+  "label": "Nice",
+  "pressed_label": "Nice'd"
 }
 ```
 
@@ -319,6 +323,8 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 | `has_niced` | Whether the current visitor has already niced. Multi-nice buttons still use this for clicked-state styling. |
 | `multi_nice` | Whether this button allows multiple nices per visitor |
 | `url` | Button content URL when the button exists |
+| `label` | Current idle-state button label |
+| `pressed_label` | Current pressed-state label for single-nice buttons |
 
 ---
 

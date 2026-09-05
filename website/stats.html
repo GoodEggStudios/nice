@@ -204,6 +204,92 @@
       opacity: 0.5;
       cursor: wait;
     }
+
+    .label-field {
+      margin-bottom: 1rem;
+    }
+
+    .label-field:last-of-type {
+      margin-bottom: 0;
+    }
+
+    .label-field label {
+      display: block;
+      color: #ccc;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .label-field input[type="text"] {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border: 2px solid #333;
+      border-radius: 8px;
+      background: #1a1a1a;
+      color: #fff;
+      font-family: 'Fira Code', monospace;
+    }
+
+    .label-field input[type="text"]:focus {
+      outline: none;
+      border-color: #fbbf24;
+    }
+
+    .label-field input[type="text"]:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .label-field input[type="text"].error {
+      border-color: #ef4444;
+    }
+
+    .label-hint {
+      color: #888;
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .label-error {
+      color: #ef4444;
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    .label-error.show {
+      display: block;
+    }
+
+    .btn-save {
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 1.25rem;
+      font-family: 'Bungee', cursive;
+      font-size: 0.875rem;
+      background: #fbbf24;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .btn-save:disabled {
+      opacity: 0.5;
+      cursor: wait;
+    }
+
+    .label-save-status {
+      min-height: 1.25rem;
+      margin-top: 0.75rem;
+      color: #22c55e;
+      font-size: 0.8125rem;
+    }
+
+    .label-save-status.error {
+      color: #ef4444;
+    }
     
     .btn-delete {
       width: 100%;
@@ -391,6 +477,24 @@
           <span class="stat-value" id="created"></span>
         </div>
       </div>
+
+      <div class="section-title">Button text</div>
+      <div class="stat-card" id="labelSettings">
+        <div class="label-field">
+          <label for="labelInput">Button text</label>
+          <input type="text" id="labelInput" name="label" required aria-describedby="labelHint labelError">
+          <div class="label-hint" id="labelHint">Text shown before someone clicks the button.</div>
+          <div class="label-error" id="labelError" role="alert"></div>
+        </div>
+        <div class="label-field" id="pressedLabelField">
+          <label for="pressedLabelInput">After-click text</label>
+          <input type="text" id="pressedLabelInput" name="pressed_label" required aria-describedby="pressedLabelHint pressedLabelError">
+          <div class="label-hint" id="pressedLabelHint">Text shown after the first click. It applies only to single-nice buttons.</div>
+          <div class="label-error" id="pressedLabelError" role="alert"></div>
+        </div>
+        <button type="button" class="btn-save" id="saveLabelsBtn">Save</button>
+        <div class="label-save-status" id="labelSaveStatus" aria-live="polite" role="status"></div>
+      </div>
       
       <div class="section-title">Embed Snippet</div>
       <div class="stat-card">
@@ -442,14 +546,11 @@
   <script>
     const API_BASE = 'https://api.nice.sbs';
     
-    // Size dimensions
-    const SIZES = {
-      xs: { w: 70, h: 28 },
-      sm: { w: 85, h: 32 },
-      md: { w: 100, h: 36 },
-      lg: { w: 120, h: 44 },
-      xl: { w: 140, h: 52 }
-    };
+    const DEFAULT_LABEL = 'Nice';
+    const DEFAULT_PRESSED_LABEL = "Nice'd";
+    const MAX_LABEL_CODE_POINTS = 32;
+    let currentSettings = null;
+    let labelSavePending = false;
     
     // Get private ID from URL path or query
     function getPrivateId() {
@@ -516,6 +617,92 @@
     function truncateUrl(url, max = 50) {
       return url.length <= max ? url : url.substring(0, max - 3) + '...';
     }
+
+    function setLabelError(input, errorElement, message) {
+      input.classList.add('error');
+      input.setAttribute('aria-invalid', 'true');
+      input.setAttribute('aria-errormessage', errorElement.id);
+      errorElement.textContent = message;
+      errorElement.classList.add('show');
+    }
+
+    function clearLabelError(input, errorElement) {
+      input.classList.remove('error');
+      input.removeAttribute('aria-invalid');
+      input.removeAttribute('aria-errormessage');
+      errorElement.textContent = '';
+      errorElement.classList.remove('show');
+    }
+
+    function validateLabelInput(input, errorElement, labelName) {
+      const value = input.value;
+      const trimmed = value.trim();
+      if (!trimmed) {
+        setLabelError(input, errorElement, labelName + ' is required');
+        return false;
+      }
+      if (/[<>]/.test(value)) {
+        setLabelError(input, errorElement, labelName + ' cannot contain angle brackets');
+        return false;
+      }
+      if (/[\u0000-\u001F\u007F]/.test(value)) {
+        setLabelError(input, errorElement, labelName + ' cannot contain control characters');
+        return false;
+      }
+      if (Array.from(trimmed).length > MAX_LABEL_CODE_POINTS) {
+        setLabelError(input, errorElement, labelName + ' must be 32 characters or fewer');
+        return false;
+      }
+      clearLabelError(input, errorElement);
+      return true;
+    }
+
+    function validateLabels() {
+      const labelInput = document.getElementById('labelInput');
+      const pressedLabelInput = document.getElementById('pressedLabelInput');
+      const validLabel = validateLabelInput(labelInput, document.getElementById('labelError'), 'Button text');
+      const validPressedLabel = document.getElementById('multiNiceToggle').checked || validateLabelInput(pressedLabelInput, document.getElementById('pressedLabelError'), 'After-click text');
+      if (!validLabel) {
+        labelInput.focus();
+        return false;
+      }
+      if (!validPressedLabel) {
+        pressedLabelInput.focus();
+        return false;
+      }
+      return true;
+    }
+
+    function updatePressedLabelVisibility(isMultiNice) {
+      const field = document.getElementById('pressedLabelField');
+      const input = document.getElementById('pressedLabelInput');
+      field.hidden = isMultiNice;
+      input.disabled = isMultiNice || labelSavePending;
+      document.getElementById('pressedLabelHint').textContent = isMultiNice
+        ? 'Clap-style buttons keep the same text on every click.'
+        : 'Text shown after the first click. It applies only to single-nice buttons.';
+    }
+
+    function renderEmbed(embed) {
+      if (!embed || typeof embed.iframe !== 'string') return;
+      document.getElementById('snippet').textContent = embed.iframe;
+      document.getElementById('preview').innerHTML = embed.iframe;
+    }
+
+    function updateLabelValues(data) {
+      const labelInput = document.getElementById('labelInput');
+      const pressedLabelInput = document.getElementById('pressedLabelInput');
+      const label = data.label || DEFAULT_LABEL;
+      const pressedLabel = data.pressed_label || DEFAULT_PRESSED_LABEL;
+      labelInput.value = label;
+      pressedLabelInput.value = pressedLabel;
+    }
+
+    function createApiError(data, fallback) {
+      const error = new Error(data.error || fallback);
+      error.code = data.code;
+      return error;
+    }
     
     // Load stats
     async function loadStats() {
@@ -556,24 +743,21 @@
       
       setActiveRestriction(data.restriction);
       
+      currentSettings = data;
+
       // Multi-nice toggle
       const multiToggle = document.getElementById('multiNiceToggle');
       const multiLabel = document.getElementById('multiNiceLabel');
       multiToggle.checked = !!data.multi_nice;
       multiLabel.textContent = data.multi_nice ? 'On' : 'Off';
+
+      updateLabelValues(data);
+      updatePressedLabelVisibility(!!data.multi_nice);
       
       document.getElementById('publicId').textContent = data.id;
       document.getElementById('created').textContent = formatDate(data.created_at);
       
-      // Embed snippet
-      const theme = data.theme || 'light';
-      const size = data.size || 'md';
-      const dims = SIZES[size] || SIZES.md;
-      const embedUrl = `${API_BASE}/e/${data.id}?theme=${theme}&size=${size}`;
-      const snippet = `<iframe src="${embedUrl}" style="border:none;width:${dims.w}px;height:${dims.h}px;" title="Nice button"></iframe>`;
-      
-      document.getElementById('snippet').textContent = snippet;
-      document.getElementById('preview').innerHTML = `<iframe src="${embedUrl}" style="border:none;width:${dims.w}px;height:${dims.h}px;" title="Nice button"></iframe>`;
+      renderEmbed(data.embed);
       
       // Badge snippet
       const badgeUrl = `${API_BASE}/badge/${data.id}.svg`;
@@ -586,6 +770,61 @@
       // Store private ID for delete
       window.PRIVATE_ID = privateId;
     }
+
+    async function saveLabels() {
+      if (labelSavePending || !window.PRIVATE_ID) return;
+      if (!validateLabels()) return;
+
+      const labelInput = document.getElementById('labelInput');
+      const pressedLabelInput = document.getElementById('pressedLabelInput');
+      const saveButton = document.getElementById('saveLabelsBtn');
+      const status = document.getElementById('labelSaveStatus');
+      let focusTarget = null;
+      labelSavePending = true;
+      saveButton.disabled = true;
+      labelInput.disabled = true;
+      pressedLabelInput.disabled = true;
+      status.classList.remove('error');
+      status.textContent = 'Saving…';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/buttons/${window.PRIVATE_ID}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            label: labelInput.value.trim(),
+            ...(document.getElementById('multiNiceToggle').checked ? {} : { pressed_label: pressedLabelInput.value.trim() }),
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw createApiError(data, 'Failed to save button text');
+
+        currentSettings = data;
+        updateLabelValues(data);
+        renderEmbed(data.embed);
+        clearLabelError(labelInput, document.getElementById('labelError'));
+        clearLabelError(pressedLabelInput, document.getElementById('pressedLabelError'));
+        status.textContent = 'Saved';
+      } catch (error) {
+        status.textContent = error.message;
+        status.classList.add('error');
+        if (error.code === 'INVALID_PRESSED_LABEL') {
+          setLabelError(pressedLabelInput, document.getElementById('pressedLabelError'), error.message);
+          focusTarget = pressedLabelInput;
+        } else {
+          setLabelError(labelInput, document.getElementById('labelError'), error.message);
+          focusTarget = labelInput;
+        }
+      } finally {
+        labelSavePending = false;
+        labelInput.disabled = false;
+        updatePressedLabelVisibility(!!(currentSettings && currentSettings.multi_nice));
+        saveButton.disabled = false;
+        if (focusTarget) focusTarget.focus();
+      }
+    }
+
+    document.getElementById('saveLabelsBtn').addEventListener('click', saveLabels);
     
     // Show error
     function showError() {
@@ -658,16 +897,19 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ multi_nice: checked })
         });
+        const data = await res.json();
         if (res.ok) {
-          label.textContent = checked ? 'On' : 'Off';
+          currentSettings = { ...(currentSettings || {}), ...data };
+          label.textContent = data.multi_nice ? 'On' : 'Off';
+          updatePressedLabelVisibility(!!data.multi_nice);
+          renderEmbed(data.embed);
         } else {
-          e.target.checked = !checked;
-          label.textContent = !checked ? 'On' : 'Off';
-          alert('Failed to update multi-nice');
+          throw createApiError(data, 'Failed to update multi-nice');
         }
       } catch (err) {
         e.target.checked = !checked;
         label.textContent = !checked ? 'On' : 'Off';
+        updatePressedLabelVisibility(!checked);
         alert('Failed to update multi-nice');
       }
     });
