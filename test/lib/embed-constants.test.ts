@@ -13,27 +13,27 @@ describe("getEmbedInitialDimensions", () => {
 
   it("uses only the idle label in clap mode", () => {
     expect(getEmbedInitialDimensions("sm", "Clap", "A very long pressed label", true)).toEqual(
-      { w: 789, h: EMBED_DIMENSIONS.sm.h }
+      { w: 173, h: EMBED_DIMENSIONS.sm.h }
     );
   });
 
-  it("reserves the full label range for direct iframe snippets", () => {
+  it("sizes direct iframe snippets from the longest relevant label", () => {
     expect(getEmbedInitialDimensions("md", "Recommend", "Recommended", false)).toEqual({
-      w: 868,
+      w: 364,
       h: EMBED_DIMENSIONS.md.h,
     });
   });
 
   it("reserves conservative space for short wide-glyph labels", () => {
     expect(getEmbedInitialDimensions("md", "推荐推荐推荐", "已推荐已推荐", false)).toEqual({
-      w: 868,
+      w: 244,
       h: EMBED_DIMENSIONS.md.h,
     });
   });
 
-  it("keeps multi-nice sizing based on the update-independent maximum", () => {
+  it("sizes multi-nice embeds from the idle label", () => {
     expect(getEmbedInitialDimensions("md", "Clap", "A very long pressed label", true)).toEqual({
-      w: 868,
+      w: 196,
       h: EMBED_DIMENSIONS.md.h,
     });
   });
