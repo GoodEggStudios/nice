@@ -81,6 +81,17 @@ Access-Control-Allow-Origin: *
 
 This is intentional — Nice buttons must be embeddable on any website. Security is enforced via rate limiting, deduplication, and referrer restrictions rather than CORS.
 
+### Embed Resize Messages
+
+Script embeds resize their iframe by listening for `nice-resize` messages from the
+embed origin. When a host suppresses the iframe referrer, the iframe cannot know
+the parent origin, so resize notifications use `targetOrigin: "*"` only for this
+non-sensitive sizing message. The loader still accepts messages only when both
+the event origin and iframe source match the expected embed. Other messages,
+including confetti and recorded events, remain origin-gated. Script embeds are
+recommended when automatic resizing is needed; copied direct iframe snippets use
+their generated dimensions and do not auto-grow after label changes.
+
 ## Information Disclosure Prevention
 
 ### Button Enumeration

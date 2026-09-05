@@ -5,8 +5,14 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { SELF } from "cloudflare:test";
-import { EMBED_DIMENSIONS, EMBED_SIZES, renderEmbedScript } from "../../src/routes/embed";
+import { SELF, env } from "cloudflare:test";
+import {
+  EMBED_DIMENSIONS,
+  EMBED_SIZES,
+  renderDemoEmbedHtml,
+  renderEmbedHtml,
+  renderEmbedScript,
+} from "../../src/routes/embed";
 
 describe("Embed", () => {
   describe("GET /embed.js", () => {
@@ -128,6 +134,112 @@ describe("Embed", () => {
 
       // Should still serve successfully with defaults
       expect(res.status).toBe(200);
+    });
+
+    it("should render persisted labels and ignore URL label overrides", async () => {
+      const buttonId = "n_labels123456";
+      await env.NICE_KV.put(
+        `btn:${buttonId}`,
+        JSON.stringify({ label: "Recommend", pressedLabel: "Recommended", multiNice: false })
+      );
+
+      const res = await SELF.fetch(
+        `https://api.nice.sbs/embed/${buttonId}?label=Attacker&pressed_label=Injected`
+      );
+      const body = await res.text();
+
+      expect(body).toContain('<span class="nice-text" id="niceText">Recommend</span>');
+      expect(body).toContain('const LABEL="Recommend";');
+      expect(body).toContain('const PRESSED_LABEL="Recommended";');
+      expect(body).not.toContain("Attacker");
+      expect(body).not.toContain("Injected");
+
+      const forcedSingle = await SELF.fetch(
+        "https://api.nice.sbs/embed/" + buttonId + "?multi=0"
+      );
+      const forcedSingleBody = await forcedSingle.text();
+      expect(forcedSingleBody).toContain("const IS_MULTI='0'==='1';");
+    });
+
+    it("should use the stored label contract for clap mode", async () => {
+      const buttonId = "n_claplabels12";
+      await env.NICE_KV.put(
+        `btn:${buttonId}`,
+        JSON.stringify({ label: "Recommend", pressedLabel: "Recommended", multiNice: true })
+      );
+
+      const res = await SELF.fetch(`https://api.nice.sbs/embed/${buttonId}`);
+      const body = await res.text();
+
+      expect(body).toContain("const IS_MULTI='1'==='1';");
+      expect(body).toContain("textEl.textContent=IS_MULTI?LABEL:PRESSED_LABEL;");
+    });
+
+    it("should keep malformed stored labels inert and defaulted", async () => {
+      const buttonId = "n_malformed12";
+      const payload = "<img src=x onerror=alert(1)>";
+      await env.NICE_KV.put(
+        `btn:${buttonId}`,
+        JSON.stringify({ label: payload, pressedLabel: 42, multiNice: false })
+      );
+
+      const res = await SELF.fetch(`https://api.nice.sbs/embed/${buttonId}`);
+      const body = await res.text();
+
+      // Angle brackets are rejected by the label contract, so stored HTML
+      // payloads fall back to defaults rather than being rendered escaped.
+      expect(body).toContain('<span class="nice-text" id="niceText">Nice</span>');
+      expect(body).toContain('const LABEL="Nice";');
+      expect(body).toContain('const PRESSED_LABEL="Nice\'d";');
+      expect(body).not.toContain("<img src=x onerror=alert(1)>");
+      expect(body).not.toContain("onerror");
+    });
+  });
+
+  describe("renderer label serialization", () => {
+    it("should escape labels in HTML and inline JavaScript", () => {
+      const label = '</script><span title="x">& 😀';
+      const pressedLabel = `Pressed \\ " ${label}`;
+      const html = renderEmbedHtml({
+        apiBase: "https://api.nice.sbs",
+        buttonId: "n_abc123456789",
+        theme: "light",
+        size: "md",
+        label,
+        pressedLabel,
+      });
+
+      expect(html).toContain("&lt;/script&gt;&lt;span title=&quot;x&quot;&gt;&amp; 😀");
+      expect(html).toContain(
+        'const LABEL="\\u003c/script\\u003e\\u003cspan title=\\"x\\"\\u003e\\u0026 😀";'
+      );
+      expect(html).toContain('const PRESSED_LABEL="Pressed \\\\ \\\" \\u003c/script');
+      expect(html).not.toContain("</script><span title=\"x\">");
+
+      const replacementPayload = renderEmbedHtml({
+        apiBase: "https://api.nice.sbs",
+        buttonId: "n_abc123456789",
+        theme: "light",
+        size: "md",
+        label: "$&",
+        pressedLabel: String.fromCharCode(36, 96, 36, 39),
+      });
+      expect(replacementPayload).toContain('<span class="nice-text" id="niceText">$&amp;</span>');
+      expect(replacementPayload).toContain('const LABEL="$\\u0026";');
+    });
+
+    it("should default demo labels while allowing explicit renderer values", () => {
+      const defaults = renderDemoEmbedHtml({ theme: "light", size: "md" });
+      const custom = renderDemoEmbedHtml({
+        theme: "light",
+        size: "md",
+        label: "Recommend",
+        pressedLabel: "Recommended",
+      });
+
+      expect(defaults).toContain("Nice</span>");
+      expect(custom).toContain("Recommend</span>");
+      expect(custom).toContain('const LABEL="Recommend";');
     });
   });
 

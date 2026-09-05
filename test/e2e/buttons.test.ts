@@ -95,22 +95,25 @@ describe("Button API", () => {
     it("should size iframe snippets using shared embed dimensions", async () => {
       const data = await createButton("https://example.com/small-button", {
         size: "sm",
-        label: "Hi",
-        pressed_label: "Ok",
       });
       const embed = data.embed as { iframe: string };
 
       expect(embed.iframe).toContain("width:85px;height:32px");
     });
 
-    it("should widen iframe snippets for longer default labels", async () => {
-      const data = await createButton("https://example.com/default-label-width", {
-        size: "sm",
+    it("should widen iframe snippets for custom labels without adding labels to the URL", async () => {
+      const data = await createButton("https://example.com/long-label", {
+        size: "md",
+        label: "Recommend",
+        pressed_label: "Recommended",
       });
-      const embed = data.embed as { iframe: string };
+      const embed = data.embed as { iframe: string; script: string };
 
-      // Default pressed label "Nice'd" exceeds sm base width (6*12+24=96)
-      expect(embed.iframe).toContain("width:96px;height:32px");
+      expect(embed.iframe).toContain("width:364px;height:36px");
+      expect(embed.iframe).not.toContain("Recommend");
+      expect(embed.iframe).not.toContain("Recommended");
+      expect(embed.script).not.toContain("Recommend");
+      expect(embed.script).not.toContain("Recommended");
     });
 
     it("should reject missing URL", async () => {
@@ -503,6 +506,7 @@ describe("Button API", () => {
       expect(res.status).toBe(404);
     });
 
+    // Timeout must cover a near-minute wait (up to ~10s) plus 21 sequential requests.
     it("should rate limit after 20 requests per IP", async () => {
       // Rate keys use calendar minutes. Wait out a near rollover so all 21
       // requests stay in one bucket (CI failed at :59 with expected 429 → 200).
