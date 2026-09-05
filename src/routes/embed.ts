@@ -205,7 +205,7 @@ btn.classList.remove('niced');
 btn.setAttribute('aria-pressed','false');
 textEl.textContent=LABEL;
 }
-btn.setAttribute('aria-label',textEl.textContent);
+btn.setAttribute('aria-label',LABEL==='Nice'&&PRESSED_LABEL==="Nice'd"?'Nice this':textEl.textContent);
 notifyResize();
 }
 function notifyResize(){

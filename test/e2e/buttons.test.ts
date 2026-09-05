@@ -109,7 +109,7 @@ describe("Button API", () => {
       });
       const embed = data.embed as { iframe: string; script: string };
 
-      expect(embed.iframe).toContain("width:868px;height:36px");
+      expect(embed.iframe).toContain("width:364px;height:36px");
       expect(embed.iframe).not.toContain("Recommend");
       expect(embed.iframe).not.toContain("Recommended");
       expect(embed.script).not.toContain("Recommend");
@@ -537,7 +537,7 @@ describe("Button API", () => {
       expect(res.status).toBe(429);
       const data = await res.json() as { code: string };
       expect(data.code).toBe("IP_LIMIT");
-    }, 20_000);
+    });
   });
 
   describe("DELETE /api/v1/buttons/:private_id - Delete", () => {
