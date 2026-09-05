@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { EMBED_DIMENSIONS, EMBED_SIZES, EMBED_THEMES, type EmbedSize, type EmbedTheme } from "../../src/routes/embed";
+import { EMBED_DIMENSIONS, EMBED_SIZES, EMBED_THEMES, getEmbedInitialDimensions, type EmbedSize, type EmbedTheme } from "../../src/routes/embed";
 import { VISUAL_BUTTON_ID } from "./fixtures/data";
 import { installNiceApiMocks } from "./fixtures/routes";
 import { screenshotPaddedLocator, stabilizePage, stableComponentClip } from "./fixtures/screenshot";
@@ -156,12 +156,9 @@ for (const size of ["xs", "xl"] as const) {
     const label = "😀".repeat(32);
     await openEmbed(page, "dark", size, { label, pressedLabel: label });
 
-    const button = page.locator("#niceBtn");
-    const box = await button.boundingBox();
-    if (!box) throw new Error("Maximum-length button has no bounding box");
-    const dimensions = EMBED_DIMENSIONS[size];
-    await page.setViewportSize({ width: Math.ceil(box.width) + 8, height: dimensions.h + 8 });
+    const dimensions = getEmbedInitialDimensions(size, label, label, false);
+    await page.setViewportSize({ width: dimensions.w + 8, height: dimensions.h + 8 });
     await expectButtonFitsEmbed(page);
-    await screenshotEmbedState(page, `embed/labels/max-length-${size}.png`, size);
+    await screenshotPaddedLocator(page.locator("#niceBtn"), `embed/labels/max-length-${size}.png`);
   });
 }
