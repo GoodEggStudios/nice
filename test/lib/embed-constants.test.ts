@@ -19,7 +19,14 @@ describe("getEmbedInitialDimensions", () => {
 
   it("adds width for the longest single-nice label", () => {
     expect(getEmbedInitialDimensions("md", "Recommend", "Recommended", false)).toEqual({
-      w: 165,
+      w: 244,
+      h: EMBED_DIMENSIONS.md.h,
+    });
+  });
+
+  it("reserves conservative space for wide glyphs", () => {
+    expect(getEmbedInitialDimensions("md", "推荐推荐推荐", "已推荐已推荐", false)).toEqual({
+      w: 124,
       h: EMBED_DIMENSIONS.md.h,
     });
   });

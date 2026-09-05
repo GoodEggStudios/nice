@@ -20,6 +20,10 @@ export const EMBED_FONT_SIZE: Record<EmbedSize, number> = {
   xl: 16,
 };
 
+// Reserve enough space for wide glyphs such as CJK characters and emoji in
+// direct iframe snippets, which cannot receive a host-side resize update.
+const EMBED_MAX_GLYPH_WIDTH_EM = 2;
+
 export function getEmbedInitialDimensions(
   size: EmbedSize,
   label: string,
@@ -40,7 +44,9 @@ export function getEmbedInitialDimensions(
       : Math.max(0, Array.from(longestLabel).length - 5);
 
   return {
-    w: Math.ceil(dimensions.w + extraCodePoints * EMBED_FONT_SIZE[size] * 0.9),
+    w: Math.ceil(
+      dimensions.w + extraCodePoints * EMBED_FONT_SIZE[size] * EMBED_MAX_GLYPH_WIDTH_EM
+    ),
     h: dimensions.h,
   };
 }
