@@ -161,6 +161,12 @@ for (const size of ["xs", "xl"] as const) {
     const dimensions = getEmbedInitialDimensions(size, label, label, false);
     await page.setViewportSize({ width: dimensions.w + 8, height: dimensions.h + 8 });
     await expectButtonFitsEmbed(page);
-    await screenshotPaddedLocator(page.locator("#niceBtn"), `embed/labels/max-length-${size}.png`);
+    // Pin clip to the deterministic iframe budget so platform glyph advances
+    // cannot change the committed screenshot dimensions.
+    const clip = stableComponentClip(dimensions, 2);
+    await screenshotPaddedLocator(page.locator("#niceBtn"), `embed/labels/max-length-${size}.png`, 2, {
+      minWidth: clip.width,
+      minHeight: clip.height,
+    });
   });
 }

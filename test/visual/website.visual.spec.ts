@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { getEmbedInitialDimensions } from "../../src/routes/embed";
 import { VISUAL_BUTTON_ID, VISUAL_PRIVATE_ID } from "./fixtures/data";
 import { installNiceApiMocks, type NiceApiMockOptions } from "./fixtures/routes";
 import {
@@ -83,7 +84,12 @@ for (const viewport of viewports) {
     await expectEmbedFrameReady(page, "#resultPreview iframe");
     await expect(page.locator("#snippet")).toContainText('data-confetti="1"');
     await expect(page.locator("#snippet")).toContainText('data-multi="1"');
-    await expect(page.locator("#resultPreview iframe")).toHaveAttribute("style", /width:316px;height:36px/);
+    const expected = getEmbedInitialDimensions("md", "Recommend", "Recommended", true);
+    await expect(page.locator("#resultPreview iframe")).toHaveAttribute(
+      "style",
+      new RegExp(`width:${expected.w}px;height:${expected.h}px`),
+    );
+    await expect(page.frameLocator("#resultPreview iframe").locator("#niceText")).toHaveText("Recommend");
     await expect(page.locator("#badgePreview img")).toBeVisible();
     await screenshotWebsiteFullPage(page, `website/create-result-${viewport.name}.png`);
   });

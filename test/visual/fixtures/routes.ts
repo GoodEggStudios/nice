@@ -112,11 +112,17 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
       return;
     }
     const body = route.request().postDataJSON() as Record<string, unknown>;
-    await fulfillJson(route, mockCreateButtonResponse({
+    stats = mockButtonStats({
       count,
       multi_nice: typeof body.multi_nice === "boolean" ? body.multi_nice : multiNice,
       label: typeof body.label === "string" ? body.label : "Nice",
       pressed_label: typeof body.pressed_label === "string" ? body.pressed_label : "Nice'd",
+    });
+    await fulfillJson(route, mockCreateButtonResponse({
+      count: stats.count,
+      multi_nice: stats.multi_nice,
+      label: stats.label,
+      pressed_label: stats.pressed_label,
     }), 201);
   });
 
