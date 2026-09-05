@@ -506,6 +506,7 @@ describe("Button API", () => {
       expect(res.status).toBe(404);
     });
 
+    // Timeout must cover a near-minute wait (up to ~10s) plus 21 sequential requests.
     it("should rate limit after 20 requests per IP", async () => {
       // Rate keys use calendar minutes. Wait out a near rollover so all 21
       // requests stay in one bucket (CI failed at :59 with expected 429 → 200).
@@ -536,7 +537,7 @@ describe("Button API", () => {
       expect(res.status).toBe(429);
       const data = await res.json() as { code: string };
       expect(data.code).toBe("IP_LIMIT");
-    });
+    }, 20_000);
   });
 
   describe("DELETE /api/v1/buttons/:private_id - Delete", () => {
