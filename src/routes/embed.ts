@@ -183,7 +183,8 @@ const btn=document.getElementById('niceBtn');
 const textEl=document.getElementById('niceText');
 const countEl=document.getElementById('niceCount');
 let count=0,hasNiced=false,isLoading=false;
-// Get parent origin for secure postMessage (no referrer = no message)
+// Get parent origin for secure postMessage; wildcard is used only when the
+// browser suppresses the referrer, and the loader still validates event.origin.
 let parentOrigin=null;
 try{if(document.referrer){parentOrigin=new URL(document.referrer).origin;}}catch(e){}
 try{hasNiced=localStorage.getItem(STORAGE_KEY)==='1';}catch(e){}
@@ -208,9 +209,8 @@ btn.setAttribute('aria-label',textEl.textContent);
 notifyResize();
 }
 function notifyResize(){
-if(!parentOrigin)return;
 const root=document.documentElement;
-parent.postMessage({type:'nice-resize',buttonId:BUTTON_ID,width:Math.ceil(root.scrollWidth),height:Math.ceil(root.scrollHeight)},parentOrigin);
+parent.postMessage({type:'nice-resize',buttonId:BUTTON_ID,width:Math.ceil(root.scrollWidth),height:Math.ceil(root.scrollHeight)},parentOrigin||'*');
 }
 function getFingerprint(){
 const data=[screen.width+'x'+screen.height,new Date().getTimezoneOffset(),navigator.language,navigator.userAgent.slice(0,50)].join('|');
@@ -459,7 +459,8 @@ export async function serveEmbedPage(
   let label = DEFAULT_BUTTON_LABEL;
   let pressedLabel = DEFAULT_PRESSED_BUTTON_LABEL;
 
-  // Stored configuration is used only when the query does not explicitly set multi mode.
+  // Stored multi-nice configuration is used only when the query omits multi;
+  // labels always come from stored button configuration.
   if (env?.NICE_KV) {
     try {
       const buttonData = await env.NICE_KV.get(`btn:${buttonId}`);

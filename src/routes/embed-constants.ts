@@ -23,6 +23,7 @@ export const EMBED_FONT_SIZE: Record<EmbedSize, number> = {
 // Reserve enough space for wide glyphs such as CJK characters and emoji in
 // direct iframe snippets, which cannot receive a host-side resize update.
 const EMBED_MAX_GLYPH_WIDTH_EM = 2;
+const EMBED_MAX_LABEL_CODE_POINTS = 32;
 
 export function getEmbedInitialDimensions(
   size: EmbedSize,
@@ -36,16 +37,14 @@ export function getEmbedInitialDimensions(
     : Array.from(label).length >= Array.from(pressedLabel).length
       ? label
       : pressedLabel;
-  // The existing default Nice'd label is six code points but already fits the
-  // shared dimensions; only labels beyond that established width need growth.
-  const extraCodePoints =
-    longestLabel === "Nice'd"
-      ? 0
-      : Math.max(0, Array.from(longestLabel).length - 5);
+  // Keep the default dimensions stable, but reserve the full validated label
+  // range so a later label update cannot outgrow a direct iframe snippet.
+  const usesDefaultDimensions = longestLabel === "Nice" || longestLabel === "Nice'd";
+  const codePoints = usesDefaultDimensions ? 0 : EMBED_MAX_LABEL_CODE_POINTS;
 
   return {
     w: Math.ceil(
-      dimensions.w + extraCodePoints * EMBED_FONT_SIZE[size] * EMBED_MAX_GLYPH_WIDTH_EM
+      dimensions.w + codePoints * EMBED_FONT_SIZE[size] * EMBED_MAX_GLYPH_WIDTH_EM
     ),
     h: dimensions.h,
   };
