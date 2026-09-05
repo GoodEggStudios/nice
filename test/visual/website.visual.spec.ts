@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
+import { getEmbedInitialDimensions } from "../../src/routes/embed";
 import { VISUAL_BUTTON_ID, VISUAL_PRIVATE_ID } from "./fixtures/data";
-import { installNiceApiMocks } from "./fixtures/routes";
+import { installNiceApiMocks, type NiceApiMockOptions } from "./fixtures/routes";
 import {
   screenshotWebsiteFullPage,
   screenshotWebsitePaddedLocator,
@@ -23,8 +24,8 @@ test.afterAll(async () => {
   await server.close();
 });
 
-async function openPage(page: Page, path: string, viewport: { width: number; height: number }) {
-  await installNiceApiMocks(page);
+async function openPage(page: Page, path: string, viewport: { width: number; height: number }, options: NiceApiMockOptions = {}) {
+  await installNiceApiMocks(page, options);
   await page.setViewportSize(viewport);
   await page.goto(`${server.origin}${path}`);
   await stabilizeWebsitePage(page);
@@ -45,6 +46,8 @@ for (const viewport of viewports) {
   test(`create empty ${viewport.name}`, async ({ page }) => {
     await openPage(page, "/create", viewport);
     await expect(page.locator("#createForm")).toBeVisible();
+    await expect(page.locator("#labelInput")).toHaveValue("Nice");
+    await expect(page.locator("#pressedLabelInput")).toHaveValue("Nice'd");
     await expect(page.locator("#previewButton")).toBeVisible();
     await screenshotWebsiteFullPage(page, `website/create-empty-${viewport.name}.png`);
   });
@@ -72,6 +75,8 @@ for (const viewport of viewports) {
   test(`create result ${viewport.name}`, async ({ page }) => {
     await openPage(page, "/create", viewport);
     await page.locator("#urlInput").fill("example.com/articles/visual-button");
+    await page.locator("#labelInput").fill("Recommend");
+    await page.locator("#pressedLabelInput").fill("Recommended");
     await page.locator("#multiNice").check();
     await page.locator("#confetti").check();
     await page.locator("#submitBtn").click();
@@ -79,6 +84,12 @@ for (const viewport of viewports) {
     await expectEmbedFrameReady(page, "#resultPreview iframe");
     await expect(page.locator("#snippet")).toContainText('data-confetti="1"');
     await expect(page.locator("#snippet")).toContainText('data-multi="1"');
+    const expected = getEmbedInitialDimensions("md", "Recommend", "Recommended", true);
+    await expect(page.locator("#resultPreview iframe")).toHaveAttribute(
+      "style",
+      new RegExp(`width:${expected.w}px;height:${expected.h}px`),
+    );
+    await expect(page.frameLocator("#resultPreview iframe").locator("#niceText")).toHaveText("Recommend");
     await expect(page.locator("#badgePreview img")).toBeVisible();
     await screenshotWebsiteFullPage(page, `website/create-result-${viewport.name}.png`);
   });
@@ -102,6 +113,8 @@ for (const viewport of viewports) {
   test(`stats loaded ${viewport.name}`, async ({ page }) => {
     await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewport);
     await expect(page.locator("#content")).toBeVisible();
+    await expect(page.locator("#labelInput")).toHaveValue("Nice");
+    await expect(page.locator("#pressedLabelInput")).toHaveValue("Nice'd");
     await expectEmbedFrameReady(page, "#preview iframe");
     await expect(page.locator("#badgePreview img")).toBeVisible();
     await screenshotWebsiteFullPage(page, `website/stats-loaded-${viewport.name}.png`);
@@ -139,6 +152,7 @@ test("create labels drive the preview and clap mode", async ({ page }) => {
   await page.locator("#previewButton").click();
   await expect(page.locator("#previewText")).toHaveText("Recommended");
   await expect(page.locator("#previewButton")).toHaveAttribute("aria-label", "Recommended");
+  await screenshotWebsitePaddedLocator(page.locator("#previewContainer"), "website/create-labels-preview-pressed.png");
 
   await page.locator("#multiNice").check();
   await expect(page.locator("#pressedLabelField")).toBeHidden();
@@ -147,6 +161,7 @@ test("create labels drive the preview and clap mode", async ({ page }) => {
   await page.locator("#previewButton").click();
   await expect(page.locator("#previewText")).toHaveText("Recommend");
   await expect(page.locator("#pressedLabelInput")).toHaveValue("Recommended");
+  await screenshotWebsitePaddedLocator(page.locator("#previewContainer"), "website/create-labels-clap.png");
 });
 
 test("create sends normalized labels and keeps field errors local", async ({ page }) => {
@@ -187,6 +202,7 @@ test("stats saves labels, refreshes the server embed, and rolls back failures", 
   await expect(page.locator("#labelSaveStatus")).toHaveText("Saved");
   await expect(page.locator("#snippet")).toContainText("<iframe");
   await expect(page.frameLocator("#preview iframe").locator("#niceText")).toHaveText("Recommend");
+  await screenshotWebsiteFullPage(page, "website/stats-labels-saved.png");
 
   await installNiceApiMocks(page, {
     buttonPatchStatus: 400,
@@ -200,6 +216,7 @@ test("stats saves labels, refreshes the server embed, and rolls back failures", 
   await expect(page.locator("#labelInput")).toHaveValue("Unsaved");
   await expect(page.locator("#pressedLabelInput")).toHaveValue("Unsaved pressed");
   await expect(page.locator("#labelInput")).toBeFocused();
+  await screenshotWebsiteFullPage(page, "website/stats-labels-rollback.png");
 });
 
 test("stats clap toggle hides and restores the pressed label", async ({ page }) => {

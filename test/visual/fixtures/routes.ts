@@ -8,6 +8,8 @@ export interface NiceApiMockOptions {
   countStatus?: number;
   hasNiced?: boolean;
   multiNice?: boolean;
+  label?: string;
+  pressedLabel?: string;
   createStatus?: number;
   createErrorCode?: string;
   createError?: string;
@@ -27,7 +29,12 @@ async function fulfillJson(route: Route, value: unknown, status = 200) {
 export async function installNiceApiMocks(page: Page, options: NiceApiMockOptions = {}): Promise<void> {
   const count = options.count ?? 42;
   const multiNice = options.multiNice ?? false;
-  let stats = mockButtonStats({ count, multi_nice: multiNice });
+  let stats = mockButtonStats({
+    count,
+    multi_nice: multiNice,
+    ...(options.label === undefined ? {} : { label: options.label }),
+    ...(options.pressedLabel === undefined ? {} : { pressed_label: options.pressedLabel }),
+  });
 
   await page.route("https://api.nice.sbs/embed.js", async (route) => {
     await route.fulfill({
@@ -43,7 +50,12 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
     const theme = (url.searchParams.get("theme") ?? "light") as EmbedTheme;
     const size = (url.searchParams.get("size") ?? "md") as EmbedSize;
     const body = buttonId === "demo"
-      ? renderDemoEmbedHtml({ theme, size })
+      ? renderDemoEmbedHtml({
+          theme,
+          size,
+          label: stats.label,
+          pressedLabel: stats.pressed_label,
+        })
       : renderEmbedHtml({
           apiBase: "https://api.nice.sbs",
           buttonId,
@@ -100,11 +112,17 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
       return;
     }
     const body = route.request().postDataJSON() as Record<string, unknown>;
-    await fulfillJson(route, mockCreateButtonResponse({
+    stats = mockButtonStats({
       count,
       multi_nice: typeof body.multi_nice === "boolean" ? body.multi_nice : multiNice,
       label: typeof body.label === "string" ? body.label : "Nice",
       pressed_label: typeof body.pressed_label === "string" ? body.pressed_label : "Nice'd",
+    });
+    await fulfillJson(route, mockCreateButtonResponse({
+      count: stats.count,
+      multi_nice: stats.multi_nice,
+      label: stats.label,
+      pressed_label: stats.pressed_label,
     }), 201);
   });
 
@@ -113,8 +131,13 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
   });
 
   await page.route(/https:\/\/api\.nice\.sbs\/api\/v1\/buttons\/ns_.*/, async (route) => {
-    if (route.request().method() !== "PATCH") {
+    const method = route.request().method();
+    if (method === "DELETE") {
       await fulfillJson(route, { success: true });
+      return;
+    }
+    if (method !== "PATCH") {
+      await route.continue();
       return;
     }
     const status = options.buttonPatchStatus ?? 200;
@@ -132,6 +155,8 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
       label: typeof body.label === "string" ? body.label : stats.label,
       pressed_label: typeof body.pressed_label === "string" ? body.pressed_label : stats.pressed_label,
       restriction: typeof body.restriction === "string" ? body.restriction as VisualButtonStats["restriction"] : stats.restriction,
+      theme: typeof body.theme === "string" ? body.theme as VisualButtonStats["theme"] : stats.theme,
+      size: typeof body.size === "string" ? body.size as VisualButtonStats["size"] : stats.size,
     });
     await fulfillJson(route, stats);
   });

@@ -43,6 +43,16 @@ Response:
 
 ---
 
+### Button labels
+
+Button owners can set `label` and `pressed_label` when creating a button or update either field later. They default to `Nice` and `Nice'd`. Values are trimmed before storage, must contain at least one non-whitespace character, may contain at most 32 Unicode code points, and must not contain ASCII control characters (`U+0000`–`U+001F`, `U+007F`) or angle brackets (`<`, `>`). Invalid values return `INVALID_LABEL` or `INVALID_PRESSED_LABEL` with HTTP 400.
+
+`label` is the idle text and the text used for every state of a clap-style (`multi_nice`) button. `pressed_label` applies only to single-nice rendering; it is retained while clap mode is enabled and becomes active again when clap mode is disabled. Existing KV records use these defaults when the fields are missing or malformed.
+
+Labels are returned in owner responses from create, stats, and update endpoints. They are not accepted as embed URL overrides: real embed URLs always use the stored button configuration, so visitor-controlled query strings cannot change the wording.
+
+---
+
 ## API Endpoints
 
 ### Create Button
@@ -310,9 +320,7 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
   "button_id": "n_x7Kf9mQ2",
   "has_niced": true,
   "multi_nice": false,
-  "url": "https://example.com/my-article",
-  "label": "Nice",
-  "pressed_label": "Nice'd"
+  "url": "https://example.com/my-article"
 }
 ```
 
@@ -323,8 +331,6 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 | `has_niced` | Whether the current visitor has already niced. Multi-nice buttons still use this for clicked-state styling. |
 | `multi_nice` | Whether this button allows multiple nices per visitor |
 | `url` | Button content URL when the button exists |
-| `label` | Current idle-state button label |
-| `pressed_label` | Current pressed-state label for single-nice buttons |
 
 ---
 
@@ -334,7 +340,7 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 
 The script tag creates the iframe and can show effects on the host page, such as confetti:
 
-Embeds use the button owner's persisted `label` and `pressed_label` values. URL parameters with those names are ignored. Script embeds resize after the Bungee font settles; generated direct-iframe snippets include a conservative initial width for custom labels.
+Embeds use the button owner's persisted `label` and `pressed_label` values. URL parameters with those names are ignored. Script embeds auto-resize after the Bungee font settles; generated direct-iframe snippets include a label-aware initial width because a standalone iframe cannot receive host-side resize updates.
 
 ```html
 <script
@@ -359,7 +365,7 @@ Remove `data-confetti="true"` to keep the button without confetti. This setting 
 
 ### iframe
 
-Use the iframe when a platform allows HTML but blocks external scripts. A standalone iframe cannot draw outside its own rectangle, so it cannot provide host-page confetti.
+Use the iframe when a platform allows HTML but blocks external scripts. A standalone iframe cannot draw outside its own rectangle, so it cannot provide host-page confetti. Prefer the generated snippet when using custom labels because its initial width accounts for the stored wording.
 
 ```html
 <iframe 
@@ -368,6 +374,8 @@ Use the iframe when a platform allows HTML but blocks external scripts. A standa
   title="Nice button">
 </iframe>
 ```
+
+`100px × 36px` is the default-label baseline. For custom labels, use the generated iframe snippet, whose width is calculated from the stored labels.
 
 **Query Parameters:**
 

@@ -40,7 +40,7 @@ Or use the API:
 ```bash
 curl -X POST https://api.nice.sbs/api/v1/buttons \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://yoursite.com"}'
+  -d '{"url": "https://yoursite.com", "label": "Recommend", "pressed_label": "Recommended"}'
 ```
 
 ### Embed it
@@ -101,11 +101,13 @@ Customise the look with `theme` and `size` parameters:
 
 **Sizes:** `xs` · `sm` · `md` · `lg` · `xl`
 
-Button owners can configure the API-managed labels with optional `label` and `pressed_label` fields. They default to `Nice` and `Nice'd`, are limited to 32 Unicode code points, and are trimmed before storage. `pressed_label` is used after interaction for single-nice buttons and is retained when clap mode changes.
+Button owners can configure the API-managed labels with optional `label` and `pressed_label` fields. They default to `Nice` and `Nice'd`, are limited to 32 Unicode code points, and are trimmed before storage. `pressed_label` is used after interaction for single-nice buttons and is retained when clap mode changes; clap mode keeps `label` active on every click.
 
-Both embed forms load these persisted labels from the button record; `label` and `pressed_label` URL parameters are ignored. Script embeds resize after the Bungee font settles, and generated iframe snippets start with a conservative width for custom labels.
+Both embed forms load these persisted labels from the button record; `label` and `pressed_label` URL parameters are ignored. Script embeds resize after the Bungee font settles, and generated iframe snippets start with a label-aware width for custom labels.
 
 **Host-page confetti (script embed only):** Add `data-confetti="true"` to opt in to a confetti celebration on the host page when someone nices. It is off by default. A standalone iframe cannot draw outside its own rectangle.
+
+See the [full API documentation](docs/API.md) for label limits, update requests, and response shapes.
 
 ```html
 <script

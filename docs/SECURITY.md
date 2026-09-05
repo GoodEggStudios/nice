@@ -71,6 +71,12 @@ Embed parameters are validated against allowlists:
 - **Sizes**: `xs`, `sm`, `md`, `lg`, `xl`
 - Invalid values fall back to defaults (no errors exposed)
 
+### Button Label Validation
+
+Button labels are validated on the server before they are stored: surrounding whitespace is trimmed, labels must be non-empty, must be no longer than 32 Unicode code points, and must not contain ASCII control characters or angle brackets. Create and update requests return separate `INVALID_LABEL` and `INVALID_PRESSED_LABEL` errors. Legacy KV records are normalized at read time, so missing or malformed values resolve to `Nice` and `Nice'd` without requiring a migration.
+
+The renderer escapes labels separately for HTML text and inline JavaScript strings. Visitor-controlled query strings cannot override the stored labels used by real embeds.
+
 ## CORS Policy
 
 All endpoints use permissive CORS:
@@ -89,8 +95,9 @@ the parent origin, so resize notifications use `targetOrigin: "*"` only for this
 non-sensitive sizing message. The loader still accepts messages only when both
 the event origin and iframe source match the expected embed. Other messages,
 including confetti and recorded events, remain origin-gated. Script embeds are
-recommended when automatic resizing is needed; copied direct iframe snippets use
-their generated dimensions and do not auto-grow after label changes.
+recommended when automatic resizing is needed; generated direct iframe snippets
+use label-aware dimensions because standalone iframes cannot auto-grow after a
+label change.
 
 ## Information Disclosure Prevention
 

@@ -12,10 +12,7 @@ patch {
 
 body:json {
   {
-    "restriction": "global",
-    "multi_nice": false,
-    "label": "Nice",
-    "pressed_label": "Nice'd"
+    "label": "Recommend"
   }
 }
 
@@ -40,8 +37,8 @@ docs {
   | theme | string | `light`, `dark`, `minimal`, `mono-dark`, `mono-light` |
   | size | string | `xs`, `sm`, `md`, `lg`, `xl` |
   | multi_nice | boolean | Enable/disable clap-style multi-nice |
-  | label | string | Visible idle label; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters are rejected |
-  | pressed_label | string | Visible pressed label; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters are rejected |
+  | label | string | Visible idle label; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters and angle brackets are rejected |
+  | pressed_label | string | Visible pressed label; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters and angle brackets are rejected |
   
   ## Response
   
@@ -54,7 +51,7 @@ docs {
     "count": 42,
     "theme": "light",
     "size": "md",
-    "label": "Nice",
+    "label": "Recommend",
     "pressed_label": "Nice'd",
     "created_at": "...",
     "embed": { ... }

@@ -189,6 +189,7 @@
       <a href="#delete">Delete Button</a>
       <a href="#nice">Record Nice</a>
       <a href="#count">Get Count</a>
+      <a href="#labels">Button labels</a>
       <a href="#embed">Embed Options</a>
     </div>
     
@@ -196,7 +197,7 @@
     <p>Create a button with a single API call — no signup required:</p>
     <pre><code>curl -X POST https://api.nice.sbs/api/v1/buttons \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com/my-article"}'</code></pre>
+  -d '{"url": "https://example.com/my-article", "label": "Recommend", "pressed_label": "Recommended"}'</code></pre>
     
     <p>Response:</p>
     <pre><code>{
@@ -207,8 +208,8 @@
   "multi_nice": false,
   "theme": "light",
   "size": "md",
-  "label": "Nice",
-  "pressed_label": "Nice'd",
+  "label": "Recommend",
+  "pressed_label": "Recommended",
   "count": 0,
   "created_at": "2026-02-18T10:00:00Z",
   "embed": {
@@ -220,6 +221,11 @@
     <div class="note">
       <p>⚠️ <strong>Save your private_id!</strong> It's only shown once and is needed to manage your button.</p>
     </div>
+
+    <h2 id="labels">Button labels</h2>
+    <p>Owners can set <code>label</code> and <code>pressed_label</code> when creating a button or update either field later. They default to <code>Nice</code> and <code>Nice'd</code>. Values are trimmed, must contain at least one non-whitespace character, may contain at most 32 Unicode code points, and must not contain ASCII control characters (<code>U+0000</code>–<code>U+001F</code>, <code>U+007F</code>) or angle brackets (<code>&lt;</code>, <code>&gt;</code>). Invalid values return <code>INVALID_LABEL</code> or <code>INVALID_PRESSED_LABEL</code> with HTTP 400.</p>
+    <p><code>pressed_label</code> applies only to single-nice rendering. It is retained in clap mode and becomes active again when clap mode is disabled; clap mode keeps <code>label</code> active on every click. Missing or malformed labels in legacy KV records resolve to the defaults at read time.</p>
+    <p>Real embed URLs do not accept label overrides. Wording comes from stored button configuration, and both script embeds and generated iframe snippets use that configuration.</p>
     
     <h2 id="create">Create Button</h2>
     
@@ -238,8 +244,8 @@
       <tr><td><code>size</code></td><td>string</td><td>No</td><td>Button size: <code>xs</code>, <code>sm</code>, <code>md</code> (default), <code>lg</code>, <code>xl</code></td></tr>
       <tr><td><code>restriction</code></td><td>string</td><td>No</td><td>Where nices are allowed from: <code>url</code> (default), <code>domain</code>, <code>global</code></td></tr>
       <tr><td><code>multi_nice</code></td><td>boolean</td><td>No</td><td>Enable clap-style multi-nice. Default: <code>false</code></td></tr>
-      <tr><td><code>label</code></td><td>string</td><td>No</td><td>Visible idle label and label for every state of a multi-nice button. Defaults to <code>Nice</code>; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters (<code>U+0000</code>–<code>U+001F</code>, <code>U+007F</code>) are rejected.</td></tr>
-      <tr><td><code>pressed_label</code></td><td>string</td><td>No</td><td>Visible label after interaction with a single-nice button. Defaults to <code>Nice'd</code>; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters (<code>U+0000</code>–<code>U+001F</code>, <code>U+007F</code>) are rejected.</td></tr>
+      <tr><td><code>label</code></td><td>string</td><td>No</td><td>Visible idle label and label for every state of a multi-nice button. Defaults to <code>Nice</code>; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters (<code>U+0000</code>–<code>U+001F</code>, <code>U+007F</code>) and angle brackets (<code>&lt;</code>, <code>&gt;</code>) are rejected.</td></tr>
+      <tr><td><code>pressed_label</code></td><td>string</td><td>No</td><td>Visible label after interaction with a single-nice button. Defaults to <code>Nice'd</code>; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters (<code>U+0000</code>–<code>U+001F</code>, <code>U+007F</code>) and angle brackets (<code>&lt;</code>, <code>&gt;</code>) are rejected.</td></tr>
     </table>
     
     <h3>Response</h3>
@@ -301,8 +307,8 @@
       <tr><td><code>theme</code></td><td>string</td><td>No</td><td><code>light</code>, <code>dark</code>, <code>minimal</code>, <code>mono-dark</code>, <code>mono-light</code></td></tr>
       <tr><td><code>size</code></td><td>string</td><td>No</td><td><code>xs</code>, <code>sm</code>, <code>md</code>, <code>lg</code>, <code>xl</code></td></tr>
       <tr><td><code>multi_nice</code></td><td>boolean</td><td>No</td><td>Enable or disable clap-style multi-nice</td></tr>
-      <tr><td><code>label</code></td><td>string</td><td>No</td><td>Update the visible idle label. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters (<code>U+0000</code>–<code>U+001F</code>, <code>U+007F</code>) are rejected.</td></tr>
-      <tr><td><code>pressed_label</code></td><td>string</td><td>No</td><td>Update the visible single-nice pressed-state label; retained when clap mode changes. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters (<code>U+0000</code>–<code>U+001F</code>, <code>U+007F</code>) are rejected.</td></tr>
+      <tr><td><code>label</code></td><td>string</td><td>No</td><td>Update the visible idle label. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters (<code>U+0000</code>–<code>U+001F</code>, <code>U+007F</code>) and angle brackets (<code>&lt;</code>, <code>&gt;</code>) are rejected.</td></tr>
+      <tr><td><code>pressed_label</code></td><td>string</td><td>No</td><td>Update the visible single-nice pressed-state label; retained when clap mode changes. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters (<code>U+0000</code>–<code>U+001F</code>, <code>U+007F</code>) and angle brackets (<code>&lt;</code>, <code>&gt;</code>) are rejected.</td></tr>
     </table>
 
     <h3>Response</h3>
@@ -404,7 +410,7 @@
     <h2 id="embed">Embed Options</h2>
     
     <h3>Script tag (Recommended)</h3>
-    <p>The script tag creates the iframe and can show effects on the host page, such as confetti:</p>
+    <p>The script tag creates the iframe and can show effects on the host page, such as confetti. It auto-resizes after the Bungee font settles:</p>
     <pre><code>&lt;script
   src="https://api.nice.sbs/embed.js"
   data-button="<span class="param">:public_id</span>"
@@ -419,17 +425,19 @@
       <tr><td><code>data-button</code></td><td>—</td><td>Public button ID (required)</td></tr>
       <tr><td><code>data-theme</code></td><td><code>light</code></td><td>Button theme</td></tr>
       <tr><td><code>data-size</code></td><td><code>md</code></td><td>Button size</td></tr>
+      <tr><td><code>data-multi</code></td><td>—</td><td>Generated as <code>1</code> when the button's stored <code>multi_nice</code> setting is enabled; do not add it independently</td></tr>
       <tr><td><code>data-confetti</code></td><td><code>false</code></td><td>Set to <code>true</code> to show confetti on the host page after a nice</td></tr>
     </table>
     <p>Remove <code>data-confetti="true"</code> to keep the button without confetti. This setting belongs to the embed placement and is not stored on the button.</p>
 
     <h3>iframe</h3>
-    <p>Use the iframe when a platform allows HTML but blocks external scripts. A standalone iframe cannot draw outside its own rectangle, so it cannot provide host-page confetti.</p>
+    <p>Use the iframe when a platform allows HTML but blocks external scripts. A standalone iframe cannot draw outside its own rectangle, so it cannot provide host-page confetti. Generated snippets use a label-aware initial width; standalone iframes cannot auto-resize after a label change.</p>
     <pre><code>&lt;iframe 
   src="https://api.nice.sbs/e/<span class="param">:public_id</span>?theme=light&size=md"
   style="border:none;width:100px;height:36px;"
   title="Nice button"&gt;
 &lt;/iframe&gt;</code></pre>
+    <p><code>100px × 36px</code> is the default-label baseline. For custom labels, use the generated iframe snippet, whose width is calculated from the stored labels.</p>
 
     <h3>Themes</h3>
     <table>
