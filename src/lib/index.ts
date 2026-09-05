@@ -27,3 +27,11 @@ export {
   urlsMatch,
   domainsMatch,
 } from "./url";
+export {
+  DEFAULT_BUTTON_LABEL,
+  DEFAULT_PRESSED_BUTTON_LABEL,
+  MAX_BUTTON_LABEL_CODE_POINTS,
+  normalizeStoredButtonLabel,
+  validateButtonLabel,
+  type ButtonLabelField,
+} from "./button-labels";

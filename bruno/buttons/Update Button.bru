@@ -12,7 +12,10 @@ patch {
 
 body:json {
   {
-    "restriction": "global"
+    "restriction": "global",
+    "multi_nice": false,
+    "label": "Nice",
+    "pressed_label": "Nice'd"
   }
 }
 
@@ -37,6 +40,8 @@ docs {
   | theme | string | `light`, `dark`, `minimal`, `mono-dark`, `mono-light` |
   | size | string | `xs`, `sm`, `md`, `lg`, `xl` |
   | multi_nice | boolean | Enable/disable clap-style multi-nice |
+  | label | string | Visible idle label; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters are rejected |
+  | pressed_label | string | Visible pressed label; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters are rejected |
   
   ## Response
   
@@ -45,9 +50,12 @@ docs {
     "id": "n_xxx",
     "url": "https://example.com",
     "restriction": "global",
+    "multi_nice": false,
     "count": 42,
     "theme": "light",
     "size": "md",
+    "label": "Nice",
+    "pressed_label": "Nice'd",
     "created_at": "...",
     "embed": { ... }
   }

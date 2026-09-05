@@ -26,6 +26,10 @@ import {
   createRateLimitResponse,
   checkRateLimit,
   rateLimitResponse,
+  DEFAULT_BUTTON_LABEL,
+  DEFAULT_PRESSED_BUTTON_LABEL,
+  normalizeStoredButtonLabel,
+  validateButtonLabel,
 } from "../lib";
 
 const VALID_RESTRICTIONS: RestrictionMode[] = ["url", "domain", "global"];
@@ -71,6 +75,8 @@ export async function createButton(
     size?: string;
     restriction?: string;
     multi_nice?: boolean;
+    label?: unknown;
+    pressed_label?: unknown;
   };
 
   try {
@@ -122,6 +128,24 @@ export async function createButton(
     );
   }
 
+  const labelResult = validateButtonLabel(
+    body.label === undefined ? DEFAULT_BUTTON_LABEL : body.label,
+    "label"
+  );
+  if (!labelResult.ok) {
+    return labelResult.response;
+  }
+
+  const pressedLabelResult = validateButtonLabel(
+    body.pressed_label === undefined
+      ? DEFAULT_PRESSED_BUTTON_LABEL
+      : body.pressed_label,
+    "pressed_label"
+  );
+  if (!pressedLabelResult.ok) {
+    return pressedLabelResult.response;
+  }
+
   // Rate limit check
   const clientIp = getClientIp(request);
   const rateLimit = await checkCreateRateLimit(env.NICE_KV, clientIp);
@@ -149,6 +173,8 @@ export async function createButton(
     multiNice: body.multi_nice || false,
     theme,
     size,
+    label: labelResult.value,
+    pressedLabel: pressedLabelResult.value,
     createdAt: new Date().toISOString(),
   };
 
@@ -173,6 +199,8 @@ export async function createButton(
       multi_nice: button.multiNice || false,
       theme,
       size,
+      label: button.label,
+      pressed_label: button.pressedLabel,
       count: 0,
       created_at: button.createdAt,
       embed,
@@ -229,6 +257,15 @@ export async function getButtonStats(
     button.size || "md"
   );
 
+  const label = normalizeStoredButtonLabel(
+    button.label,
+    DEFAULT_BUTTON_LABEL
+  );
+  const pressedLabel = normalizeStoredButtonLabel(
+    button.pressedLabel,
+    DEFAULT_PRESSED_BUTTON_LABEL
+  );
+
   return Response.json({
     id: publicId,
     url: button.url,
@@ -237,6 +274,8 @@ export async function getButtonStats(
     count: button.count,
     theme: button.theme,
     size: button.size,
+    label,
+    pressed_label: pressedLabel,
     created_at: button.createdAt,
     embed,
   });
@@ -264,6 +303,8 @@ export async function updateButton(
     theme?: string;
     size?: string;
     multi_nice?: boolean;
+    label?: unknown;
+    pressed_label?: unknown;
   };
 
   try {
@@ -296,6 +337,22 @@ export async function updateButton(
   }
 
   const button: Button = JSON.parse(buttonData);
+
+  const labelResult =
+    body.label === undefined
+      ? undefined
+      : validateButtonLabel(body.label, "label");
+  if (labelResult && !labelResult.ok) {
+    return labelResult.response;
+  }
+
+  const pressedLabelResult =
+    body.pressed_label === undefined
+      ? undefined
+      : validateButtonLabel(body.pressed_label, "pressed_label");
+  if (pressedLabelResult && !pressedLabelResult.ok) {
+    return pressedLabelResult.response;
+  }
 
   // Update allowed fields
   if (body.restriction !== undefined) {
@@ -332,6 +389,14 @@ export async function updateButton(
     button.multiNice = body.multi_nice;
   }
 
+  if (labelResult) {
+    button.label = labelResult.value;
+  }
+
+  if (pressedLabelResult) {
+    button.pressedLabel = pressedLabelResult.value;
+  }
+
   // Save updated button
   await env.NICE_KV.put(`btn:${publicId}`, JSON.stringify(button));
 
@@ -345,6 +410,15 @@ export async function updateButton(
     button.size || "md"
   );
 
+  const label = normalizeStoredButtonLabel(
+    button.label,
+    DEFAULT_BUTTON_LABEL
+  );
+  const pressedLabel = normalizeStoredButtonLabel(
+    button.pressedLabel,
+    DEFAULT_PRESSED_BUTTON_LABEL
+  );
+
   return Response.json({
     id: publicId,
     url: button.url,
@@ -353,6 +427,8 @@ export async function updateButton(
     count: button.count,
     theme: button.theme,
     size: button.size,
+    label,
+    pressed_label: pressedLabel,
     created_at: button.createdAt,
     embed,
   });
