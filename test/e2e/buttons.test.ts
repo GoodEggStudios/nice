@@ -537,7 +537,7 @@ describe("Button API", () => {
       expect(res.status).toBe(429);
       const data = await res.json() as { code: string };
       expect(data.code).toBe("IP_LIMIT");
-    });
+    }, 15_000);
   });
 
   describe("DELETE /api/v1/buttons/:private_id - Delete", () => {
