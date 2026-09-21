@@ -377,7 +377,7 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 
 The script tag creates the iframe and can show effects on the host page, such as confetti:
 
-Embeds use the button owner's persisted `label` and `pressed_label` values. URL parameters with those names are ignored. Script embeds auto-resize after the Bungee font settles; generated direct-iframe snippets include a label-aware initial width because a standalone iframe cannot receive host-side resize updates.
+Embeds use the button owner's persisted label, pressed label, and appearance settings (`colors`, `shape`, count visibility/position/format, and animation). URL parameters with those names are ignored. Script embeds auto-resize after the Bungee font settles; generated direct-iframe snippets include a label-aware initial width because a standalone iframe cannot receive host-side resize updates. Stored button animation runs inside the iframe; `data-confetti` is a separate host-page effect.
 
 ```html
 <script

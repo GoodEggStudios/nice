@@ -1,4 +1,5 @@
 import { getEmbedInitialDimensions } from "../../../src/routes/embed-constants";
+import type { ButtonAnimation, ButtonShape, CountFormat, CountPosition, CountVisibility, PublicButtonColors } from "../../../src/lib/button-appearance";
 
 export const VISUAL_BUTTON_ID = "n_visual0001";
 export const VISUAL_PRIVATE_ID = "ns_visual00000000000001";
@@ -15,6 +16,12 @@ export interface VisualButtonStats {
   size: "xs" | "sm" | "md" | "lg" | "xl";
   label: string;
   pressed_label: string;
+  colors: PublicButtonColors | null;
+  shape: ButtonShape;
+  count_visibility: CountVisibility;
+  count_position: CountPosition;
+  count_format: CountFormat;
+  animation: ButtonAnimation;
   created_at: string;
   embed?: { iframe: string; script: string };
 }
@@ -44,6 +51,12 @@ export function mockButtonStats(overrides: Partial<VisualButtonStats> = {}): Vis
     size: "md",
     label: "Nice",
     pressed_label: "Nice'd",
+    colors: null,
+    shape: "rounded",
+    count_visibility: "nonzero",
+    count_position: "inside",
+    count_format: "compact",
+    animation: "pop",
     created_at: VISUAL_CREATED_AT,
     ...overrides,
   };
@@ -63,6 +76,12 @@ export function mockCreateButtonResponse(overrides: Partial<VisualButtonStats> =
     count: stats.count,
     label: stats.label,
     pressed_label: stats.pressed_label,
+    colors: stats.colors,
+    shape: stats.shape,
+    count_visibility: stats.count_visibility,
+    count_position: stats.count_position,
+    count_format: stats.count_format,
+    animation: stats.animation,
     created_at: stats.created_at,
     embed: mockEmbed(stats),
   };

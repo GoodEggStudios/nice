@@ -1,5 +1,6 @@
 import type { Page, Route } from "@playwright/test";
 import { generateBadge, normalizeTheme } from "../../../src/lib/badge";
+import type { PublicButtonColors } from "../../../src/lib/button-appearance";
 import { renderEmbedHtml, renderDemoEmbedHtml, renderEmbedScript, type EmbedSize, type EmbedTheme } from "../../../src/routes/embed";
 import type { EmbedAppearance } from "../../../src/routes/embed-constants";
 import { mockButtonStats, mockCreateButtonResponse, VISUAL_BUTTON_ID, type VisualButtonStats } from "./data";
@@ -15,6 +16,7 @@ export interface NiceApiMockOptions {
   createStatus?: number;
   createErrorCode?: string;
   createError?: string;
+  createResponse?: Partial<VisualButtonStats>;
   buttonPatchStatus?: number;
   buttonPatchErrorCode?: string;
   buttonPatchError?: string;
@@ -116,18 +118,25 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
       return;
     }
     const body = route.request().postDataJSON() as Record<string, unknown>;
+    const colors = body.colors && typeof body.colors === "object"
+      ? body.colors as PublicButtonColors
+      : null;
+    // Echo the request by default, then let createResponse win so tests can
+    // simulate a normalized server payload that differs from the submitted form.
     stats = mockButtonStats({
       count,
       multi_nice: typeof body.multi_nice === "boolean" ? body.multi_nice : multiNice,
       label: typeof body.label === "string" ? body.label : "Nice",
       pressed_label: typeof body.pressed_label === "string" ? body.pressed_label : "Nice'd",
+      colors,
+      shape: typeof body.shape === "string" ? body.shape as VisualButtonStats["shape"] : "rounded",
+      count_visibility: typeof body.count_visibility === "string" ? body.count_visibility as VisualButtonStats["count_visibility"] : "nonzero",
+      count_position: typeof body.count_position === "string" ? body.count_position as VisualButtonStats["count_position"] : "inside",
+      count_format: typeof body.count_format === "string" ? body.count_format as VisualButtonStats["count_format"] : "compact",
+      animation: typeof body.animation === "string" ? body.animation as VisualButtonStats["animation"] : "pop",
+      ...options.createResponse,
     });
-    await fulfillJson(route, mockCreateButtonResponse({
-      count: stats.count,
-      multi_nice: stats.multi_nice,
-      label: stats.label,
-      pressed_label: stats.pressed_label,
-    }), 201);
+    await fulfillJson(route, mockCreateButtonResponse(stats), 201);
   });
 
   await page.route(/https:\/\/api\.nice\.sbs\/api\/v1\/buttons\/stats\/ns_.*/, async (route) => {
