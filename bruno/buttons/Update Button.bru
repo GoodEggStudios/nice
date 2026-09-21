@@ -12,7 +12,10 @@ patch {
 
 body:json {
   {
-    "label": "Recommend"
+    "label": "Recommend",
+    "shape": "pill",
+    "count_visibility": "always",
+    "animation": "bounce"
   }
 }
 
@@ -39,6 +42,12 @@ docs {
   | multi_nice | boolean | Enable/disable clap-style multi-nice |
   | label | string | Visible idle label; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters and angle brackets are rejected |
   | pressed_label | string | Visible pressed label; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters and angle brackets are rejected |
+  | colors | object or null | Replace the complete six-key `#RRGGBB` palette, or clear it with `null` |
+  | shape | string | `rounded`, `pill`, `square` |
+  | count_visibility | string | `nonzero`, `always`, `hidden` |
+  | count_position | string | `inside`, `beside`, `below` |
+  | count_format | string | `compact`, `full` |
+  | animation | string | `pop`, `bounce`, `sparkle`, `confetti`, `none` |
   
   ## Response
   
@@ -53,6 +62,12 @@ docs {
     "size": "md",
     "label": "Recommend",
     "pressed_label": "Nice'd",
+    "colors": null,
+    "shape": "pill",
+    "count_visibility": "always",
+    "count_position": "inside",
+    "count_format": "compact",
+    "animation": "bounce",
     "created_at": "...",
     "embed": { ... }
   }

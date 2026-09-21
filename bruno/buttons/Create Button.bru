@@ -18,7 +18,13 @@ body:json {
     "restriction": "url",
     "multi_nice": false,
     "label": "Nice",
-    "pressed_label": "Nice'd"
+    "pressed_label": "Nice'd",
+    "colors": null,
+    "shape": "rounded",
+    "count_visibility": "nonzero",
+    "count_position": "inside",
+    "count_format": "compact",
+    "animation": "pop"
   }
 }
 
@@ -45,6 +51,12 @@ docs {
   | multi_nice | boolean | No | Enable clap-style multi-nice (default: false) |
   | label | string | No | Visible idle label; defaults to Nice; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters and angle brackets are rejected |
   | pressed_label | string | No | Visible pressed label; defaults to Nice'd; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters and angle brackets are rejected |
+  | colors | object or null | No | Complete six-key `#RRGGBB` palette, or `null` for theme colours |
+  | shape | string | No | rounded (default), pill, square |
+  | count_visibility | string | No | nonzero (default), always, hidden |
+  | count_position | string | No | inside (default), beside, below |
+  | count_format | string | No | compact (default), full |
+  | animation | string | No | pop (default), bounce, sparkle, confetti, none |
   
   ## Response
 
@@ -59,6 +71,12 @@ docs {
     "size": "md",
     "label": "Nice",
     "pressed_label": "Nice'd",
+    "colors": null,
+    "shape": "rounded",
+    "count_visibility": "nonzero",
+    "count_position": "inside",
+    "count_format": "compact",
+    "animation": "pop",
     "count": 0,
     "created_at": "2026-02-18T10:00:00Z",
     "embed": { ... }

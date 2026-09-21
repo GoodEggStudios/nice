@@ -30,6 +30,15 @@ import {
   DEFAULT_PRESSED_BUTTON_LABEL,
   normalizeStoredButtonLabel,
   validateButtonLabel,
+  DEFAULT_BUTTON_SHAPE,
+  DEFAULT_COUNT_VISIBILITY,
+  DEFAULT_COUNT_POSITION,
+  DEFAULT_COUNT_FORMAT,
+  DEFAULT_BUTTON_ANIMATION,
+  validateAppearance,
+  applyAppearanceValues,
+  getButtonAppearance,
+  type AppearanceBody,
 } from "../lib";
 
 const VALID_RESTRICTIONS: RestrictionMode[] = ["url", "domain", "global"];
@@ -80,7 +89,7 @@ export async function createButton(
     multi_nice?: boolean;
     label?: unknown;
     pressed_label?: unknown;
-  };
+  } & AppearanceBody;
 
   try {
     body = await request.json();
@@ -149,6 +158,11 @@ export async function createButton(
     return pressedLabelResult.response;
   }
 
+  const appearanceResult = validateAppearance(body);
+  if (!appearanceResult.ok) {
+    return appearanceResult.response;
+  }
+
   // Rate limit check
   const clientIp = getClientIp(request);
   const rateLimit = await checkCreateRateLimit(env.NICE_KV, clientIp);
@@ -178,6 +192,16 @@ export async function createButton(
     size,
     label: labelResult.value,
     pressedLabel: pressedLabelResult.value,
+    ...(appearanceResult.value.colors
+      ? { colors: appearanceResult.value.colors }
+      : {}),
+    shape: appearanceResult.value.shape ?? DEFAULT_BUTTON_SHAPE,
+    countVisibility:
+      appearanceResult.value.countVisibility ?? DEFAULT_COUNT_VISIBILITY,
+    countPosition:
+      appearanceResult.value.countPosition ?? DEFAULT_COUNT_POSITION,
+    countFormat: appearanceResult.value.countFormat ?? DEFAULT_COUNT_FORMAT,
+    animation: appearanceResult.value.animation ?? DEFAULT_BUTTON_ANIMATION,
     createdAt: new Date().toISOString(),
   };
 
@@ -212,6 +236,7 @@ export async function createButton(
       size,
       label: button.label,
       pressed_label: button.pressedLabel,
+      ...getButtonAppearance(button),
       count: 0,
       created_at: button.createdAt,
       embed,
@@ -290,6 +315,7 @@ export async function getButtonStats(
     size: button.size,
     label,
     pressed_label: pressedLabel,
+    ...getButtonAppearance(button),
     created_at: button.createdAt,
     embed,
   });
@@ -319,7 +345,7 @@ export async function updateButton(
     multi_nice?: boolean;
     label?: unknown;
     pressed_label?: unknown;
-  };
+  } & AppearanceBody;
 
   try {
     body = await request.json();
@@ -368,7 +394,12 @@ export async function updateButton(
     return pressedLabelResult.response;
   }
 
-  // Update allowed fields
+  const appearanceResult = validateAppearance(body);
+  if (!appearanceResult.ok) {
+    return appearanceResult.response;
+  }
+
+  let restriction: RestrictionMode | undefined;
   if (body.restriction !== undefined) {
     if (!VALID_RESTRICTIONS.includes(body.restriction as RestrictionMode)) {
       return Response.json(
@@ -376,9 +407,10 @@ export async function updateButton(
         { status: 400 }
       );
     }
-    button.restriction = body.restriction as RestrictionMode;
+    restriction = body.restriction as RestrictionMode;
   }
 
+  let theme: string | undefined;
   if (body.theme !== undefined) {
     if (!EMBED_THEMES.includes(body.theme as EmbedTheme)) {
       return Response.json(
@@ -386,9 +418,10 @@ export async function updateButton(
         { status: 400 }
       );
     }
-    button.theme = body.theme;
+    theme = body.theme;
   }
 
+  let size: string | undefined;
   if (body.size !== undefined) {
     if (!EMBED_SIZES.includes(body.size as EmbedSize)) {
       return Response.json(
@@ -396,7 +429,20 @@ export async function updateButton(
         { status: 400 }
       );
     }
-    button.size = body.size;
+    size = body.size;
+  }
+
+  // Update allowed fields
+  if (restriction !== undefined) {
+    button.restriction = restriction;
+  }
+
+  if (theme !== undefined) {
+    button.theme = theme;
+  }
+
+  if (size !== undefined) {
+    button.size = size;
   }
 
   if (body.multi_nice !== undefined) {
@@ -410,6 +456,8 @@ export async function updateButton(
   if (pressedLabelResult) {
     button.pressedLabel = pressedLabelResult.value;
   }
+
+  applyAppearanceValues(button, appearanceResult.value);
 
   // Save updated button
   await env.NICE_KV.put(`btn:${publicId}`, JSON.stringify(button));
@@ -446,6 +494,7 @@ export async function updateButton(
     size: button.size,
     label,
     pressed_label: pressedLabel,
+    ...getButtonAppearance(button),
     created_at: button.createdAt,
     embed,
   });

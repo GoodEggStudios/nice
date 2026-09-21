@@ -35,6 +35,12 @@ describe("Button API", () => {
       expect(data.restriction).toBe("url");
       expect(data.label).toBe("Nice");
       expect(data.pressed_label).toBe("Nice'd");
+      expect(data.colors).toBeNull();
+      expect(data.shape).toBe("rounded");
+      expect(data.count_visibility).toBe("nonzero");
+      expect(data.count_position).toBe("inside");
+      expect(data.count_format).toBe("compact");
+      expect(data.animation).toBe("pop");
       expect(data.embed).toBeDefined();
       expect(data.created_at).toBeTruthy();
     });
@@ -70,6 +76,51 @@ describe("Button API", () => {
       expect(data.theme).toBe("dark");
       expect(data.size).toBe("lg");
       expect(data.restriction).toBe("global");
+    });
+
+    it("should create and return a fully customized appearance", async () => {
+      const data = await createButton("https://example.com/appearance", {
+        colors: {
+          background: "#aabbcc",
+          foreground: "#DDEEFF",
+          border: "#112233",
+          pressed_background: "#445566",
+          pressed_foreground: "#778899",
+          pressed_border: "#a1b2c3",
+        },
+        shape: "pill",
+        count_visibility: "always",
+        count_position: "beside",
+        count_format: "full",
+        animation: "confetti",
+      });
+
+      expect(data.colors).toEqual({
+        background: "#AABBCC",
+        foreground: "#DDEEFF",
+        border: "#112233",
+        pressed_background: "#445566",
+        pressed_foreground: "#778899",
+        pressed_border: "#A1B2C3",
+      });
+      expect(data.shape).toBe("pill");
+      expect(data.count_visibility).toBe("always");
+      expect(data.count_position).toBe("beside");
+      expect(data.count_format).toBe("full");
+      expect(data.animation).toBe("confetti");
+
+      const stats = await SELF.fetch(
+        `https://api.nice.sbs/api/v1/buttons/stats/${data.private_id}`
+      );
+      expect(stats.status).toBe(200);
+      await expect(stats.json()).resolves.toMatchObject({
+        colors: data.colors,
+        shape: "pill",
+        count_visibility: "always",
+        count_position: "beside",
+        count_format: "full",
+        animation: "confetti",
+      });
     });
 
     it("should generate embed snippets", async () => {
@@ -211,12 +262,24 @@ describe("Button API", () => {
         count: number;
         label: string;
         pressed_label: string;
+        colors: unknown;
+        shape: string;
+        count_visibility: string;
+        count_position: string;
+        count_format: string;
+        animation: string;
       };
       expect(data.id).toBe(button.public_id);
       expect(data.url).toBe("https://example.com/stats-test");
       expect(data.count).toBe(0);
       expect(data.label).toBe("Nice");
       expect(data.pressed_label).toBe("Nice'd");
+      expect(data.colors).toBeNull();
+      expect(data.shape).toBe("rounded");
+      expect(data.count_visibility).toBe("nonzero");
+      expect(data.count_position).toBe("inside");
+      expect(data.count_format).toBe("compact");
+      expect(data.animation).toBe("pop");
     });
 
     it("should return defaults for a pre-feature record without labels", async () => {
@@ -227,6 +290,12 @@ describe("Button API", () => {
       const legacyButton = JSON.parse(stored as string) as Record<string, unknown>;
       delete legacyButton.label;
       delete legacyButton.pressedLabel;
+      delete legacyButton.colors;
+      delete legacyButton.shape;
+      delete legacyButton.countVisibility;
+      delete legacyButton.countPosition;
+      delete legacyButton.countFormat;
+      delete legacyButton.animation;
       await env.NICE_KV.put(`btn:${button.public_id}`, JSON.stringify(legacyButton));
 
       const res = await SELF.fetch(
@@ -234,9 +303,58 @@ describe("Button API", () => {
       );
 
       expect(res.status).toBe(200);
-      const data = await res.json() as { label: string; pressed_label: string };
+      const data = await res.json() as {
+        label: string;
+        pressed_label: string;
+        colors: unknown;
+        shape: string;
+        count_visibility: string;
+        count_position: string;
+        count_format: string;
+        animation: string;
+      };
       expect(data.label).toBe("Nice");
       expect(data.pressed_label).toBe("Nice'd");
+      expect(data.colors).toBeNull();
+      expect(data.shape).toBe("rounded");
+      expect(data.count_visibility).toBe("nonzero");
+      expect(data.count_position).toBe("inside");
+      expect(data.count_format).toBe("compact");
+      expect(data.animation).toBe("pop");
+    });
+
+    it("should safely normalize malformed legacy appearance fields", async () => {
+      const button = await createButton("https://example.com/malformed-appearance");
+      const stored = await env.NICE_KV.get(`btn:${button.public_id}`);
+      const legacyButton = JSON.parse(stored as string) as Record<string, unknown>;
+      legacyButton.colors = {
+        background: "red",
+        foreground: "#DDEEFF",
+        border: "#112233",
+        pressedBackground: "#445566",
+        pressedForeground: "#778899",
+        pressedBorder: "#A1B2C3",
+      };
+      legacyButton.shape = "circle";
+      legacyButton.countVisibility = [];
+      legacyButton.countPosition = "outside";
+      legacyButton.countFormat = 42;
+      legacyButton.animation = { name: "confetti" };
+      await env.NICE_KV.put(`btn:${button.public_id}`, JSON.stringify(legacyButton));
+
+      const res = await SELF.fetch(
+        `https://api.nice.sbs/api/v1/buttons/stats/${button.private_id}`
+      );
+
+      expect(res.status).toBe(200);
+      await expect(res.json()).resolves.toMatchObject({
+        colors: null,
+        shape: "rounded",
+        count_visibility: "nonzero",
+        count_position: "inside",
+        count_format: "compact",
+        animation: "pop",
+      });
     });
 
     it("should return 404 for unknown private ID", async () => {
@@ -315,6 +433,51 @@ describe("Button API", () => {
       expect(data.size).toBe("xl");
     });
 
+    it("should patch each appearance enum while preserving the others", async () => {
+      const button = await createButton("https://example.com/appearance-patch", {
+        shape: "pill",
+        count_visibility: "always",
+        count_position: "beside",
+        count_format: "full",
+        animation: "bounce",
+      });
+      const updates = [
+        ["shape", "square"],
+        ["count_visibility", "hidden"],
+        ["count_position", "below"],
+        ["count_format", "compact"],
+        ["animation", "none"],
+      ] as const;
+      const expected = {
+        shape: "pill",
+        count_visibility: "always",
+        count_position: "beside",
+        count_format: "full",
+        animation: "bounce",
+      };
+
+      for (const [field, value] of updates) {
+        const res = await SELF.fetch(
+          `https://api.nice.sbs/api/v1/buttons/${button.private_id}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ [field]: value }),
+          }
+        );
+
+        expect(res.status).toBe(200);
+        const data = await res.json() as Record<string, unknown>;
+        expected[field] = value;
+        expect(data[field]).toBe(value);
+        expect(data.shape).toBe(expected.shape);
+        expect(data.count_visibility).toBe(expected.count_visibility);
+        expect(data.count_position).toBe(expected.count_position);
+        expect(data.count_format).toBe(expected.count_format);
+        expect(data.animation).toBe(expected.animation);
+      }
+    });
+
     it("should preserve other fields when partially updating", async () => {
       const button = await createButton("https://example.com/partial", {
         theme: "dark",
@@ -337,6 +500,135 @@ describe("Button API", () => {
       expect(data.theme).toBe("minimal");
       expect(data.size).toBe("lg"); // preserved
       expect(data.restriction).toBe("domain"); // preserved
+    });
+
+    it("should replace a palette atomically and reset it with null", async () => {
+      const button = await createButton("https://example.com/palette-patch", {
+        colors: {
+          background: "#111111",
+          foreground: "#222222",
+          border: "#333333",
+          pressed_background: "#444444",
+          pressed_foreground: "#555555",
+          pressed_border: "#666666",
+        },
+        shape: "pill",
+      });
+      const replacement = {
+        background: "#aabbcc",
+        foreground: "#DDEEFF",
+        border: "#112233",
+        pressed_background: "#445566",
+        pressed_foreground: "#778899",
+        pressed_border: "#a1b2c3",
+      };
+
+      const replace = await SELF.fetch(
+        `https://api.nice.sbs/api/v1/buttons/${button.private_id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ colors: replacement }),
+        }
+      );
+      expect(replace.status).toBe(200);
+      await expect(replace.json()).resolves.toMatchObject({
+        colors: {
+          background: "#AABBCC",
+          foreground: "#DDEEFF",
+          border: "#112233",
+          pressed_background: "#445566",
+          pressed_foreground: "#778899",
+          pressed_border: "#A1B2C3",
+        },
+        shape: "pill",
+      });
+
+      const reset = await SELF.fetch(
+        `https://api.nice.sbs/api/v1/buttons/${button.private_id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ colors: null }),
+        }
+      );
+      expect(reset.status).toBe(200);
+      await expect(reset.json()).resolves.toMatchObject({
+        colors: null,
+        shape: "pill",
+      });
+    });
+
+    it("should reject invalid appearance PATCH values without mutation", async () => {
+      const button = await createButton("https://example.com/invalid-appearance", {
+        colors: {
+          background: "#111111",
+          foreground: "#222222",
+          border: "#333333",
+          pressed_background: "#444444",
+          pressed_foreground: "#555555",
+          pressed_border: "#666666",
+        },
+        shape: "pill",
+        count_visibility: "always",
+        count_position: "beside",
+        count_format: "full",
+        animation: "bounce",
+      });
+      const cases = [
+        { field: "colors", value: { background: "red" }, code: "INVALID_COLORS" },
+        { field: "shape", value: "circle", code: "INVALID_SHAPE" },
+        {
+          field: "count_visibility",
+          value: "sometimes",
+          code: "INVALID_COUNT_VISIBILITY",
+        },
+        {
+          field: "count_position",
+          value: "outside",
+          code: "INVALID_COUNT_POSITION",
+        },
+        { field: "count_format", value: "pretty", code: "INVALID_COUNT_FORMAT" },
+        { field: "animation", value: "wiggle", code: "INVALID_ANIMATION" },
+      ];
+
+      for (const testCase of cases) {
+        const res = await SELF.fetch(
+          `https://api.nice.sbs/api/v1/buttons/${button.private_id}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              [testCase.field]: testCase.value,
+              theme: "dark",
+            }),
+          }
+        );
+
+        expect(res.status).toBe(400);
+        const data = await res.json() as { code: string };
+        expect(data.code).toBe(testCase.code);
+      }
+
+      const stats = await SELF.fetch(
+        `https://api.nice.sbs/api/v1/buttons/stats/${button.private_id}`
+      );
+      await expect(stats.json()).resolves.toMatchObject({
+        colors: {
+          background: "#111111",
+          foreground: "#222222",
+          border: "#333333",
+          pressed_background: "#444444",
+          pressed_foreground: "#555555",
+          pressed_border: "#666666",
+        },
+        theme: "light",
+        shape: "pill",
+        count_visibility: "always",
+        count_position: "beside",
+        count_format: "full",
+        animation: "bounce",
+      });
     });
 
     it("should update one label while preserving the other settings", async () => {
