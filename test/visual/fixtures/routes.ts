@@ -2,10 +2,15 @@ import type { Page, Route } from "@playwright/test";
 import { generateBadge, normalizeTheme } from "../../../src/lib/badge";
 import type { PublicButtonColors } from "../../../src/lib/button-appearance";
 import { renderEmbedHtml, renderDemoEmbedHtml, renderEmbedScript, type EmbedSize, type EmbedTheme } from "../../../src/routes/embed";
-import type { EmbedAppearance } from "../../../src/routes/embed-constants";
-import { mockButtonStats, mockCreateButtonResponse, VISUAL_BUTTON_ID, type VisualButtonStats } from "./data";
-
-type VisualAppearance = Pick<VisualButtonStats, "colors" | "shape" | "count_visibility" | "count_position" | "count_format" | "animation">;
+import {
+  mockButtonStats,
+  mockCreateButtonResponse,
+  normalizeVisualAppearance,
+  VISUAL_BUTTON_ID,
+  type VisualAppearanceOverrides,
+  type VisualButtonStats,
+  type VisualButtonStatsOverrides,
+} from "./data";
 
 export interface NiceApiMockOptions {
   count?: number;
@@ -14,18 +19,17 @@ export interface NiceApiMockOptions {
   multiNice?: boolean;
   label?: string;
   pressedLabel?: string;
-  appearance?: EmbedAppearance;
+  appearance?: VisualAppearanceOverrides;
   createStatus?: number;
   createErrorCode?: string;
   createError?: string;
-  createResponse?: Partial<VisualButtonStats>;
+  createResponse?: VisualButtonStatsOverrides;
   buttonPatchStatus?: number;
   buttonPatchErrorCode?: string;
   buttonPatchError?: string;
-  appearance?: Partial<VisualAppearance>;
   theme?: VisualButtonStats["theme"];
   buttonPatchDelay?: number;
-  buttonPatchResponse?: Partial<VisualButtonStats>;
+  buttonPatchResponse?: VisualButtonStatsOverrides;
   buttonPatchNetworkError?: boolean;
 }
 
@@ -46,7 +50,7 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
     ...(options.theme === undefined ? {} : { theme: options.theme }),
     ...(options.label === undefined ? {} : { label: options.label }),
     ...(options.pressedLabel === undefined ? {} : { pressed_label: options.pressedLabel }),
-    ...options.appearance,
+    ...normalizeVisualAppearance(options.appearance),
   });
 
   await page.route("https://api.nice.sbs/embed.js", async (route) => {
@@ -68,7 +72,7 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
           size,
           label: stats.label,
           pressedLabel: stats.pressed_label,
-          appearance: options.appearance,
+          appearance: stats,
         })
       : renderEmbedHtml({
           apiBase: "https://api.nice.sbs",
@@ -78,7 +82,7 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
           multiNice: url.searchParams.get("multi") === "1" || multiNice,
           label: stats.label,
           pressedLabel: stats.pressed_label,
-          appearance: options.appearance,
+          appearance: stats,
         });
     await route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body });
   });
@@ -137,12 +141,14 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
       multi_nice: typeof body.multi_nice === "boolean" ? body.multi_nice : multiNice,
       label: typeof body.label === "string" ? body.label : "Nice",
       pressed_label: typeof body.pressed_label === "string" ? body.pressed_label : "Nice'd",
-      colors,
-      shape: typeof body.shape === "string" ? body.shape as VisualButtonStats["shape"] : "rounded",
-      count_visibility: typeof body.count_visibility === "string" ? body.count_visibility as VisualButtonStats["count_visibility"] : "nonzero",
-      count_position: typeof body.count_position === "string" ? body.count_position as VisualButtonStats["count_position"] : "inside",
-      count_format: typeof body.count_format === "string" ? body.count_format as VisualButtonStats["count_format"] : "compact",
-      animation: typeof body.animation === "string" ? body.animation as VisualButtonStats["animation"] : "pop",
+      ...normalizeVisualAppearance({
+        colors,
+        shape: typeof body.shape === "string" ? body.shape as VisualButtonStats["shape"] : undefined,
+        count_visibility: typeof body.count_visibility === "string" ? body.count_visibility as VisualButtonStats["count_visibility"] : undefined,
+        count_position: typeof body.count_position === "string" ? body.count_position as VisualButtonStats["count_position"] : undefined,
+        count_format: typeof body.count_format === "string" ? body.count_format as VisualButtonStats["count_format"] : undefined,
+        animation: typeof body.animation === "string" ? body.animation as VisualButtonStats["animation"] : undefined,
+      }),
       ...options.createResponse,
     });
     await fulfillJson(route, mockCreateButtonResponse(stats), 201);
@@ -178,6 +184,18 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
       return;
     }
     const body = route.request().postDataJSON() as Record<string, unknown>;
+    const appearance = normalizeVisualAppearance({
+      colors: body.colors === null
+        ? null
+        : typeof body.colors === "object"
+          ? body.colors as VisualAppearanceOverrides["colors"]
+          : undefined,
+      shape: typeof body.shape === "string" ? body.shape as VisualButtonStats["shape"] : undefined,
+      count_visibility: typeof body.count_visibility === "string" ? body.count_visibility as VisualButtonStats["count_visibility"] : undefined,
+      count_position: typeof body.count_position === "string" ? body.count_position as VisualButtonStats["count_position"] : undefined,
+      count_format: typeof body.count_format === "string" ? body.count_format as VisualButtonStats["count_format"] : undefined,
+      animation: typeof body.animation === "string" ? body.animation as VisualButtonStats["animation"] : undefined,
+    }, stats);
     stats = mockButtonStats({
       ...stats,
       multi_nice: typeof body.multi_nice === "boolean" ? body.multi_nice : stats.multi_nice,
@@ -186,12 +204,7 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
       restriction: typeof body.restriction === "string" ? body.restriction as VisualButtonStats["restriction"] : stats.restriction,
       theme: typeof body.theme === "string" ? body.theme as VisualButtonStats["theme"] : stats.theme,
       size: typeof body.size === "string" ? body.size as VisualButtonStats["size"] : stats.size,
-      colors: body.colors === null || typeof body.colors === "object" ? body.colors as VisualButtonStats["colors"] : stats.colors,
-      shape: typeof body.shape === "string" ? body.shape as VisualButtonStats["shape"] : stats.shape,
-      count_visibility: typeof body.count_visibility === "string" ? body.count_visibility as VisualButtonStats["count_visibility"] : stats.count_visibility,
-      count_position: typeof body.count_position === "string" ? body.count_position as VisualButtonStats["count_position"] : stats.count_position,
-      count_format: typeof body.count_format === "string" ? body.count_format as VisualButtonStats["count_format"] : stats.count_format,
-      animation: typeof body.animation === "string" ? body.animation as VisualButtonStats["animation"] : stats.animation,
+      ...appearance,
       ...options.buttonPatchResponse,
     });
     await fulfillJson(route, stats);

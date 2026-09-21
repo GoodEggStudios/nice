@@ -17,6 +17,7 @@ async function openCreatePage(page: Page) {
   await page.goto(`${server.origin}/create`);
 }
 
+test.describe("create appearance", () => {
 test("create defaults select the expected appearance values", async ({ page }) => {
   await openCreatePage(page);
 
@@ -267,4 +268,5 @@ test("appearance radios remain keyboard-operable", async ({ page }) => {
   await expect(pill).toBeChecked();
   await expect(page.locator("#previewButton")).toHaveClass(/shape-pill/);
   await expect(pill.locator(".." )).toHaveCSS("outline-style", "solid");
+});
 });

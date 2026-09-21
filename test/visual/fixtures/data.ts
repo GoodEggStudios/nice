@@ -18,6 +18,15 @@ export const VISUAL_PRIVATE_ID = "ns_visual00000000000001";
 export const VISUAL_URL = "https://example.com/articles/visual-button";
 export const VISUAL_CREATED_AT = "2026-06-27T12:00:00.000Z";
 
+const DEFAULT_VISUAL_COLORS: PublicButtonColors = {
+  background: "#F3F4F6",
+  foreground: "#374151",
+  border: "#D1D5DB",
+  pressed_background: "#FEF3C7",
+  pressed_foreground: "#92400E",
+  pressed_border: "#F59E0B",
+};
+
 export interface VisualButtonStats {
   id: string;
   url: string;
@@ -38,6 +47,45 @@ export interface VisualButtonStats {
   embed?: { iframe: string; script: string };
 }
 
+export type VisualAppearance = Pick<
+  VisualButtonStats,
+  "colors" | "shape" | "count_visibility" | "count_position" | "count_format" | "animation"
+>;
+
+export type VisualAppearanceOverrides = Omit<Partial<VisualAppearance>, "colors"> & {
+  colors?: Partial<PublicButtonColors> | null;
+};
+
+export type VisualButtonStatsOverrides = Omit<Partial<VisualButtonStats>, keyof VisualAppearance> &
+  VisualAppearanceOverrides;
+
+export function normalizeVisualAppearance(
+  overrides: VisualAppearanceOverrides = {},
+  base: VisualAppearance = {
+    colors: null,
+    shape: DEFAULT_BUTTON_SHAPE,
+    count_visibility: DEFAULT_COUNT_VISIBILITY,
+    count_position: DEFAULT_COUNT_POSITION,
+    count_format: DEFAULT_COUNT_FORMAT,
+    animation: DEFAULT_BUTTON_ANIMATION,
+  },
+): VisualAppearance {
+  const colors = overrides.colors === undefined
+    ? base.colors
+    : overrides.colors === null
+      ? null
+      : { ...DEFAULT_VISUAL_COLORS, ...base.colors, ...overrides.colors };
+
+  return {
+    colors,
+    shape: overrides.shape ?? base.shape,
+    count_visibility: overrides.count_visibility ?? base.count_visibility,
+    count_position: overrides.count_position ?? base.count_position,
+    count_format: overrides.count_format ?? base.count_format,
+    animation: overrides.animation ?? base.animation,
+  };
+}
+
 function mockEmbed(stats: VisualButtonStats) {
   const multi = stats.multi_nice ? "&multi=1" : "";
   const dimensions = getEmbedInitialDimensions(
@@ -45,6 +93,8 @@ function mockEmbed(stats: VisualButtonStats) {
     stats.label,
     stats.pressed_label,
     stats.multi_nice,
+    stats.count,
+    stats,
   );
   return {
     iframe: `<iframe src="https://api.nice.sbs/e/${stats.id}?theme=${stats.theme}&size=${stats.size}${multi}" style="background:transparent;border:none;overflow:hidden;display:block;color-scheme:normal;width:${dimensions.w}px;height:${dimensions.h}px;" scrolling="no" frameborder="0" allowtransparency="true" title="Nice button"></iframe>`,
@@ -52,7 +102,8 @@ function mockEmbed(stats: VisualButtonStats) {
   };
 }
 
-export function mockButtonStats(overrides: Partial<VisualButtonStats> = {}): VisualButtonStats {
+export function mockButtonStats(overrides: VisualButtonStatsOverrides = {}): VisualButtonStats {
+  const appearance = normalizeVisualAppearance(overrides);
   const stats: VisualButtonStats = {
     id: VISUAL_BUTTON_ID,
     url: VISUAL_URL,
@@ -63,19 +114,14 @@ export function mockButtonStats(overrides: Partial<VisualButtonStats> = {}): Vis
     size: "md",
     label: "Nice",
     pressed_label: "Nice'd",
-    colors: null,
-    shape: DEFAULT_BUTTON_SHAPE,
-    count_visibility: DEFAULT_COUNT_VISIBILITY,
-    count_position: DEFAULT_COUNT_POSITION,
-    count_format: DEFAULT_COUNT_FORMAT,
-    animation: DEFAULT_BUTTON_ANIMATION,
     created_at: VISUAL_CREATED_AT,
     ...overrides,
+    ...appearance,
   };
   return { ...stats, embed: mockEmbed(stats) };
 }
 
-export function mockCreateButtonResponse(overrides: Partial<VisualButtonStats> = {}) {
+export function mockCreateButtonResponse(overrides: VisualButtonStatsOverrides = {}) {
   const stats = mockButtonStats(overrides);
   return {
     public_id: stats.id,
