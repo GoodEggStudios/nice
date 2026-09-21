@@ -34,6 +34,24 @@ export const BUTTON_ANIMATIONS = [
   "none",
 ] as const;
 
+const PUBLIC_COLOR_KEYS = [
+  "background",
+  "foreground",
+  "border",
+  "pressed_background",
+  "pressed_foreground",
+  "pressed_border",
+] as const;
+
+const STORED_COLOR_KEYS = [
+  "background",
+  "foreground",
+  "border",
+  "pressedBackground",
+  "pressedForeground",
+  "pressedBorder",
+] as const;
+
 export const DEFAULT_BUTTON_SHAPE: ButtonShape = "rounded";
 export const DEFAULT_COUNT_VISIBILITY: CountVisibility = "nonzero";
 export const DEFAULT_COUNT_POSITION: CountPosition = "inside";
@@ -95,15 +113,7 @@ export function validateButtonColors(
   }
 
   const colors = value as PublicButtonColorsInput;
-  const expectedKeys = [
-    "background",
-    "foreground",
-    "border",
-    "pressed_background",
-    "pressed_foreground",
-    "pressed_border",
-  ];
-  if (!hasExactKeys(colors, expectedKeys)) {
+  if (!hasExactKeys(colors, PUBLIC_COLOR_KEYS)) {
     return invalidAppearance("INVALID_COLORS", "colors");
   }
 
@@ -137,15 +147,7 @@ export function normalizeStoredButtonColors(value: unknown): ButtonColors | null
   }
 
   const colors = value as Record<string, unknown>;
-  const expectedKeys = [
-    "background",
-    "foreground",
-    "border",
-    "pressedBackground",
-    "pressedForeground",
-    "pressedBorder",
-  ];
-  if (!hasExactKeys(colors, expectedKeys)) {
+  if (!hasExactKeys(colors, STORED_COLOR_KEYS)) {
     return null;
   }
 
