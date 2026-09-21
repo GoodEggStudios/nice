@@ -47,7 +47,7 @@ test("custom colours seed from minimal and stay stable across theme changes", as
 
   await page.locator("#customColors").uncheck();
   await expect(page.locator("#colorBackground")).toBeDisabled();
-  await expect(page.locator("#previewButton")).not.toHaveClass(/custom-colors/);
+  await expect(page.locator("#previewButton")).not.toHaveClass(/appearance-custom/);
 });
 
 test("shape and count controls update the preview presentation", async ({ page }) => {
@@ -73,6 +73,12 @@ test("shape and count controls update the preview presentation", async ({ page }
 
   await page.getByText("Non-zero", { exact: true }).click();
   await expect(page.locator("#previewCount")).toBeHidden();
+
+  await page.getByText("Always", { exact: true }).click();
+  await page.locator("#previewZeroToggle").click();
+  await expect(page.locator("#previewCount")).toHaveText("42K");
+  await page.getByText("Full", { exact: true }).click();
+  await expect(page.locator("#previewCount")).toHaveText("42000");
 });
 
 test("animation choices run locally and reduced motion suppresses them", async ({ page }) => {
