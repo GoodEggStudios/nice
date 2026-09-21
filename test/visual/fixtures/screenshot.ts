@@ -141,10 +141,14 @@ export async function stabilizeWebsitePage(page: Page): Promise<void> {
         transition-duration: 0s !important;
         caret-color: transparent !important;
       }
+      /* Deterministic metrics across macOS/Linux for full-page website snapshots. */
+      html, body, button, input, textarea, select, legend,
+      h1, h2, h3, p, label, span, a, code, pre, div {
+        font-family: Arial, Helvetica, sans-serif !important;
+      }
     `,
   });
   await page.evaluate(async () => {
-    await document.fonts.load("12px 'Bungee'");
     await document.fonts.ready;
   });
 }
