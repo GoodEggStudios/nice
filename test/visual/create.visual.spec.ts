@@ -17,7 +17,7 @@ async function openCreatePage(page: Page) {
   await page.goto(`${server.origin}/create`);
 }
 
-test("create defaults expose the Phase 1 appearance contract", async ({ page }) => {
+test("create defaults select the expected appearance values", async ({ page }) => {
   await openCreatePage(page);
 
   await expect(page.getByRole("heading", { name: "Button appearance" })).toBeVisible();
@@ -47,7 +47,7 @@ test("custom colours seed from minimal and stay stable across theme changes", as
 
   await page.locator("#customColors").uncheck();
   await expect(page.locator("#colorBackground")).toBeDisabled();
-  await expect(page.locator("#previewButton")).not.toHaveClass(/appearance-custom/);
+  await expect(page.locator("#previewButton")).not.toHaveClass(/has-custom-colors/);
 });
 
 test("shape and count controls update the preview presentation", async ({ page }) => {
@@ -83,6 +83,17 @@ test("shape and count controls update the preview presentation", async ({ page }
 
 test("animation choices run locally and reduced motion suppresses them", async ({ page }) => {
   await openCreatePage(page);
+
+  for (const animation of ["Pop", "Sparkle", "None"]) {
+    await page.getByText(animation, { exact: true }).click();
+    await page.locator("#previewButton").click();
+    if (animation === "None") {
+      await expect(page.locator("#previewButton")).not.toHaveClass(/is-animating/);
+    } else {
+      await expect(page.locator("#previewButton")).toHaveClass(/is-animating/);
+      await expect(page.locator("#previewButton")).not.toHaveClass(/is-animating/, { timeout: 1_000 });
+    }
+  }
 
   await page.getByText("Bounce", { exact: true }).click();
   await page.locator("#previewButton").click();
@@ -140,7 +151,7 @@ test("create sends the exact appearance contract without leaking it into the emb
   await expect(page.locator("#snippet")).not.toContainText("shape=");
 });
 
-test("create defaults submit the Phase 1 appearance defaults", async ({ page }) => {
+test("create defaults submit the expected appearance values", async ({ page }) => {
   await openCreatePage(page);
   await page.locator("#urlInput").fill("example.com/default-appearance");
 

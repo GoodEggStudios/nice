@@ -471,16 +471,16 @@
     .demo-button.shape-pill { border-radius: 9999px; }
     .demo-button.shape-square { border-radius: 0; }
 
-    .demo-button.appearance-custom {
-      background: var(--nice-bg);
-      color: var(--nice-fg);
+    .demo-button.has-custom-colors {
+      background: var(--nice-background);
+      color: var(--nice-foreground);
       border: 1px solid var(--nice-border);
       opacity: 1;
     }
 
-    .demo-button.appearance-custom.niced {
-      background: var(--nice-pressed-bg);
-      color: var(--nice-pressed-fg);
+    .demo-button.has-custom-colors.niced {
+      background: var(--nice-pressed-background);
+      color: var(--nice-pressed-foreground);
       border-color: var(--nice-pressed-border);
     }
 
@@ -499,13 +499,12 @@
     .preview-demo.count-position-below { flex-direction: column; }
     .preview-demo.count-position-beside .demo-count,
     .preview-demo.count-position-below .demo-count {
-      position: absolute;
       position: static;
       transform: none;
     }
 
     .demo-button.animation-pop.is-animating { animation: preview-pop 0.3s ease; }
-    .demo-button.animation-bounce.is-animating { animation: preview-bounce 0.45s ease; }
+    .demo-button.animation-bounce.is-animating { animation: preview-bounce 0.3s ease; }
     .demo-button.animation-sparkle.is-animating { animation: preview-sparkle 0.45s ease; }
 
     @keyframes preview-pop {
@@ -847,8 +846,9 @@
             <canvas class="preview-canvas" id="previewCanvas"></canvas>
             <button type="button" class="demo-button theme-dark size-md shape-rounded" id="previewButton" aria-label="Preview Nice button">
               <span id="previewText">Nice</span>
-              <span class="demo-count" id="previewCount">42000</span>
+              <span class="demo-count nice-count-inside" id="previewCountInside">42000</span>
             </button>
+            <span class="demo-count nice-count-outside" id="previewCount" aria-live="polite">42000</span>
           </div>
         </div>
         <button type="button" id="previewZeroToggle" class="preview-note" style="display:block;width:auto;margin:0.75rem auto 0;background:transparent;border:0;color:#888;cursor:pointer;text-decoration:underline;">Preview zero count</button>
@@ -972,6 +972,7 @@
     const urlError = document.getElementById('urlError');
     const previewButton = document.getElementById('previewButton');
     const previewText = document.getElementById('previewText');
+    const previewCountInside = document.getElementById('previewCountInside');
     const previewCount = document.getElementById('previewCount');
     const previewCanvas = document.getElementById('previewCanvas');
     const previewNote = document.getElementById('previewNote');
@@ -1146,17 +1147,17 @@
       Object.values(colorInputs).forEach(input => {
         input.disabled = !customColorsInput.checked;
       });
-      previewButton.classList.toggle('appearance-custom', customColorsInput.checked);
+      previewButton.classList.toggle('has-custom-colors', customColorsInput.checked);
     }
 
     function applyCustomColorVariables() {
       if (!customColorsInput.checked) return;
       const variables = {
-        '--nice-bg': colorInputs.background.value.toUpperCase(),
-        '--nice-fg': colorInputs.foreground.value.toUpperCase(),
+        '--nice-background': colorInputs.background.value.toUpperCase(),
+        '--nice-foreground': colorInputs.foreground.value.toUpperCase(),
         '--nice-border': colorInputs.border.value.toUpperCase(),
-        '--nice-pressed-bg': colorInputs.pressed_background.value.toUpperCase(),
-        '--nice-pressed-fg': colorInputs.pressed_foreground.value.toUpperCase(),
+        '--nice-pressed-background': colorInputs.pressed_background.value.toUpperCase(),
+        '--nice-pressed-foreground': colorInputs.pressed_foreground.value.toUpperCase(),
         '--nice-pressed-border': colorInputs.pressed_border.value.toUpperCase()
       };
       Object.entries(variables).forEach(([name, value]) => previewButton.style.setProperty(name, value));
@@ -1298,10 +1299,15 @@
 
     function updatePreviewCount() {
       const visibility = getSelectedAppearanceValue('count_visibility', 'nonzero');
+      const position = getSelectedAppearanceValue('count_position', 'inside');
       const shouldShow = visibility !== 'hidden' && (visibility === 'always' || previewState.count > 0);
-      previewCount.textContent = formatPreviewCount(previewState.count);
-      previewCount.hidden = !shouldShow;
-      previewCount.setAttribute('aria-hidden', String(!shouldShow));
+      const text = formatPreviewCount(previewState.count);
+      previewCountInside.textContent = position === 'inside' ? text : '';
+      previewCountInside.hidden = !shouldShow || position !== 'inside';
+      previewCountInside.setAttribute('aria-hidden', String(!shouldShow || position !== 'inside'));
+      previewCount.textContent = position === 'inside' ? '' : text;
+      previewCount.hidden = !shouldShow || position === 'inside';
+      previewCount.setAttribute('aria-hidden', String(!shouldShow || position === 'inside'));
     }
 
     function updatePreviewNote() {
