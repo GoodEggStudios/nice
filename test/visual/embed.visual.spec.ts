@@ -260,6 +260,7 @@ for (const animation of ["pop", "bounce", "sparkle", "confetti"] as const) {
       await expect(page.locator("#niceBtn")).toHaveClass(/bouncing/);
     } else {
       await expect(page.locator(".nice-particle")).toHaveCount(animation === "sparkle" ? 8 : 16);
+      await expect(page.locator(".nice-particle").first()).toBeVisible();
     }
     await page.waitForTimeout(animation === "pop" ? 350 : animation === "bounce" ? 450 : 750);
     await expect(page.locator("#niceBtn")).not.toHaveClass(/animating|bouncing/);

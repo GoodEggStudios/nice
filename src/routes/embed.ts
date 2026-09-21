@@ -266,6 +266,7 @@ particle.style.setProperty('--particle-index',String(i));
 particle.style.setProperty('--particle-color',colors[i%colors.length]);
 btn.appendChild(particle);particles.push(particle);
 }
+notifyResize();
 const timer=window.setTimeout(()=>{particles.forEach((particle)=>particle.remove());animationCleanup=null;notifyResize();},ANIMATION==='sparkle'?500:700);
 animationCleanup=()=>{window.clearTimeout(timer);particles.forEach((particle)=>particle.remove());notifyResize();};
 }

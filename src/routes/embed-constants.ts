@@ -75,13 +75,20 @@ export function getEmbedInitialDimensions(
 
   let width = dimensions.w + codePoints * EMBED_FONT_SIZE[size] * EMBED_MAX_GLYPH_WIDTH_EM;
   let height = dimensions.h;
-  const reservesOutsideCount =
-    appearance.count_visibility !== "hidden" && appearance.count_position !== "inside";
-  if (reservesOutsideCount) {
+  const countIsVisible =
+    appearance.count_visibility === "always" ||
+    (appearance.count_visibility === "nonzero" && count > 0);
+  const reservesCount =
+    countIsVisible ||
+    (appearance.count_visibility === "nonzero" && appearance.count_position !== "inside");
+  if (reservesCount) {
     const countText = formatEmbedCount(count > 0 ? count : 0, appearance.count_format);
-    const countWidth = countText.length * EMBED_FONT_SIZE[size] * 0.75;
+    // Direct iframe snippets cannot resize when a count crosses a digit
+    // boundary, so keep one extra character of headroom for the next value.
+    const countCharacters = Math.max(2, countText.length + 1);
+    const countWidth = countCharacters * EMBED_FONT_SIZE[size] * 0.75;
     const gap = size === "xs" ? 4 : size === "sm" ? 5 : size === "md" ? 6 : size === "lg" ? 7 : 8;
-    if (appearance.count_position === "beside") {
+    if (appearance.count_position === "inside" || appearance.count_position === "beside") {
       width += gap + countWidth;
     } else {
       height += gap + Math.ceil(EMBED_FONT_SIZE[size] * 1.2);

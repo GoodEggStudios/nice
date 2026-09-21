@@ -49,7 +49,7 @@ describe("getEmbedInitialDimensions", () => {
     } as const;
 
     expect(getEmbedInitialDimensions("md", "Nice", "Nice'd", false, 123456, appearance)).toEqual({
-      w: 160,
+      w: 169,
       h: EMBED_DIMENSIONS.md.h,
     });
   });
@@ -90,7 +90,23 @@ describe("getEmbedInitialDimensions", () => {
     } as const;
 
     expect(getEmbedInitialDimensions("md", "Nice", "Nice'd", false, 0, appearance)).toEqual({
-      w: 115,
+      w: 124,
+      h: EMBED_DIMENSIONS.md.h,
+    });
+  });
+
+  it("budgets inside full counts and one digit of growth", () => {
+    const appearance = {
+      colors: null,
+      shape: "rounded",
+      count_visibility: "always",
+      count_position: "inside",
+      count_format: "full",
+      animation: "pop",
+    } as const;
+
+    expect(getEmbedInitialDimensions("md", "Nice", "Nice'd", false, 9, appearance)).toEqual({
+      w: 124,
       h: EMBED_DIMENSIONS.md.h,
     });
   });
