@@ -159,6 +159,8 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 .theme-dark .nice-button{background:#374151;color:#f3f4f6}
 .theme-dark .nice-button:hover{background:#4b5563}
 .theme-dark .nice-button.niced{background:#fbbf24;color:#000}
+.theme-dark .nice-count-outside{color:#f3f4f6}
+.theme-dark .nice-button.niced+.nice-count-outside{color:#000}
 
 /* Theme: Minimal */
 .theme-minimal .nice-button{background:transparent;color:inherit;border:2px solid currentColor;opacity:.7}
@@ -169,11 +171,15 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 .theme-mono-dark .nice-button{background:#000;color:#fff;border:1px solid #333}
 .theme-mono-dark .nice-button:hover{background:#111}
 .theme-mono-dark .nice-button.niced{background:#fff;color:#000;border-color:#fff}
+.theme-mono-dark .nice-count-outside{color:#fff}
+.theme-mono-dark .nice-button.niced+.nice-count-outside{color:#000}
 
 /* Theme: Mono Light (black on white, inverts when niced) */
 .theme-mono-light .nice-button{background:#fff;color:#000;border:1px solid #ddd}
 .theme-mono-light .nice-button:hover{background:#f5f5f5}
 .theme-mono-light .nice-button.niced{background:#000;color:#fff;border-color:#000}
+.theme-mono-light .nice-count-outside{color:#000}
+.theme-mono-light .nice-button.niced+.nice-count-outside{color:#fff}
 
 .shape-pill .nice-button{border-radius:9999px}
 .shape-square .nice-button{border-radius:0}
@@ -531,15 +537,21 @@ body{font-family:'Bungee',cursive;background:transparent;display:flex;align-item
 .theme-dark .nice-button{background:#374151;color:#f3f4f6}
 .theme-dark .nice-button:hover{background:#4b5563}
 .theme-dark .nice-button.niced{background:#fbbf24;color:#000}
+.theme-dark .nice-count-outside{color:#f3f4f6}
+.theme-dark .nice-button.niced+.nice-count-outside{color:#000}
 .theme-light .nice-button{background:#f3f4f6;color:#374151}
 .theme-light .nice-button:hover{background:#e5e7eb}
 .theme-light .nice-button.niced{background:#fef3c7;color:#92400e}
 .theme-mono-dark .nice-button{background:#000;color:#fff;border:1px solid #333}
 .theme-mono-dark .nice-button:hover{background:#111}
 .theme-mono-dark .nice-button.niced{background:#fff;color:#000;border-color:#fff}
+.theme-mono-dark .nice-count-outside{color:#fff}
+.theme-mono-dark .nice-button.niced+.nice-count-outside{color:#000}
 .theme-mono-light .nice-button{background:#fff;color:#000;border:1px solid #ddd}
 .theme-mono-light .nice-button:hover{background:#f5f5f5}
 .theme-mono-light .nice-button.niced{background:#000;color:#fff;border-color:#000}
+.theme-mono-light .nice-count-outside{color:#000}
+.theme-mono-light .nice-button.niced+.nice-count-outside{color:#fff}
 .shape-pill .nice-button{border-radius:9999px}
 .shape-square .nice-button{border-radius:0}
 .has-custom-colors .nice-button{background:var(--nice-background);color:var(--nice-foreground);border:1px solid var(--nice-border)}

@@ -54,7 +54,7 @@ describe("getEmbedInitialDimensions", () => {
     });
   });
 
-  it("adds below-count height but reserves no space for hidden or zero nonzero counts", () => {
+  it("adds below-count height but reserves no space for hidden counts", () => {
     const below = {
       colors: null,
       shape: "rounded",
@@ -73,8 +73,25 @@ describe("getEmbedInitialDimensions", () => {
     expect(getEmbedInitialDimensions("sm", "Nice", "Nice'd", false, 42, hidden)).toEqual(
       EMBED_DIMENSIONS.sm
     );
-    expect(getEmbedInitialDimensions("sm", "Nice", "Nice'd", false, 0, nonzero)).toEqual(
-      EMBED_DIMENSIONS.sm
-    );
+    expect(getEmbedInitialDimensions("sm", "Nice", "Nice'd", false, 0, nonzero)).toEqual({
+      w: EMBED_DIMENSIONS.sm.w,
+      h: 51,
+    });
+  });
+
+  it("reserves beside-count width before a nonzero count appears", () => {
+    const appearance = {
+      colors: null,
+      shape: "rounded",
+      count_visibility: "nonzero",
+      count_position: "beside",
+      count_format: "compact",
+      animation: "pop",
+    } as const;
+
+    expect(getEmbedInitialDimensions("md", "Nice", "Nice'd", false, 0, appearance)).toEqual({
+      w: 115,
+      h: EMBED_DIMENSIONS.md.h,
+    });
   });
 });

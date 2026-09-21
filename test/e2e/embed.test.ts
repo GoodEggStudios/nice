@@ -77,6 +77,20 @@ describe("Embed", () => {
       expect(lightBody).not.toBe(darkBody);
     });
 
+    it("should color outside counts for built-in dark themes", async () => {
+      const darkBody = await (await SELF.fetch(
+        "https://api.nice.sbs/embed/n_abc123456789?theme=dark"
+      )).text();
+      const monoDarkBody = await (await SELF.fetch(
+        "https://api.nice.sbs/embed/n_abc123456789?theme=mono-dark"
+      )).text();
+
+      expect(darkBody).toContain(".theme-dark .nice-count-outside{color:#f3f4f6}");
+      expect(darkBody).toContain(".theme-dark .nice-button.niced+.nice-count-outside{color:#000}");
+      expect(monoDarkBody).toContain(".theme-mono-dark .nice-count-outside{color:#fff}");
+      expect(monoDarkBody).toContain(".theme-mono-dark .nice-button.niced+.nice-count-outside{color:#000}");
+    });
+
     it("should apply size parameter", async () => {
       const resMd = await SELF.fetch("https://api.nice.sbs/embed/n_abc123456789?size=md");
       const resXl = await SELF.fetch("https://api.nice.sbs/embed/n_abc123456789?size=xl");

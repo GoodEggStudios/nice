@@ -75,11 +75,10 @@ export function getEmbedInitialDimensions(
 
   let width = dimensions.w + codePoints * EMBED_FONT_SIZE[size] * EMBED_MAX_GLYPH_WIDTH_EM;
   let height = dimensions.h;
-  const countVisible =
-    appearance.count_visibility === "always" ||
-    (appearance.count_visibility === "nonzero" && count > 0);
-  if (countVisible && appearance.count_position !== "inside") {
-    const countText = formatEmbedCount(count, appearance.count_format);
+  const reservesOutsideCount =
+    appearance.count_visibility !== "hidden" && appearance.count_position !== "inside";
+  if (reservesOutsideCount) {
+    const countText = formatEmbedCount(count > 0 ? count : 0, appearance.count_format);
     const countWidth = countText.length * EMBED_FONT_SIZE[size] * 0.75;
     const gap = size === "xs" ? 4 : size === "sm" ? 5 : size === "md" ? 6 : size === "lg" ? 7 : 8;
     if (appearance.count_position === "beside") {
