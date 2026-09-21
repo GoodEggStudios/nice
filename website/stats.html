@@ -1007,10 +1007,9 @@
 
     function setAppearancePending(pending) {
       appearanceSavePending = pending;
-      document.querySelectorAll('#appearanceSettings input, #appearanceSettings select').forEach((control) => {
+      document.querySelectorAll('#content input, #content select, #content button').forEach((control) => {
         control.disabled = pending;
       });
-      document.getElementById('resetAppearanceBtn').disabled = pending;
       updateAppearanceColorState();
       updateAppearanceDirtyState();
     }
@@ -1054,6 +1053,7 @@
       errorElement.textContent = '';
       status.textContent = 'Saving…';
       let focusErrorCode = null;
+      let saveFailed = false;
 
       try {
         const res = await fetch(`${API_BASE}/api/v1/buttons/${window.PRIVATE_ID}`, {
@@ -1069,6 +1069,7 @@
         renderEmbed(data.embed);
         status.textContent = 'Saved';
       } catch (error) {
+        saveFailed = true;
         const message = error instanceof Error && error.message !== 'Failed to fetch'
           ? error.message
           : 'Failed to save button appearance. Check your connection and try again.';
@@ -1078,7 +1079,11 @@
         focusErrorCode = error.code;
       } finally {
         setAppearancePending(false);
-        focusAppearanceError(focusErrorCode);
+        if (saveFailed) {
+          focusAppearanceError(focusErrorCode);
+        } else {
+          document.getElementById('resetAppearanceBtn').focus();
+        }
       }
     }
 
