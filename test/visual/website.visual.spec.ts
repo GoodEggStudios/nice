@@ -236,10 +236,17 @@ test.describe("website create appearance", () => {
       await openPage(page, "/create", viewport);
       await expect(page.getByRole("heading", { name: "Button appearance" })).toBeVisible();
       await expect(page.locator("#previewButton")).toBeVisible();
-      await screenshotWebsitePaddedLocator(
-        page.locator(".appearance-section"),
-        `website/create-appearance-controls-${viewport.name}.png`,
-      );
+      if (viewport.name === "mobile") {
+        await expect(page.locator(".appearance-section")).toHaveScreenshot(
+          `website/create-appearance-controls-${viewport.name}.png`,
+          { animations: "disabled", scale: "css", omitBackground: false },
+        );
+      } else {
+        await screenshotWebsitePaddedLocator(
+          page.locator(".appearance-section"),
+          `website/create-appearance-controls-${viewport.name}.png`,
+        );
+      }
       await screenshotWebsitePaddedLocator(
         page.locator("#previewContainer"),
         `website/create-appearance-preview-${viewport.name}.png`,
