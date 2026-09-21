@@ -81,6 +81,29 @@ test("shape and count controls update the preview presentation", async ({ page }
   await expect(page.locator("#previewCount")).toHaveText("42000");
 });
 
+test("every count visibility, position, and format combination updates the preview DOM", async ({ page }) => {
+  await openCreatePage(page);
+
+  for (const visibility of ["nonzero", "always", "hidden"]) {
+    for (const position of ["inside", "beside", "below"]) {
+      for (const format of ["compact", "full"]) {
+        await page.locator(`input[name="count_visibility"][value="${visibility}"]`).check();
+        await page.locator(`input[name="count_position"][value="${position}"]`).check();
+        await page.locator(`input[name="count_format"][value="${format}"]`).check();
+
+        const visible = visibility !== "hidden";
+        const inside = position === "inside";
+        expect(await page.locator("#previewCountInside").isVisible()).toBe(visible && inside);
+        expect(await page.locator("#previewCount").isVisible()).toBe(visible && !inside);
+        if (visible) {
+          await expect(page.locator(inside ? "#previewCountInside" : "#previewCount"))
+            .toHaveText(format === "full" ? "42" : "42");
+        }
+      }
+    }
+  }
+});
+
 test("animation choices run locally and reduced motion suppresses them", async ({ page }) => {
   await openCreatePage(page);
 

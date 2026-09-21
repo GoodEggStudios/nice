@@ -382,7 +382,16 @@ export function applyAppearanceValues(
   }
 }
 
-export function getButtonAppearance(button: ButtonAppearanceFields) {
+export interface ButtonAppearance {
+  colors: PublicButtonColors | null;
+  shape: ButtonShape;
+  count_visibility: CountVisibility;
+  count_position: CountPosition;
+  count_format: CountFormat;
+  animation: ButtonAnimation;
+}
+
+export function getButtonAppearance(button: ButtonAppearanceFields): ButtonAppearance {
   return {
     colors: serializeButtonColors(button.colors),
     shape: normalizeStoredButtonShape(button.shape),

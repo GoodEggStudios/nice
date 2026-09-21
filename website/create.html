@@ -506,6 +506,7 @@
     .demo-button.animation-pop.is-animating { animation: preview-pop 0.3s ease; }
     .demo-button.animation-bounce.is-animating { animation: preview-bounce 0.3s ease; }
     .demo-button.animation-sparkle.is-animating { animation: preview-sparkle 0.45s ease; }
+    .demo-button.animation-confetti.is-animating { animation: preview-confetti 0.45s ease; }
 
     @keyframes preview-pop {
       0%, 100% { transform: scale(1); }
@@ -514,13 +515,18 @@
 
     @keyframes preview-bounce {
       0%, 100% { transform: translateY(0); }
-      40% { transform: translateY(-7px); }
-      70% { transform: translateY(2px); }
+      50% { transform: translateY(-5px); }
     }
 
     @keyframes preview-sparkle {
-      0%, 100% { filter: brightness(1); }
-      50% { filter: brightness(1.7) saturate(1.4); }
+      0%, 100% { filter: none; }
+      50% { filter: brightness(1.5) drop-shadow(0 0 4px #fbbf24); }
+    }
+
+    @keyframes preview-confetti {
+      0%, 100% { transform: scale(1) rotate(0); }
+      25% { transform: scale(1.08) rotate(-3deg); }
+      75% { transform: scale(1.08) rotate(3deg); }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -832,12 +838,15 @@
           </div>
         </fieldset>
 
-        <label for="confetti" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:8px 0;">
-          <input type="checkbox" id="confetti" style="width:18px;height:18px;accent-color:#fbbf24;cursor:pointer;flex:0 0 auto;">
-          <span>Allow full-page host confetti for this embed<span class="label-hint" style="display:block;">Stored animation affects the button iframe. Host confetti is a separate opt-in; direct iframes cannot draw outside their rectangle.</span></span>
-        </label>
         <div class="appearance-error" id="appearanceError" role="alert"></div>
       </section>
+
+      <div class="form-group">
+        <label for="confetti" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:8px 0;">
+          <input type="checkbox" id="confetti" style="width:18px;height:18px;accent-color:#fbbf24;cursor:pointer;flex:0 0 auto;">
+          <span>Allow host-page confetti for this embed<span class="label-hint" style="display:block;">This placement-only option affects script embeds; stored button animation stays inside the iframe.</span></span>
+        </label>
+      </div>
       
       <div class="preview-section">
         <div class="preview-label">Preview</div>
@@ -846,9 +855,9 @@
             <canvas class="preview-canvas" id="previewCanvas"></canvas>
             <button type="button" class="demo-button theme-dark size-md shape-rounded" id="previewButton" aria-label="Preview Nice button">
               <span id="previewText">Nice</span>
-              <span class="demo-count nice-count-inside" id="previewCountInside">42000</span>
+              <span class="demo-count nice-count-inside" id="previewCountInside">42</span>
             </button>
-            <span class="demo-count nice-count-outside" id="previewCount" aria-live="polite">42000</span>
+            <span class="demo-count nice-count-outside" id="previewCount" aria-live="polite">42</span>
           </div>
         </div>
         <button type="button" id="previewZeroToggle" class="preview-note" style="display:block;width:auto;margin:0.75rem auto 0;background:transparent;border:0;color:#888;cursor:pointer;text-decoration:underline;">Preview zero count</button>
@@ -1080,7 +1089,7 @@
     urlInput.addEventListener('blur', validateUrl);
     
     const previewState = {
-      count: 42000,
+      count: 42,
       hasNiced: false,
       confettiLock: false,
       zeroPreview: false,
@@ -1123,8 +1132,10 @@
       });
     });
 
-    [multiNiceInput, confettiInput].forEach(input => {
-      input.addEventListener('change', updatePreview);
+    multiNiceInput.addEventListener('change', updatePreview);
+    confettiInput.addEventListener('change', () => {
+      updatePreview();
+      if (confettiInput.checked) launchPreviewConfetti();
     });
 
     function getSelectedAppearanceValue(name, fallback) {
@@ -1324,7 +1335,7 @@
     }
 
     function resetPreviewState() {
-      previewState.count = previewState.zeroPreview ? 0 : 42000;
+      previewState.count = previewState.zeroPreview ? 0 : 42;
       previewState.hasNiced = false;
       previewState.confettiLock = false;
       if (previewState.animationTimer) clearTimeout(previewState.animationTimer);
@@ -1345,10 +1356,6 @@
     function animatePreviewButton() {
       const animation = getSelectedAppearanceValue('animation', 'pop');
       if (animation === 'none' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-      if (animation === 'confetti') {
-        launchPreviewConfetti();
-        return;
-      }
       previewButton.classList.remove('is-animating');
       void previewButton.offsetWidth;
       previewButton.classList.add('is-animating');
@@ -1356,7 +1363,7 @@
       previewState.animationTimer = setTimeout(() => {
         previewButton.classList.remove('is-animating');
         previewState.animationTimer = null;
-      }, animation === 'pop' ? 300 : 450);
+      }, animation === 'sparkle' ? 450 : 300);
     }
 
     function launchPreviewConfetti() {
@@ -1470,14 +1477,11 @@
       previewButton.setAttribute('aria-pressed', 'true');
       updatePreviewCount();
       animatePreviewButton();
-      if (getSelectedAppearanceValue('animation', 'pop') === 'confetti' && !previewState.confettiLock) {
-        previewState.confettiLock = true;
-      }
     });
 
     previewZeroToggle.addEventListener('click', () => {
       previewState.zeroPreview = !previewState.zeroPreview;
-      previewZeroToggle.textContent = previewState.zeroPreview ? 'Preview count 42000' : 'Preview zero count';
+      previewZeroToggle.textContent = previewState.zeroPreview ? 'Preview count 42' : 'Preview zero count';
       updatePreview();
     });
 
