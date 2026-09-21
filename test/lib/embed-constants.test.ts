@@ -126,4 +126,24 @@ describe("getEmbedInitialDimensions", () => {
       h: 84,
     });
   });
+
+  it("stacks beside-count headroom with the confetti particle envelope", () => {
+    const appearance = {
+      colors: null,
+      shape: "pill",
+      count_visibility: "always",
+      count_position: "beside",
+      count_format: "full",
+      animation: "confetti",
+    } as const;
+
+    expect(getEmbedInitialDimensions("md", "Nice", "Nice'd", false, 0, appearance)).toEqual({
+      w: 236,
+      h: 84,
+    });
+    expect(getEmbedInitialDimensions("md", "Nice", "Nice'd", false, 123456, appearance)).toEqual({
+      w: 281,
+      h: 84,
+    });
+  });
 });
