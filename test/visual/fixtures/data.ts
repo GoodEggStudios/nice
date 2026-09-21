@@ -1,5 +1,17 @@
 import { getEmbedInitialDimensions } from "../../../src/routes/embed-constants";
-import type { ButtonAnimation, ButtonShape, CountFormat, CountPosition, CountVisibility, PublicButtonColors } from "../../../src/lib/button-appearance";
+import {
+  DEFAULT_BUTTON_ANIMATION,
+  DEFAULT_BUTTON_SHAPE,
+  DEFAULT_COUNT_FORMAT,
+  DEFAULT_COUNT_POSITION,
+  DEFAULT_COUNT_VISIBILITY,
+  type ButtonAnimation,
+  type ButtonShape,
+  type CountFormat,
+  type CountPosition,
+  type CountVisibility,
+  type PublicButtonColors,
+} from "../../../src/lib/button-appearance";
 
 export const VISUAL_BUTTON_ID = "n_visual0001";
 export const VISUAL_PRIVATE_ID = "ns_visual00000000000001";
@@ -52,11 +64,11 @@ export function mockButtonStats(overrides: Partial<VisualButtonStats> = {}): Vis
     label: "Nice",
     pressed_label: "Nice'd",
     colors: null,
-    shape: "rounded",
-    count_visibility: "nonzero",
-    count_position: "inside",
-    count_format: "compact",
-    animation: "pop",
+    shape: DEFAULT_BUTTON_SHAPE,
+    count_visibility: DEFAULT_COUNT_VISIBILITY,
+    count_position: DEFAULT_COUNT_POSITION,
+    count_format: DEFAULT_COUNT_FORMAT,
+    animation: DEFAULT_BUTTON_ANIMATION,
     created_at: VISUAL_CREATED_AT,
     ...overrides,
   };

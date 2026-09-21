@@ -5,6 +5,8 @@ import { renderEmbedHtml, renderDemoEmbedHtml, renderEmbedScript, type EmbedSize
 import type { EmbedAppearance } from "../../../src/routes/embed-constants";
 import { mockButtonStats, mockCreateButtonResponse, VISUAL_BUTTON_ID, type VisualButtonStats } from "./data";
 
+type VisualAppearance = Pick<VisualButtonStats, "colors" | "shape" | "count_visibility" | "count_position" | "count_format" | "animation">;
+
 export interface NiceApiMockOptions {
   count?: number;
   countStatus?: number;
@@ -20,6 +22,11 @@ export interface NiceApiMockOptions {
   buttonPatchStatus?: number;
   buttonPatchErrorCode?: string;
   buttonPatchError?: string;
+  appearance?: Partial<VisualAppearance>;
+  theme?: VisualButtonStats["theme"];
+  buttonPatchDelay?: number;
+  buttonPatchResponse?: Partial<VisualButtonStats>;
+  buttonPatchNetworkError?: boolean;
 }
 
 async function fulfillJson(route: Route, value: unknown, status = 200) {
@@ -36,8 +43,10 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
   let stats = mockButtonStats({
     count,
     multi_nice: multiNice,
+    ...(options.theme === undefined ? {} : { theme: options.theme }),
     ...(options.label === undefined ? {} : { label: options.label }),
     ...(options.pressedLabel === undefined ? {} : { pressed_label: options.pressedLabel }),
+    ...options.appearance,
   });
 
   await page.route("https://api.nice.sbs/embed.js", async (route) => {
@@ -154,6 +163,13 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
       return;
     }
     const status = options.buttonPatchStatus ?? 200;
+    if (options.buttonPatchNetworkError) {
+      await route.abort();
+      return;
+    }
+    if (options.buttonPatchDelay) {
+      await new Promise((resolve) => setTimeout(resolve, options.buttonPatchDelay));
+    }
     if (status !== 200) {
       await fulfillJson(route, {
         error: options.buttonPatchError ?? "Failed to update button",
@@ -170,6 +186,13 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
       restriction: typeof body.restriction === "string" ? body.restriction as VisualButtonStats["restriction"] : stats.restriction,
       theme: typeof body.theme === "string" ? body.theme as VisualButtonStats["theme"] : stats.theme,
       size: typeof body.size === "string" ? body.size as VisualButtonStats["size"] : stats.size,
+      colors: body.colors === null || typeof body.colors === "object" ? body.colors as VisualButtonStats["colors"] : stats.colors,
+      shape: typeof body.shape === "string" ? body.shape as VisualButtonStats["shape"] : stats.shape,
+      count_visibility: typeof body.count_visibility === "string" ? body.count_visibility as VisualButtonStats["count_visibility"] : stats.count_visibility,
+      count_position: typeof body.count_position === "string" ? body.count_position as VisualButtonStats["count_position"] : stats.count_position,
+      count_format: typeof body.count_format === "string" ? body.count_format as VisualButtonStats["count_format"] : stats.count_format,
+      animation: typeof body.animation === "string" ? body.animation as VisualButtonStats["animation"] : stats.animation,
+      ...options.buttonPatchResponse,
     });
     await fulfillJson(route, stats);
   });

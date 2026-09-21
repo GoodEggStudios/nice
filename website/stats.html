@@ -290,6 +290,156 @@
     .label-save-status.error {
       color: #ef4444;
     }
+
+    .appearance-card h2 {
+      font-family: 'Bungee', cursive;
+      font-size: 1rem;
+      color: #fff;
+      margin-bottom: 1.25rem;
+    }
+
+    .appearance-fieldset {
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      min-width: 0;
+    }
+
+    .appearance-fieldset legend {
+      color: #ccc;
+      font-weight: 500;
+      padding: 0 0.5rem;
+    }
+
+    .appearance-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      color: #ccc;
+      cursor: pointer;
+    }
+
+    .appearance-toggle input {
+      width: 18px;
+      height: 18px;
+      accent-color: #fbbf24;
+    }
+
+    .appearance-colors {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .appearance-color {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: 0.5rem;
+      color: #ccc;
+      font-size: 0.8125rem;
+    }
+
+    .appearance-color input[type="color"] {
+      width: 2rem;
+      height: 2rem;
+      padding: 0;
+      border: 2px solid #555;
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .appearance-color input[type="color"]:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .color-value {
+      grid-column: 2;
+      color: #888;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.75rem;
+    }
+
+    .appearance-selects {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .appearance-selects label {
+      display: grid;
+      gap: 0.4rem;
+      color: #ccc;
+      font-size: 0.8125rem;
+    }
+
+    .appearance-selects select {
+      width: 100%;
+      padding: 0.65rem 0.75rem;
+      border: 2px solid #333;
+      border-radius: 8px;
+      background: #1a1a1a;
+      color: #fff;
+      font: inherit;
+    }
+
+    .appearance-selects select:focus,
+    .appearance-color input[type="color"]:focus,
+    .appearance-toggle input:focus-visible,
+    .appearance-actions button:focus-visible {
+      outline: 2px solid #fbbf24;
+      outline-offset: 2px;
+    }
+
+    .appearance-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .appearance-actions button {
+      flex: 1;
+      margin-top: 0;
+    }
+
+    .btn-reset {
+      padding: 0.75rem;
+      margin-top: 1.25rem;
+      font-family: 'Bungee', cursive;
+      font-size: 0.875rem;
+      background: transparent;
+      color: #fbbf24;
+      border: 2px solid #fbbf24;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .btn-reset:disabled,
+    .appearance-actions .btn-save:disabled {
+      opacity: 0.5;
+      cursor: wait;
+    }
+
+    .appearance-save-status {
+      min-height: 1.25rem;
+      margin-top: 0.75rem;
+      color: #22c55e;
+      font-size: 0.8125rem;
+    }
+
+    .appearance-save-status.error,
+    .appearance-error {
+      color: #ef4444;
+    }
+
+    .appearance-error {
+      min-height: 1.25rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+    }
     
     .btn-delete {
       width: 100%;
@@ -430,6 +580,9 @@
       h1 { font-size: 1.5rem; }
       .stat-row { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
       .stat-value { max-width: 100%; text-align: left; }
+      .appearance-colors,
+      .appearance-selects { grid-template-columns: 1fr; }
+      .appearance-actions { flex-direction: column; }
     }
   </style>
 </head>
@@ -495,6 +648,96 @@
         <button type="button" class="btn-save" id="saveLabelsBtn">Save</button>
         <div class="label-save-status" id="labelSaveStatus" aria-live="polite" role="status"></div>
       </div>
+
+      <div class="stat-card appearance-card" id="appearanceSettings" tabindex="-1">
+        <h2>Button appearance</h2>
+        <fieldset class="appearance-fieldset" id="appearanceColors">
+          <legend>Custom colours</legend>
+          <label class="appearance-toggle" for="appearanceCustomColors">
+            <input type="checkbox" id="appearanceCustomColors">
+            <span>Use custom colours</span>
+          </label>
+          <div class="appearance-colors">
+            <label class="appearance-color" for="appearanceBackground">
+              <input type="color" id="appearanceBackground" data-color="background">
+              <span>Background</span>
+              <span class="color-value" data-color-value="background"></span>
+            </label>
+            <label class="appearance-color" for="appearanceForeground">
+              <input type="color" id="appearanceForeground" data-color="foreground">
+              <span>Foreground</span>
+              <span class="color-value" data-color-value="foreground"></span>
+            </label>
+            <label class="appearance-color" for="appearanceBorder">
+              <input type="color" id="appearanceBorder" data-color="border">
+              <span>Border</span>
+              <span class="color-value" data-color-value="border"></span>
+            </label>
+            <label class="appearance-color" for="appearancePressedBackground">
+              <input type="color" id="appearancePressedBackground" data-color="pressed_background">
+              <span>Pressed background</span>
+              <span class="color-value" data-color-value="pressed_background"></span>
+            </label>
+            <label class="appearance-color" for="appearancePressedForeground">
+              <input type="color" id="appearancePressedForeground" data-color="pressed_foreground">
+              <span>Pressed foreground</span>
+              <span class="color-value" data-color-value="pressed_foreground"></span>
+            </label>
+            <label class="appearance-color" for="appearancePressedBorder">
+              <input type="color" id="appearancePressedBorder" data-color="pressed_border">
+              <span>Pressed border</span>
+              <span class="color-value" data-color-value="pressed_border"></span>
+            </label>
+          </div>
+        </fieldset>
+        <fieldset class="appearance-fieldset">
+          <legend>Button details</legend>
+          <div class="appearance-selects">
+            <label for="appearanceShape">Shape
+              <select id="appearanceShape">
+                <option value="rounded">Rounded</option>
+                <option value="pill">Pill</option>
+                <option value="square">Square</option>
+              </select>
+            </label>
+            <label for="appearanceCountVisibility">Count visibility
+              <select id="appearanceCountVisibility">
+                <option value="nonzero">Nonzero</option>
+                <option value="always">Always</option>
+                <option value="hidden">Hidden</option>
+              </select>
+            </label>
+            <label for="appearanceCountPosition">Count position
+              <select id="appearanceCountPosition">
+                <option value="inside">Inside</option>
+                <option value="beside">Beside</option>
+                <option value="below">Below</option>
+              </select>
+            </label>
+            <label for="appearanceCountFormat">Count format
+              <select id="appearanceCountFormat">
+                <option value="compact">Compact</option>
+                <option value="full">Full</option>
+              </select>
+            </label>
+            <label for="appearanceAnimation">Animation
+              <select id="appearanceAnimation">
+                <option value="pop">Pop</option>
+                <option value="bounce">Bounce</option>
+                <option value="sparkle">Sparkle</option>
+                <option value="confetti">Confetti</option>
+                <option value="none">None</option>
+              </select>
+            </label>
+          </div>
+        </fieldset>
+        <div class="appearance-actions">
+          <button type="button" class="btn-save" id="saveAppearanceBtn" disabled>Save appearance</button>
+          <button type="button" class="btn-reset" id="resetAppearanceBtn">Reset appearance</button>
+        </div>
+        <div class="appearance-save-status" id="appearanceSaveStatus" aria-live="polite" role="status"></div>
+        <div class="appearance-error" id="appearanceError" aria-live="polite" role="alert"></div>
+      </div>
       
       <div class="section-title">Embed Snippet</div>
       <div class="stat-card">
@@ -549,8 +792,30 @@
     const DEFAULT_LABEL = 'Nice';
     const DEFAULT_PRESSED_LABEL = "Nice'd";
     const MAX_LABEL_CODE_POINTS = 32;
+    const DEFAULT_APPEARANCE = {
+      colors: null,
+      shape: 'rounded',
+      count_visibility: 'nonzero',
+      count_position: 'inside',
+      count_format: 'compact',
+      animation: 'pop',
+    };
+    const THEME_PREVIEW_COLORS = {
+      light: { background: '#F3F4F6', foreground: '#374151', border: '#D1D5DB', pressed_background: '#FEF3C7', pressed_foreground: '#92400E', pressed_border: '#FBBF24' },
+      dark: { background: '#374151', foreground: '#F3F4F6', border: '#4B5563', pressed_background: '#FBBF24', pressed_foreground: '#000000', pressed_border: '#F59E0B' },
+      minimal: { background: '#111827', foreground: '#F5F5F5', border: '#F5F5F5', pressed_background: '#1F2937', pressed_foreground: '#FBBF24', pressed_border: '#FBBF24' },
+      'mono-dark': { background: '#000000', foreground: '#FFFFFF', border: '#333333', pressed_background: '#FFFFFF', pressed_foreground: '#000000', pressed_border: '#FFFFFF' },
+      'mono-light': { background: '#FFFFFF', foreground: '#000000', border: '#DDDDDD', pressed_background: '#000000', pressed_foreground: '#FFFFFF', pressed_border: '#000000' },
+    };
+    const MINIMAL_EDITABLE_COLORS = {
+      background: '#FFFFFF', foreground: '#374151', border: '#374151',
+      pressed_background: '#FEF3C7', pressed_foreground: '#92400E', pressed_border: '#FBBF24',
+    };
+    const APPEARANCE_COLOR_KEYS = ['background', 'foreground', 'border', 'pressed_background', 'pressed_foreground', 'pressed_border'];
     let currentSettings = null;
     let labelSavePending = false;
+    let savedAppearance = null;
+    let appearanceSavePending = false;
     
     // Get private ID from URL path or query
     function getPrivateId() {
@@ -584,8 +849,11 @@
           body: JSON.stringify({ restriction: newMode })
         });
         
+        const data = await res.json();
         if (res.ok) {
-          setActiveRestriction(newMode);
+          currentSettings = { ...(currentSettings || {}), ...data };
+          setActiveRestriction(data.restriction || newMode);
+          renderEmbed(data.embed);
         } else {
           alert('Failed to update restriction');
         }
@@ -698,6 +966,151 @@
       pressedLabelInput.value = pressedLabel;
     }
 
+    function getAppearanceColors(data) {
+      return data.colors || THEME_PREVIEW_COLORS[data.theme] || THEME_PREVIEW_COLORS.light;
+    }
+
+    function updateAppearanceColorValues(colors) {
+      APPEARANCE_COLOR_KEYS.forEach((key) => {
+        const input = document.querySelector(`[data-color="${key}"]`);
+        const value = colors[key].toUpperCase();
+        input.value = value;
+        document.querySelector(`[data-color-value="${key}"]`).textContent = value;
+      });
+    }
+
+    function updateAppearanceColorState() {
+      const enabled = document.getElementById('appearanceCustomColors').checked;
+      document.querySelectorAll('#appearanceColors input[type="color"]').forEach((input) => {
+        input.disabled = !enabled || appearanceSavePending;
+      });
+    }
+
+    function readAppearanceForm() {
+      const colors = {};
+      APPEARANCE_COLOR_KEYS.forEach((key) => {
+        colors[key] = document.querySelector(`[data-color="${key}"]`).value.toUpperCase();
+      });
+      return {
+        colors: document.getElementById('appearanceCustomColors').checked ? colors : null,
+        shape: document.getElementById('appearanceShape').value,
+        count_visibility: document.getElementById('appearanceCountVisibility').value,
+        count_position: document.getElementById('appearanceCountPosition').value,
+        count_format: document.getElementById('appearanceCountFormat').value,
+        animation: document.getElementById('appearanceAnimation').value,
+      };
+    }
+
+    function appearanceIsDirty() {
+      return JSON.stringify(readAppearanceForm()) !== JSON.stringify(savedAppearance);
+    }
+
+    function updateAppearanceDirtyState() {
+      document.getElementById('saveAppearanceBtn').disabled = appearanceSavePending || !appearanceIsDirty();
+    }
+
+    function setAppearancePending(pending) {
+      appearanceSavePending = pending;
+      document.querySelectorAll('#appearanceSettings input, #appearanceSettings select, #appearanceSettings button').forEach((control) => {
+        control.disabled = pending;
+      });
+      updateAppearanceColorState();
+      updateAppearanceDirtyState();
+      updatePressedLabelVisibility(!!(currentSettings && currentSettings.multi_nice));
+    }
+
+    function focusAppearanceError(code) {
+      const controls = {
+        INVALID_COLORS: '#appearanceCustomColors',
+        INVALID_SHAPE: '#appearanceShape',
+        INVALID_COUNT_VISIBILITY: '#appearanceCountVisibility',
+        INVALID_COUNT_POSITION: '#appearanceCountPosition',
+        INVALID_COUNT_FORMAT: '#appearanceCountFormat',
+        INVALID_ANIMATION: '#appearanceAnimation',
+      };
+      const target = document.querySelector(controls[code] || '#appearanceSettings');
+      target.focus();
+    }
+
+    function fillAppearanceForm(appearance) {
+      const customColors = appearance.colors !== null && appearance.colors !== undefined;
+      document.getElementById('appearanceCustomColors').checked = customColors;
+      updateAppearanceColorValues(getAppearanceColors(appearance));
+      document.getElementById('appearanceShape').value = appearance.shape;
+      document.getElementById('appearanceCountVisibility').value = appearance.count_visibility;
+      document.getElementById('appearanceCountPosition').value = appearance.count_position;
+      document.getElementById('appearanceCountFormat').value = appearance.count_format;
+      document.getElementById('appearanceAnimation').value = appearance.animation;
+    }
+
+    function updateAppearanceValues(data) {
+      const appearance = { ...DEFAULT_APPEARANCE, ...data };
+      fillAppearanceForm(appearance);
+      savedAppearance = readAppearanceForm();
+      updateAppearanceColorState();
+      updateAppearanceDirtyState();
+    }
+
+    async function saveAppearance() {
+      if (appearanceSavePending || !window.PRIVATE_ID || !appearanceIsDirty()) return;
+
+      const status = document.getElementById('appearanceSaveStatus');
+      const errorElement = document.getElementById('appearanceError');
+      const payload = readAppearanceForm();
+      setAppearancePending(true);
+      status.classList.remove('error');
+      errorElement.textContent = '';
+      status.textContent = 'Saving…';
+      let focusErrorCode = null;
+      let saveFailed = false;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/buttons/${window.PRIVATE_ID}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) throw createApiError(data, 'Failed to save button appearance');
+
+        currentSettings = { ...(currentSettings || {}), ...data };
+        updateAppearanceValues(data);
+        renderEmbed(data.embed);
+        status.textContent = 'Saved';
+      } catch (error) {
+        saveFailed = true;
+        const message = error instanceof Error && error.message !== 'Failed to fetch'
+          ? error.message
+          : 'Failed to save button appearance. Check your connection and try again.';
+        status.textContent = message;
+        status.classList.add('error');
+        errorElement.textContent = message;
+        focusErrorCode = error.code;
+      } finally {
+        setAppearancePending(false);
+        if (saveFailed) {
+          focusAppearanceError(focusErrorCode);
+        }
+      }
+    }
+
+    function resetAppearance() {
+      const resetButton = document.getElementById('resetAppearanceBtn');
+      if (!window.confirm('Reset button appearance to its defaults?')) {
+        resetButton.focus();
+        return;
+      }
+
+      const defaults = {
+        ...DEFAULT_APPEARANCE,
+        colors: null,
+        theme: currentSettings && currentSettings.theme,
+      };
+      fillAppearanceForm(defaults);
+      updateAppearanceColorState();
+      saveAppearance();
+    }
+
     function createApiError(data, fallback) {
       const error = new Error(data.error || fallback);
       error.code = data.code;
@@ -753,6 +1166,7 @@
 
       updateLabelValues(data);
       updatePressedLabelVisibility(!!data.multi_nice);
+      updateAppearanceValues(data);
       
       document.getElementById('publicId').textContent = data.id;
       document.getElementById('created').textContent = formatDate(data.created_at);
@@ -799,7 +1213,7 @@
         const data = await res.json();
         if (!res.ok) throw createApiError(data, 'Failed to save button text');
 
-        currentSettings = data;
+        currentSettings = { ...(currentSettings || {}), ...data };
         updateLabelValues(data);
         renderEmbed(data.embed);
         clearLabelError(labelInput, document.getElementById('labelError'));
@@ -825,6 +1239,25 @@
     }
 
     document.getElementById('saveLabelsBtn').addEventListener('click', saveLabels);
+
+    document.getElementById('appearanceCustomColors').addEventListener('change', () => {
+      if (document.getElementById('appearanceCustomColors').checked && savedAppearance && savedAppearance.colors === null && currentSettings && currentSettings.theme === 'minimal') {
+        updateAppearanceColorValues(MINIMAL_EDITABLE_COLORS);
+      }
+      updateAppearanceColorState();
+      updateAppearanceDirtyState();
+    });
+    document.querySelectorAll('#appearanceColors input[type="color"]').forEach((input) => {
+      input.addEventListener('input', () => {
+        document.querySelector(`[data-color-value="${input.dataset.color}"]`).textContent = input.value.toUpperCase();
+        updateAppearanceDirtyState();
+      });
+    });
+    document.querySelectorAll('#appearanceSettings select').forEach((input) => {
+      input.addEventListener('change', updateAppearanceDirtyState);
+    });
+    document.getElementById('saveAppearanceBtn').addEventListener('click', saveAppearance);
+    document.getElementById('resetAppearanceBtn').addEventListener('click', resetAppearance);
     
     // Show error
     function showError() {
