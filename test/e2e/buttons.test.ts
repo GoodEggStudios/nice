@@ -123,7 +123,7 @@ describe("Button API", () => {
       });
 
       const createdEmbed = data.embed as { iframe: string };
-      expect(createdEmbed.iframe).toContain("width:115px;height:36px");
+      expect(createdEmbed.iframe).toContain("width:124px;height:36px");
 
       const stored = JSON.parse(
         (await env.NICE_KV.get(`btn:${data.public_id}`)) as string
@@ -134,7 +134,7 @@ describe("Button API", () => {
         `https://api.nice.sbs/api/v1/buttons/stats/${data.private_id}`
       );
       const updatedData = await updatedStats.json() as { embed: { iframe: string } };
-      expect(updatedData.embed.iframe).toContain("width:160px;height:36px");
+      expect(updatedData.embed.iframe).toContain("width:169px;height:36px");
     });
 
     it("should generate embed snippets", async () => {
