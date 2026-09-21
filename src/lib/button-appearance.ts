@@ -1,8 +1,20 @@
-export type ButtonShape = "rounded" | "pill" | "square";
-export type CountVisibility = "nonzero" | "always" | "hidden";
-export type CountPosition = "inside" | "beside" | "below";
-export type CountFormat = "compact" | "full";
-export type ButtonAnimation = "pop" | "bounce" | "sparkle" | "confetti" | "none";
+export const BUTTON_SHAPES = ["rounded", "pill", "square"] as const;
+export const COUNT_VISIBILITIES = ["nonzero", "always", "hidden"] as const;
+export const COUNT_POSITIONS = ["inside", "beside", "below"] as const;
+export const COUNT_FORMATS = ["compact", "full"] as const;
+export const BUTTON_ANIMATIONS = [
+  "pop",
+  "bounce",
+  "sparkle",
+  "confetti",
+  "none",
+] as const;
+
+export type ButtonShape = (typeof BUTTON_SHAPES)[number];
+export type CountVisibility = (typeof COUNT_VISIBILITIES)[number];
+export type CountPosition = (typeof COUNT_POSITIONS)[number];
+export type CountFormat = (typeof COUNT_FORMATS)[number];
+export type ButtonAnimation = (typeof BUTTON_ANIMATIONS)[number];
 
 export interface ButtonColors {
   background: string;
@@ -21,18 +33,6 @@ export interface PublicButtonColors {
   pressed_foreground: string;
   pressed_border: string;
 }
-
-export const BUTTON_SHAPES = ["rounded", "pill", "square"] as const;
-export const COUNT_VISIBILITIES = ["nonzero", "always", "hidden"] as const;
-export const COUNT_POSITIONS = ["inside", "beside", "below"] as const;
-export const COUNT_FORMATS = ["compact", "full"] as const;
-export const BUTTON_ANIMATIONS = [
-  "pop",
-  "bounce",
-  "sparkle",
-  "confetti",
-  "none",
-] as const;
 
 const PUBLIC_COLOR_KEYS = [
   "background",

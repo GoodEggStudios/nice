@@ -108,6 +108,7 @@ describe("button appearance", () => {
       true,
       [],
       {},
+      () => "#AABBCC",
       { ...complete, border: undefined },
       { ...complete, extra: "#000000" },
       { ...complete, background: "red" },
@@ -117,6 +118,7 @@ describe("button appearance", () => {
       { ...complete, background: " #AABBCC" },
       { ...complete, background: "#AABBCC " },
       { ...complete, background: 123 },
+      { ...complete, background: () => "#AABBCC" },
     ];
 
     for (const value of malformed) {
