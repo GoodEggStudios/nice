@@ -9,14 +9,6 @@
  */
 
 import type { Env, Button, RestrictionMode } from "../types";
-import type {
-  ButtonAnimation,
-  ButtonColors,
-  ButtonShape,
-  CountFormat,
-  CountPosition,
-  CountVisibility,
-} from "../lib/button-appearance";
 import {
   EMBED_SIZES,
   EMBED_THEMES,
@@ -43,94 +35,13 @@ import {
   DEFAULT_COUNT_POSITION,
   DEFAULT_COUNT_FORMAT,
   DEFAULT_BUTTON_ANIMATION,
-  normalizeStoredButtonShape,
-  normalizeStoredCountVisibility,
-  normalizeStoredCountPosition,
-  normalizeStoredCountFormat,
-  normalizeStoredButtonAnimation,
-  serializeButtonColors,
-  validateButtonColors,
-  validateButtonShape,
-  validateCountVisibility,
-  validateCountPosition,
-  validateCountFormat,
-  validateButtonAnimation,
+  validateAppearance,
+  applyAppearanceValues,
+  getButtonAppearance,
+  type AppearanceBody,
 } from "../lib";
 
 const VALID_RESTRICTIONS: RestrictionMode[] = ["url", "domain", "global"];
-
-type AppearanceBody = {
-  colors?: unknown;
-  shape?: unknown;
-  count_visibility?: unknown;
-  count_position?: unknown;
-  count_format?: unknown;
-  animation?: unknown;
-};
-
-type AppearanceValues = {
-  colors?: ButtonColors | null;
-  shape?: ButtonShape;
-  countVisibility?: CountVisibility;
-  countPosition?: CountPosition;
-  countFormat?: CountFormat;
-  animation?: ButtonAnimation;
-};
-
-function validateAppearance(
-  body: AppearanceBody
-): { ok: true; value: AppearanceValues } | { ok: false; response: Response } {
-  if (body.colors !== undefined) {
-    const result = validateButtonColors(body.colors);
-    if (!result.ok) return result;
-    return validateAppearanceEnums(body, { colors: result.value });
-  }
-
-  return validateAppearanceEnums(body, {});
-}
-
-function validateAppearanceEnums(
-  body: AppearanceBody,
-  values: AppearanceValues
-): { ok: true; value: AppearanceValues } | { ok: false; response: Response } {
-  if (body.shape !== undefined) {
-    const result = validateButtonShape(body.shape);
-    if (!result.ok) return result;
-    values.shape = result.value;
-  }
-  if (body.count_visibility !== undefined) {
-    const result = validateCountVisibility(body.count_visibility);
-    if (!result.ok) return result;
-    values.countVisibility = result.value;
-  }
-  if (body.count_position !== undefined) {
-    const result = validateCountPosition(body.count_position);
-    if (!result.ok) return result;
-    values.countPosition = result.value;
-  }
-  if (body.count_format !== undefined) {
-    const result = validateCountFormat(body.count_format);
-    if (!result.ok) return result;
-    values.countFormat = result.value;
-  }
-  if (body.animation !== undefined) {
-    const result = validateButtonAnimation(body.animation);
-    if (!result.ok) return result;
-    values.animation = result.value;
-  }
-  return { ok: true, value: values };
-}
-
-function getButtonAppearance(button: Button) {
-  return {
-    colors: serializeButtonColors(button.colors),
-    shape: normalizeStoredButtonShape(button.shape),
-    count_visibility: normalizeStoredCountVisibility(button.countVisibility),
-    count_position: normalizeStoredCountPosition(button.countPosition),
-    count_format: normalizeStoredCountFormat(button.countFormat),
-    animation: normalizeStoredButtonAnimation(button.animation),
-  };
-}
 
 /**
  * Get client IP from request
@@ -546,28 +457,7 @@ export async function updateButton(
     button.pressedLabel = pressedLabelResult.value;
   }
 
-  if (appearanceResult.value.colors !== undefined) {
-    if (appearanceResult.value.colors === null) {
-      delete button.colors;
-    } else {
-      button.colors = appearanceResult.value.colors;
-    }
-  }
-  if (appearanceResult.value.shape !== undefined) {
-    button.shape = appearanceResult.value.shape;
-  }
-  if (appearanceResult.value.countVisibility !== undefined) {
-    button.countVisibility = appearanceResult.value.countVisibility;
-  }
-  if (appearanceResult.value.countPosition !== undefined) {
-    button.countPosition = appearanceResult.value.countPosition;
-  }
-  if (appearanceResult.value.countFormat !== undefined) {
-    button.countFormat = appearanceResult.value.countFormat;
-  }
-  if (appearanceResult.value.animation !== undefined) {
-    button.animation = appearanceResult.value.animation;
-  }
+  applyAppearanceValues(button, appearanceResult.value);
 
   // Save updated button
   await env.NICE_KV.put(`btn:${publicId}`, JSON.stringify(button));

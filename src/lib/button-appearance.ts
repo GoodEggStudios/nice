@@ -260,3 +260,135 @@ export function normalizeStoredCountFormat(value: unknown): CountFormat {
 export function normalizeStoredButtonAnimation(value: unknown): ButtonAnimation {
   return normalizeEnum(value, BUTTON_ANIMATIONS, DEFAULT_BUTTON_ANIMATION);
 }
+
+export type AppearanceBody = {
+  colors?: unknown;
+  shape?: unknown;
+  count_visibility?: unknown;
+  count_position?: unknown;
+  count_format?: unknown;
+  animation?: unknown;
+};
+
+export type AppearanceValues = {
+  colors?: ButtonColors | null;
+  shape?: ButtonShape;
+  countVisibility?: CountVisibility;
+  countPosition?: CountPosition;
+  countFormat?: CountFormat;
+  animation?: ButtonAnimation;
+};
+
+/** Stored appearance fields used by serialize/normalize helpers. */
+export type ButtonAppearanceFields = {
+  colors?: ButtonColors;
+  shape?: ButtonShape;
+  countVisibility?: CountVisibility;
+  countPosition?: CountPosition;
+  countFormat?: CountFormat;
+  animation?: ButtonAnimation;
+};
+
+type AppearanceEnumField<K extends keyof AppearanceValues> = {
+  bodyKey: keyof AppearanceBody;
+  valueKey: K;
+  buttonKey: keyof ButtonAppearanceFields;
+  validate: (value: unknown) => EnumValidationResult<NonNullable<AppearanceValues[K]>>;
+};
+
+const APPEARANCE_ENUM_FIELDS = [
+  {
+    bodyKey: "shape",
+    valueKey: "shape",
+    buttonKey: "shape",
+    validate: validateButtonShape,
+  },
+  {
+    bodyKey: "count_visibility",
+    valueKey: "countVisibility",
+    buttonKey: "countVisibility",
+    validate: validateCountVisibility,
+  },
+  {
+    bodyKey: "count_position",
+    valueKey: "countPosition",
+    buttonKey: "countPosition",
+    validate: validateCountPosition,
+  },
+  {
+    bodyKey: "count_format",
+    valueKey: "countFormat",
+    buttonKey: "countFormat",
+    validate: validateCountFormat,
+  },
+  {
+    bodyKey: "animation",
+    valueKey: "animation",
+    buttonKey: "animation",
+    validate: validateButtonAnimation,
+  },
+] as const satisfies readonly AppearanceEnumField<
+  "shape" | "countVisibility" | "countPosition" | "countFormat" | "animation"
+>[];
+
+function validateAppearanceEnums(
+  body: AppearanceBody,
+  values: AppearanceValues
+): { ok: true; value: AppearanceValues } | { ok: false; response: Response } {
+  for (const field of APPEARANCE_ENUM_FIELDS) {
+    const raw = body[field.bodyKey];
+    if (raw === undefined) continue;
+
+    const result = field.validate(raw);
+    if (!result.ok) return result;
+    values[field.valueKey] = result.value as never;
+  }
+  return { ok: true, value: values };
+}
+
+export function validateAppearance(
+  body: AppearanceBody
+): { ok: true; value: AppearanceValues } | { ok: false; response: Response } {
+  if (body.colors !== undefined) {
+    const result = validateButtonColors(body.colors);
+    if (!result.ok) return result;
+    return validateAppearanceEnums(body, { colors: result.value });
+  }
+
+  return validateAppearanceEnums(body, {});
+}
+
+/**
+ * Apply validated appearance values onto a stored button record.
+ * `colors: null` clears a custom palette; omitted fields are left unchanged.
+ */
+export function applyAppearanceValues(
+  button: ButtonAppearanceFields,
+  values: AppearanceValues
+): void {
+  if (values.colors !== undefined) {
+    if (values.colors === null) {
+      delete button.colors;
+    } else {
+      button.colors = values.colors;
+    }
+  }
+
+  for (const field of APPEARANCE_ENUM_FIELDS) {
+    const next = values[field.valueKey];
+    if (next !== undefined) {
+      button[field.buttonKey] = next as never;
+    }
+  }
+}
+
+export function getButtonAppearance(button: ButtonAppearanceFields) {
+  return {
+    colors: serializeButtonColors(button.colors),
+    shape: normalizeStoredButtonShape(button.shape),
+    count_visibility: normalizeStoredCountVisibility(button.countVisibility),
+    count_position: normalizeStoredCountPosition(button.countPosition),
+    count_format: normalizeStoredCountFormat(button.countFormat),
+    animation: normalizeStoredButtonAnimation(button.animation),
+  };
+}
