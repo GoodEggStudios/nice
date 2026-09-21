@@ -402,7 +402,7 @@ Remove `data-confetti="true"` to keep the button without confetti. This setting 
 
 ### iframe
 
-Use the iframe when a platform allows HTML but blocks external scripts. A standalone iframe cannot draw outside its own rectangle, so it cannot provide host-page confetti. The generated snippet sizes the iframe from the button's stored labels and appearance settings; direct iframes also reserve the particle envelope for stored sparkle/confetti animations because they cannot receive resize messages. Appearance query parameters are ignored.
+Use the iframe when a platform allows HTML but blocks external scripts. A standalone iframe cannot draw outside its own rectangle, so it cannot provide host-page confetti. The generated snippet sizes the iframe from the button's stored labels and appearance settings (visible count position/format). Script embeds expand for particle animations via resize messages; direct iframes keep baseline dimensions. Appearance query parameters are ignored.
 
 ```html
 <iframe 

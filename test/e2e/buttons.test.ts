@@ -123,8 +123,9 @@ describe("Button API", () => {
       });
 
       const createdEmbed = data.embed as { iframe: string };
-      // Beside-count headroom (124×36) plus confetti particle envelope (112×48).
-      expect(createdEmbed.iframe).toContain("width:236px;height:84px");
+      // Beside-count headroom only; particle animations rely on resize, not
+      // generate-time envelope padding.
+      expect(createdEmbed.iframe).toContain("width:113px;height:36px");
 
       const stored = JSON.parse(
         (await env.NICE_KV.get(`btn:${data.public_id}`)) as string
@@ -135,7 +136,7 @@ describe("Button API", () => {
         `https://api.nice.sbs/api/v1/buttons/stats/${data.private_id}`
       );
       const updatedData = await updatedStats.json() as { embed: { iframe: string } };
-      expect(updatedData.embed.iframe).toContain("width:281px;height:84px");
+      expect(updatedData.embed.iframe).toContain("width:158px;height:36px");
     });
 
     it("should generate embed snippets", async () => {
