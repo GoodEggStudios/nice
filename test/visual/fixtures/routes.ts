@@ -23,6 +23,7 @@ export interface NiceApiMockOptions {
   buttonPatchErrorCode?: string;
   buttonPatchError?: string;
   appearance?: Partial<VisualAppearance>;
+  theme?: VisualButtonStats["theme"];
   buttonPatchDelay?: number;
   buttonPatchResponse?: Partial<VisualButtonStats>;
   buttonPatchNetworkError?: boolean;
@@ -42,6 +43,7 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
   let stats = mockButtonStats({
     count,
     multi_nice: multiNice,
+    ...(options.theme === undefined ? {} : { theme: options.theme }),
     ...(options.label === undefined ? {} : { label: options.label }),
     ...(options.pressedLabel === undefined ? {} : { pressed_label: options.pressedLabel }),
     ...options.appearance,

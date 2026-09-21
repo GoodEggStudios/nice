@@ -276,6 +276,16 @@ test("stats hydrates a customized button appearance", async ({ page }) => {
   await expect(page.locator("[data-color-value=pressed_foreground]")).toHaveText("#0F0F0F");
 });
 
+test("stats seeds editable minimal colours when custom colours are enabled", async ({ page }) => {
+  await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0], { theme: "minimal" });
+
+  await expect(page.locator("#appearanceBackground")).toHaveValue("#111827");
+  await page.locator("#appearanceCustomColors").check();
+  await expect(page.locator("#appearanceBackground")).toHaveValue("#ffffff");
+  await expect(page.locator("#appearanceForeground")).toHaveValue("#374151");
+  await expect(page.locator("#appearancePressedBackground")).toHaveValue("#fef3c7");
+});
+
 test("stats saves the complete appearance contract and refreshes the embed", async ({ page }) => {
   await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0], {
     buttonPatchDelay: 250,
@@ -378,7 +388,6 @@ for (const errorCase of appearanceErrorCases) {
     await errorCase.edit(page);
     await page.locator("#saveAppearanceBtn").click();
 
-    await expect(page.locator("#appearanceSaveStatus")).toContainText(`Rejected ${errorCase.code}`);
     await expect(page.locator("#appearanceError")).toContainText(`Rejected ${errorCase.code}`);
     await expect(page.locator(errorCase.control)).toBeFocused();
   });
@@ -392,7 +401,7 @@ test("stats preserves appearance edits after a network failure", async ({ page }
   await page.locator("#saveAppearanceBtn").click();
 
   await expect(page.locator("#appearanceShape")).toHaveValue("square");
-  await expect(page.locator("#appearanceSaveStatus")).toContainText("Failed to save button appearance");
+  await expect(page.locator("#appearanceError")).toContainText("Failed to save button appearance");
   await expect(page.locator("#appearanceSettings")).toBeFocused();
   await expect(page.locator("#appearanceSaveStatus")).not.toHaveClass(/alert/);
 });

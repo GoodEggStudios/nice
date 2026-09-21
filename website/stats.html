@@ -807,6 +807,10 @@
       'mono-dark': { background: '#000000', foreground: '#FFFFFF', border: '#333333', pressed_background: '#FFFFFF', pressed_foreground: '#000000', pressed_border: '#FFFFFF' },
       'mono-light': { background: '#FFFFFF', foreground: '#000000', border: '#DDDDDD', pressed_background: '#000000', pressed_foreground: '#FFFFFF', pressed_border: '#000000' },
     };
+    const MINIMAL_EDITABLE_COLORS = {
+      background: '#FFFFFF', foreground: '#374151', border: '#374151',
+      pressed_background: '#FEF3C7', pressed_foreground: '#92400E', pressed_border: '#FBBF24',
+    };
     const APPEARANCE_COLOR_KEYS = ['background', 'foreground', 'border', 'pressed_background', 'pressed_foreground', 'pressed_border'];
     let currentSettings = null;
     let labelSavePending = false;
@@ -1078,7 +1082,7 @@
         const message = error instanceof Error && error.message !== 'Failed to fetch'
           ? error.message
           : 'Failed to save button appearance. Check your connection and try again.';
-        status.textContent = message;
+        status.textContent = '';
         status.classList.add('error');
         errorElement.textContent = message;
         focusErrorCode = error.code;
@@ -1237,7 +1241,11 @@
     document.getElementById('saveLabelsBtn').addEventListener('click', saveLabels);
 
     document.getElementById('appearanceCustomColors').addEventListener('change', () => {
+      if (document.getElementById('appearanceCustomColors').checked && savedAppearance && savedAppearance.colors === null && currentSettings && currentSettings.theme === 'minimal') {
+        updateAppearanceColorValues(MINIMAL_EDITABLE_COLORS);
+      }
       updateAppearanceColorState();
+      updateAppearanceDirtyState();
     });
     document.querySelectorAll('#appearanceColors input[type="color"]').forEach((input) => {
       input.addEventListener('input', () => {
@@ -1248,7 +1256,6 @@
     document.querySelectorAll('#appearanceSettings select').forEach((input) => {
       input.addEventListener('change', updateAppearanceDirtyState);
     });
-    document.getElementById('appearanceCustomColors').addEventListener('change', updateAppearanceDirtyState);
     document.getElementById('saveAppearanceBtn').addEventListener('click', saveAppearance);
     document.getElementById('resetAppearanceBtn').addEventListener('click', resetAppearance);
     
