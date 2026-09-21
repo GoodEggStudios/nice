@@ -392,3 +392,12 @@ export function getButtonAppearance(button: ButtonAppearanceFields) {
     animation: normalizeStoredButtonAnimation(button.animation),
   };
 }
+
+export function hasStoredButtonAppearance(button: ButtonAppearanceFields): boolean {
+  return serializeButtonColors(button.colors) !== null ||
+    BUTTON_SHAPES.includes(button.shape as ButtonShape) ||
+    COUNT_VISIBILITIES.includes(button.countVisibility as CountVisibility) ||
+    COUNT_POSITIONS.includes(button.countPosition as CountPosition) ||
+    COUNT_FORMATS.includes(button.countFormat as CountFormat) ||
+    BUTTON_ANIMATIONS.includes(button.animation as ButtonAnimation);
+}

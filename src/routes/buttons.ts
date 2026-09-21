@@ -13,6 +13,7 @@ import {
   EMBED_SIZES,
   EMBED_THEMES,
   getEmbedInitialDimensions,
+  type EmbedAppearance,
   type EmbedSize,
   type EmbedTheme,
 } from "./embed-constants";
@@ -60,12 +61,21 @@ function generateEmbedSnippets(
   size: string,
   label: string,
   pressedLabel: string,
-  multiNice?: boolean
+  multiNice: boolean | undefined,
+  count: number,
+  appearance: EmbedAppearance
 ): { iframe: string; script: string } {
   const embedUrl = `${baseUrl}/e/${publicId}?theme=${theme}&size=${size}${multiNice ? '&multi=1' : ''}`;
 
   const embedSize = EMBED_SIZES.includes(size as EmbedSize) ? (size as EmbedSize) : "md";
-  const dim = getEmbedInitialDimensions(embedSize, label, pressedLabel, multiNice === true);
+  const dim = getEmbedInitialDimensions(
+    embedSize,
+    label,
+    pressedLabel,
+    multiNice === true,
+    count,
+    appearance
+  );
 
   const iframe = `<iframe src="${embedUrl}" style="background:transparent;border:none;overflow:hidden;display:block;color-scheme:normal;width:${dim.w}px;height:${dim.h}px;" scrolling="no" frameborder="0" allowtransparency="true" title="Nice button"></iframe>`;
   const script = `<script src="${baseUrl}/embed.js" data-button="${publicId}" data-theme="${theme}" data-size="${size}"${multiNice ? ' data-multi="1"' : ''} async></script>`;
@@ -221,7 +231,9 @@ export async function createButton(
     size,
     labelResult.value,
     pressedLabelResult.value,
-    button.multiNice
+    button.multiNice,
+    0,
+    getButtonAppearance(button)
   );
 
   // Return response with both IDs (private shown only once!)
@@ -302,7 +314,9 @@ export async function getButtonStats(
     button.size || "md",
     label,
     pressedLabel,
-    button.multiNice
+    button.multiNice,
+    button.count,
+    getButtonAppearance(button)
   );
 
   return Response.json({
@@ -481,7 +495,9 @@ export async function updateButton(
     button.size || "md",
     label,
     pressedLabel,
-    button.multiNice
+    button.multiNice,
+    button.count,
+    getButtonAppearance(button)
   );
 
   return Response.json({

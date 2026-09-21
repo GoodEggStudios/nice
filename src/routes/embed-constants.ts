@@ -1,10 +1,38 @@
 export const EMBED_THEMES = ["light", "dark", "minimal", "mono-dark", "mono-light"] as const;
 export const EMBED_SIZES = ["xs", "sm", "md", "lg", "xl"] as const;
 
+import { formatCount } from "../lib/format";
+
 import { MAX_BUTTON_LABEL_CODE_POINTS } from "../lib/button-labels";
+import type {
+  ButtonAnimation,
+  ButtonShape,
+  CountFormat,
+  CountPosition,
+  CountVisibility,
+  PublicButtonColors,
+} from "../lib/button-appearance";
 
 export type EmbedTheme = typeof EMBED_THEMES[number];
 export type EmbedSize = typeof EMBED_SIZES[number];
+
+export interface EmbedAppearance {
+  colors: PublicButtonColors | null;
+  shape: ButtonShape;
+  count_visibility: CountVisibility;
+  count_position: CountPosition;
+  count_format: CountFormat;
+  animation: ButtonAnimation;
+}
+
+export const DEFAULT_EMBED_APPEARANCE: EmbedAppearance = {
+  colors: null,
+  shape: "rounded",
+  count_visibility: "nonzero",
+  count_position: "inside",
+  count_format: "compact",
+  animation: "pop",
+};
 
 export const EMBED_DIMENSIONS: Record<EmbedSize, { w: number; h: number }> = {
   xs: { w: 70, h: 28 },
@@ -30,7 +58,9 @@ export function getEmbedInitialDimensions(
   size: EmbedSize,
   label: string,
   pressedLabel: string,
-  multiNice: boolean
+  multiNice: boolean,
+  count = 0,
+  appearance: EmbedAppearance = DEFAULT_EMBED_APPEARANCE
 ): { w: number; h: number } {
   const dimensions = EMBED_DIMENSIONS[size];
   const longestLabel = multiNice
@@ -45,12 +75,29 @@ export function getEmbedInitialDimensions(
     ? 0
     : Math.min(Array.from(longestLabel).length, MAX_BUTTON_LABEL_CODE_POINTS);
 
-  return {
-    w: Math.ceil(
-      dimensions.w + codePoints * EMBED_FONT_SIZE[size] * EMBED_MAX_GLYPH_WIDTH_EM
-    ),
-    h: dimensions.h,
-  };
+  let width = dimensions.w + codePoints * EMBED_FONT_SIZE[size] * EMBED_MAX_GLYPH_WIDTH_EM;
+  let height = dimensions.h;
+  const countIsVisible =
+    appearance.count_visibility === "always" ||
+    (appearance.count_visibility === "nonzero" && count > 0);
+  if (countIsVisible) {
+    const countText = formatEmbedCount(count > 0 ? count : 0, appearance.count_format);
+    const countCharacters = countText.length;
+    const countWidth = countCharacters * EMBED_FONT_SIZE[size] * 0.75;
+    const gap = 4;
+    if (appearance.count_position === "beside") {
+      width += gap + countWidth;
+    } else if (appearance.count_position === "below") {
+      height += gap + Math.ceil(EMBED_FONT_SIZE[size] * 1.2);
+    }
+  }
+
+  return { w: Math.ceil(width), h: Math.ceil(height) };
+}
+
+export function formatEmbedCount(count: number, format: CountFormat): string {
+  if (format === "full") return count.toString();
+  return formatCount(count);
 }
 
 export function renderEmbedSizeMapLiteral(): string {

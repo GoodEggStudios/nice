@@ -121,6 +121,22 @@ describe("Button API", () => {
         count_format: "full",
         animation: "confetti",
       });
+
+      const createdEmbed = data.embed as { iframe: string };
+      // Beside-count headroom only; particle animations rely on resize, not
+      // generate-time envelope padding.
+      expect(createdEmbed.iframe).toContain("width:113px;height:36px");
+
+      const stored = JSON.parse(
+        (await env.NICE_KV.get(`btn:${data.public_id}`)) as string
+      ) as Record<string, unknown>;
+      stored.count = 123456;
+      await env.NICE_KV.put(`btn:${data.public_id}`, JSON.stringify(stored));
+      const updatedStats = await SELF.fetch(
+        `https://api.nice.sbs/api/v1/buttons/stats/${data.private_id}`
+      );
+      const updatedData = await updatedStats.json() as { embed: { iframe: string } };
+      expect(updatedData.embed.iframe).toContain("width:158px;height:36px");
     });
 
     it("should generate embed snippets", async () => {
