@@ -107,6 +107,8 @@ The appearance API accepts `colors`, `shape`, `count_visibility`, `count_positio
 
 Both embed forms load these persisted labels and appearance settings from the button record; `label`, `pressed_label`, and appearance URL parameters are ignored. Script embeds resize after the Bungee font settles, and generated iframe snippets calculate initial dimensions from custom labels, visible count position/format, and the stored appearance. Refresh generated direct-iframe snippets after material count or layout changes. SVG badges do not support custom appearance.
 
+Invalid appearance values return HTTP 400 with `INVALID_COLORS`, `INVALID_SHAPE`, `INVALID_COUNT_VISIBILITY`, `INVALID_COUNT_POSITION`, `INVALID_COUNT_FORMAT`, or `INVALID_ANIMATION`.
+
 **Host-page confetti (script embed only):** Add `data-confetti="true"` to opt in to a confetti celebration on the host page when someone nices. It is off by default. A standalone iframe cannot draw outside its own rectangle.
 
 See the [full API documentation](docs/API.md) for label limits, update requests, and response shapes.

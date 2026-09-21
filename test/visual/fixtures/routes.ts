@@ -1,6 +1,5 @@
 import type { Page, Route } from "@playwright/test";
 import { generateBadge, normalizeTheme } from "../../../src/lib/badge";
-import type { PublicButtonColors } from "../../../src/lib/button-appearance";
 import { renderEmbedHtml, renderDemoEmbedHtml, renderEmbedScript, type EmbedSize, type EmbedTheme } from "../../../src/routes/embed";
 import {
   mockButtonStats,
@@ -146,9 +145,6 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
       return;
     }
     const body = route.request().postDataJSON() as Record<string, unknown>;
-    const colors = body.colors && typeof body.colors === "object"
-      ? body.colors as PublicButtonColors
-      : null;
     // Echo the request by default, then let createResponse win so tests can
     // simulate a normalized server payload that differs from the submitted form.
     stats = mockButtonStats({
@@ -156,7 +152,7 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
       multi_nice: typeof body.multi_nice === "boolean" ? body.multi_nice : multiNice,
       label: typeof body.label === "string" ? body.label : "Nice",
       pressed_label: typeof body.pressed_label === "string" ? body.pressed_label : "Nice'd",
-      ...normalizeVisualAppearance({ colors, ...appearanceOverridesFromBody(body) }),
+      ...normalizeVisualAppearance(appearanceOverridesFromBody(body)),
       ...options.createResponse,
     });
     await fulfillJson(route, mockCreateButtonResponse(stats), 201);

@@ -1,7 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { EMBED_DIMENSIONS, EMBED_SIZES, EMBED_THEMES, getEmbedInitialDimensions, type EmbedSize, type EmbedTheme } from "../../src/routes/embed";
 import type { EmbedAppearance } from "../../src/routes/embed-constants";
-import { VISUAL_BUTTON_ID } from "./fixtures/data";
+import { normalizeVisualAppearance, VISUAL_BUTTON_ID, type VisualAppearanceOverrides } from "./fixtures/data";
 import { installNiceApiMocks } from "./fixtures/routes";
 import { screenshotPaddedLocator, stabilizePage, stableComponentClip } from "./fixtures/screenshot";
 import { startVisualServer, type VisualServer } from "./fixtures/server";
@@ -95,6 +95,10 @@ async function expectButtonFitsEmbed(page: Page): Promise<void> {
   expect(metrics.left).toBeGreaterThanOrEqual(0);
   expect(metrics.right).toBeLessThanOrEqual(metrics.clientWidth);
   expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth);
+}
+
+function makeAppearance(overrides: VisualAppearanceOverrides = {}) {
+  return normalizeVisualAppearance(overrides);
 }
 
 test.describe("embed default theme and size matrix", () => {
@@ -339,7 +343,7 @@ test.describe("embed appearance behavior", () => {
 });
 
 test.describe("embed appearance screenshots", () => {
-  const customPalette: EmbedAppearance = {
+  const customPalette: EmbedAppearance = makeAppearance({
     colors: {
       background: "#112233",
       foreground: "#AABBCC",
@@ -353,7 +357,7 @@ test.describe("embed appearance screenshots", () => {
     count_position: "inside",
     count_format: "compact",
     animation: "none",
-  };
+  });
 
   test("custom palette idle and pressed", async ({ page }) => {
     await openEmbed(page, "dark", "md", { count: 0, appearance: customPalette });
@@ -372,14 +376,7 @@ test.describe("embed appearance screenshots", () => {
 
   for (const shape of ["rounded", "pill", "square"] as const) {
     test(`shape ${shape}`, async ({ page }) => {
-      const appearance: EmbedAppearance = {
-        colors: null,
-        shape,
-        count_visibility: "nonzero",
-        count_position: "inside",
-        count_format: "compact",
-        animation: "none",
-      };
+      const appearance = makeAppearance({ shape, animation: "none" });
       await openEmbed(page, "dark", "md", { count: 42, appearance });
       await expect(page.locator("body")).toHaveClass(new RegExp(`shape-${shape}`));
       await screenshotEmbedWidget(page, `embed/appearance/shape-${shape}.png`, {
@@ -390,14 +387,7 @@ test.describe("embed appearance screenshots", () => {
   }
 
   test("count inside nonzero compact", async ({ page }) => {
-    const appearance: EmbedAppearance = {
-      colors: null,
-      shape: "rounded",
-      count_visibility: "nonzero",
-      count_position: "inside",
-      count_format: "compact",
-      animation: "none",
-    };
+    const appearance = makeAppearance({ animation: "none" });
     await openEmbed(page, "dark", "md", { count: 42, appearance });
     await expect(page.locator("#niceCountInside")).toHaveText("42");
     await screenshotEmbedWidget(page, "embed/appearance/count-inside-nonzero-compact.png", {
@@ -407,14 +397,7 @@ test.describe("embed appearance screenshots", () => {
   });
 
   test("count beside always full at zero", async ({ page }) => {
-    const appearance: EmbedAppearance = {
-      colors: null,
-      shape: "rounded",
-      count_visibility: "always",
-      count_position: "beside",
-      count_format: "full",
-      animation: "none",
-    };
+    const appearance = makeAppearance({ count_visibility: "always", count_position: "beside", count_format: "full", animation: "none" });
     await openEmbed(page, "dark", "md", { count: 0, appearance });
     await expect(page.locator("#niceCountOutside")).toHaveText("0");
     await screenshotEmbedWidget(page, "embed/appearance/count-beside-always-full-zero.png", {
@@ -424,14 +407,7 @@ test.describe("embed appearance screenshots", () => {
   });
 
   test("count below nonzero compact with loaded count", async ({ page }) => {
-    const appearance: EmbedAppearance = {
-      colors: null,
-      shape: "rounded",
-      count_visibility: "nonzero",
-      count_position: "below",
-      count_format: "compact",
-      animation: "none",
-    };
+    const appearance = makeAppearance({ count_position: "below", animation: "none" });
     await openEmbed(page, "dark", "md", { count: 4200, appearance });
     await expect(page.locator("#niceCountOutside")).toHaveText("4.2K");
     await screenshotEmbedWidget(page, "embed/appearance/count-below-nonzero-compact.png", {
@@ -441,14 +417,7 @@ test.describe("embed appearance screenshots", () => {
   });
 
   test("hidden count", async ({ page }) => {
-    const appearance: EmbedAppearance = {
-      colors: null,
-      shape: "rounded",
-      count_visibility: "hidden",
-      count_position: "beside",
-      count_format: "compact",
-      animation: "none",
-    };
+    const appearance = makeAppearance({ count_visibility: "hidden", count_position: "beside", animation: "none" });
     await openEmbed(page, "dark", "md", { count: 42, appearance });
     await expect(page.locator("#niceCountInside")).toBeHidden();
     await expect(page.locator("#niceCountOutside")).toBeHidden();
@@ -460,14 +429,7 @@ test.describe("embed appearance screenshots", () => {
 
   test("long custom label with outside count fits without clipping", async ({ page }) => {
     const label = "W".repeat(24);
-    const appearance: EmbedAppearance = {
-      colors: null,
-      shape: "rounded",
-      count_visibility: "always",
-      count_position: "beside",
-      count_format: "compact",
-      animation: "none",
-    };
+    const appearance = makeAppearance({ count_visibility: "always", count_position: "beside", animation: "none" });
     await openEmbed(page, "dark", "md", {
       count: 42,
       label,
@@ -485,14 +447,7 @@ test.describe("embed appearance screenshots", () => {
   });
 
   test("stable post-animation resting state", async ({ page }) => {
-    const appearance: EmbedAppearance = {
-      colors: null,
-      shape: "rounded",
-      count_visibility: "always",
-      count_position: "inside",
-      count_format: "compact",
-      animation: "pop",
-    };
+    const appearance = makeAppearance({ count_visibility: "always", animation: "pop" });
     await openEmbed(page, "dark", "md", { multiNice: true, count: 42, appearance });
     await page.locator("#niceBtn").click();
     await expect(page.locator("#niceBtn")).toHaveClass(/animating/);
