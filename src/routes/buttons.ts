@@ -9,6 +9,14 @@
  */
 
 import type { Env, Button, RestrictionMode } from "../types";
+import type {
+  ButtonAnimation,
+  ButtonColors,
+  ButtonShape,
+  CountFormat,
+  CountPosition,
+  CountVisibility,
+} from "../lib/button-appearance";
 import {
   EMBED_SIZES,
   EMBED_THEMES,
@@ -30,9 +38,99 @@ import {
   DEFAULT_PRESSED_BUTTON_LABEL,
   normalizeStoredButtonLabel,
   validateButtonLabel,
+  DEFAULT_BUTTON_SHAPE,
+  DEFAULT_COUNT_VISIBILITY,
+  DEFAULT_COUNT_POSITION,
+  DEFAULT_COUNT_FORMAT,
+  DEFAULT_BUTTON_ANIMATION,
+  normalizeStoredButtonShape,
+  normalizeStoredCountVisibility,
+  normalizeStoredCountPosition,
+  normalizeStoredCountFormat,
+  normalizeStoredButtonAnimation,
+  serializeButtonColors,
+  validateButtonColors,
+  validateButtonShape,
+  validateCountVisibility,
+  validateCountPosition,
+  validateCountFormat,
+  validateButtonAnimation,
 } from "../lib";
 
 const VALID_RESTRICTIONS: RestrictionMode[] = ["url", "domain", "global"];
+
+type AppearanceBody = {
+  colors?: unknown;
+  shape?: unknown;
+  count_visibility?: unknown;
+  count_position?: unknown;
+  count_format?: unknown;
+  animation?: unknown;
+};
+
+type AppearanceValues = {
+  colors?: ButtonColors | null;
+  shape?: ButtonShape;
+  countVisibility?: CountVisibility;
+  countPosition?: CountPosition;
+  countFormat?: CountFormat;
+  animation?: ButtonAnimation;
+};
+
+function validateAppearance(
+  body: AppearanceBody
+): { ok: true; value: AppearanceValues } | { ok: false; response: Response } {
+  if (body.colors !== undefined) {
+    const result = validateButtonColors(body.colors);
+    if (!result.ok) return result;
+    return validateAppearanceEnums(body, { colors: result.value });
+  }
+
+  return validateAppearanceEnums(body, {});
+}
+
+function validateAppearanceEnums(
+  body: AppearanceBody,
+  values: AppearanceValues
+): { ok: true; value: AppearanceValues } | { ok: false; response: Response } {
+  if (body.shape !== undefined) {
+    const result = validateButtonShape(body.shape);
+    if (!result.ok) return result;
+    values.shape = result.value;
+  }
+  if (body.count_visibility !== undefined) {
+    const result = validateCountVisibility(body.count_visibility);
+    if (!result.ok) return result;
+    values.countVisibility = result.value;
+  }
+  if (body.count_position !== undefined) {
+    const result = validateCountPosition(body.count_position);
+    if (!result.ok) return result;
+    values.countPosition = result.value;
+  }
+  if (body.count_format !== undefined) {
+    const result = validateCountFormat(body.count_format);
+    if (!result.ok) return result;
+    values.countFormat = result.value;
+  }
+  if (body.animation !== undefined) {
+    const result = validateButtonAnimation(body.animation);
+    if (!result.ok) return result;
+    values.animation = result.value;
+  }
+  return { ok: true, value: values };
+}
+
+function getButtonAppearance(button: Button) {
+  return {
+    colors: serializeButtonColors(button.colors),
+    shape: normalizeStoredButtonShape(button.shape),
+    count_visibility: normalizeStoredCountVisibility(button.countVisibility),
+    count_position: normalizeStoredCountPosition(button.countPosition),
+    count_format: normalizeStoredCountFormat(button.countFormat),
+    animation: normalizeStoredButtonAnimation(button.animation),
+  };
+}
 
 /**
  * Get client IP from request
@@ -80,7 +178,7 @@ export async function createButton(
     multi_nice?: boolean;
     label?: unknown;
     pressed_label?: unknown;
-  };
+  } & AppearanceBody;
 
   try {
     body = await request.json();
@@ -149,6 +247,11 @@ export async function createButton(
     return pressedLabelResult.response;
   }
 
+  const appearanceResult = validateAppearance(body);
+  if (!appearanceResult.ok) {
+    return appearanceResult.response;
+  }
+
   // Rate limit check
   const clientIp = getClientIp(request);
   const rateLimit = await checkCreateRateLimit(env.NICE_KV, clientIp);
@@ -178,6 +281,16 @@ export async function createButton(
     size,
     label: labelResult.value,
     pressedLabel: pressedLabelResult.value,
+    ...(appearanceResult.value.colors
+      ? { colors: appearanceResult.value.colors }
+      : {}),
+    shape: appearanceResult.value.shape ?? DEFAULT_BUTTON_SHAPE,
+    countVisibility:
+      appearanceResult.value.countVisibility ?? DEFAULT_COUNT_VISIBILITY,
+    countPosition:
+      appearanceResult.value.countPosition ?? DEFAULT_COUNT_POSITION,
+    countFormat: appearanceResult.value.countFormat ?? DEFAULT_COUNT_FORMAT,
+    animation: appearanceResult.value.animation ?? DEFAULT_BUTTON_ANIMATION,
     createdAt: new Date().toISOString(),
   };
 
@@ -212,6 +325,7 @@ export async function createButton(
       size,
       label: button.label,
       pressed_label: button.pressedLabel,
+      ...getButtonAppearance(button),
       count: 0,
       created_at: button.createdAt,
       embed,
@@ -290,6 +404,7 @@ export async function getButtonStats(
     size: button.size,
     label,
     pressed_label: pressedLabel,
+    ...getButtonAppearance(button),
     created_at: button.createdAt,
     embed,
   });
@@ -319,7 +434,7 @@ export async function updateButton(
     multi_nice?: boolean;
     label?: unknown;
     pressed_label?: unknown;
-  };
+  } & AppearanceBody;
 
   try {
     body = await request.json();
@@ -368,7 +483,12 @@ export async function updateButton(
     return pressedLabelResult.response;
   }
 
-  // Update allowed fields
+  const appearanceResult = validateAppearance(body);
+  if (!appearanceResult.ok) {
+    return appearanceResult.response;
+  }
+
+  let restriction: RestrictionMode | undefined;
   if (body.restriction !== undefined) {
     if (!VALID_RESTRICTIONS.includes(body.restriction as RestrictionMode)) {
       return Response.json(
@@ -376,9 +496,10 @@ export async function updateButton(
         { status: 400 }
       );
     }
-    button.restriction = body.restriction as RestrictionMode;
+    restriction = body.restriction as RestrictionMode;
   }
 
+  let theme: string | undefined;
   if (body.theme !== undefined) {
     if (!EMBED_THEMES.includes(body.theme as EmbedTheme)) {
       return Response.json(
@@ -386,9 +507,10 @@ export async function updateButton(
         { status: 400 }
       );
     }
-    button.theme = body.theme;
+    theme = body.theme;
   }
 
+  let size: string | undefined;
   if (body.size !== undefined) {
     if (!EMBED_SIZES.includes(body.size as EmbedSize)) {
       return Response.json(
@@ -396,7 +518,20 @@ export async function updateButton(
         { status: 400 }
       );
     }
-    button.size = body.size;
+    size = body.size;
+  }
+
+  // Update allowed fields
+  if (restriction !== undefined) {
+    button.restriction = restriction;
+  }
+
+  if (theme !== undefined) {
+    button.theme = theme;
+  }
+
+  if (size !== undefined) {
+    button.size = size;
   }
 
   if (body.multi_nice !== undefined) {
@@ -409,6 +544,29 @@ export async function updateButton(
 
   if (pressedLabelResult) {
     button.pressedLabel = pressedLabelResult.value;
+  }
+
+  if (appearanceResult.value.colors !== undefined) {
+    if (appearanceResult.value.colors === null) {
+      delete button.colors;
+    } else {
+      button.colors = appearanceResult.value.colors;
+    }
+  }
+  if (appearanceResult.value.shape !== undefined) {
+    button.shape = appearanceResult.value.shape;
+  }
+  if (appearanceResult.value.countVisibility !== undefined) {
+    button.countVisibility = appearanceResult.value.countVisibility;
+  }
+  if (appearanceResult.value.countPosition !== undefined) {
+    button.countPosition = appearanceResult.value.countPosition;
+  }
+  if (appearanceResult.value.countFormat !== undefined) {
+    button.countFormat = appearanceResult.value.countFormat;
+  }
+  if (appearanceResult.value.animation !== undefined) {
+    button.animation = appearanceResult.value.animation;
   }
 
   // Save updated button
@@ -446,6 +604,7 @@ export async function updateButton(
     size: button.size,
     label,
     pressed_label: pressedLabel,
+    ...getButtonAppearance(button),
     created_at: button.createdAt,
     embed,
   });

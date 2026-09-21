@@ -51,6 +51,25 @@ Button owners can set `label` and `pressed_label` when creating a button or upda
 
 Labels are returned in owner responses from create, stats, and update endpoints. They are not accepted as embed URL overrides: real embed URLs always use the stored button configuration, so visitor-controlled query strings cannot change the wording.
 
+### Button appearance
+
+Create, stats, and update responses always include the normalized appearance fields:
+
+```json
+{
+  "colors": null,
+  "shape": "rounded",
+  "count_visibility": "nonzero",
+  "count_position": "inside",
+  "count_format": "compact",
+  "animation": "pop"
+}
+```
+
+Create and update requests may provide `shape` (`rounded`, `pill`, `square`), `count_visibility` (`nonzero`, `always`, `hidden`), `count_position` (`inside`, `beside`, `below`), `count_format` (`compact`, `full`), and `animation` (`pop`, `bounce`, `sparkle`, `confetti`, `none`). Omitted values use the defaults above; omitted PATCH fields preserve their stored values.
+
+`colors` is either `null`, meaning theme colours, or a complete object with exactly these six keys: `background`, `foreground`, `border`, `pressed_background`, `pressed_foreground`, and `pressed_border`. Every value must be a whitespace-free `#RRGGBB` color. Values are normalized to uppercase. PATCH replaces the complete palette atomically, and `"colors": null` clears it. Invalid appearance values return HTTP 400 with `INVALID_COLORS`, `INVALID_SHAPE`, `INVALID_COUNT_VISIBILITY`, `INVALID_COUNT_POSITION`, `INVALID_COUNT_FORMAT`, or `INVALID_ANIMATION`.
+
 ---
 
 ## API Endpoints
@@ -68,7 +87,13 @@ Content-Type: application/json
   "restriction": "url",
   "multi_nice": false,
   "label": "Nice",
-  "pressed_label": "Nice'd"
+  "pressed_label": "Nice'd",
+  "colors": null,
+  "shape": "rounded",
+  "count_visibility": "nonzero",
+  "count_position": "inside",
+  "count_format": "compact",
+  "animation": "pop"
 }
 ```
 
@@ -83,6 +108,12 @@ Content-Type: application/json
 | `multi_nice` | boolean | No | Enable clap-style multi-nice (default: `false`) |
 | `label` | string | No | Visible idle label, and label for every state of a multi-nice button. Defaults to `Nice`. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) and angle brackets (`<`, `>`) are rejected. |
 | `pressed_label` | string | No | Visible label after interaction with a single-nice button. Defaults to `Nice'd`. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) and angle brackets (`<`, `>`) are rejected. |
+| `colors` | object or `null` | No | Complete six-key palette using strict `#RRGGBB` values, or `null` for theme colours. |
+| `shape` | string | No | `rounded` (default), `pill`, `square` |
+| `count_visibility` | string | No | `nonzero` (default), `always`, `hidden` |
+| `count_position` | string | No | `inside` (default), `beside`, `below` |
+| `count_format` | string | No | `compact` (default), `full` |
+| `animation` | string | No | `pop` (default), `bounce`, `sparkle`, `confetti`, `none` |
 
 **Response (201 Created):**
 ```json
@@ -159,6 +190,12 @@ Update button settings. Requires the private ID.
 | `multi_nice` | boolean | No | Enable/disable clap-style multi-nice. **Note:** toggling this changes the deduplication model — single-nice enforces one per visitor per day, multi-nice allows unlimited. |
 | `label` | string | No | Update the visible idle label. Defaults are returned for legacy records when this field is absent. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) and angle brackets (`<`, `>`) are rejected. |
 | `pressed_label` | string | No | Update the visible single-nice pressed-state label. It is retained when `multi_nice` changes. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) and angle brackets (`<`, `>`) are rejected. |
+| `colors` | object or `null` | No | Replace the complete six-key palette, or clear it with `null` for theme colours. |
+| `shape` | string | No | `rounded`, `pill`, `square` |
+| `count_visibility` | string | No | `nonzero`, `always`, `hidden` |
+| `count_position` | string | No | `inside`, `beside`, `below` |
+| `count_format` | string | No | `compact`, `full` |
+| `animation` | string | No | `pop`, `bounce`, `sparkle`, `confetti`, `none` |
 
 **Response (200 OK):**
 ```json
