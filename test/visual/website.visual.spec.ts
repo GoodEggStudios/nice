@@ -118,6 +118,7 @@ for (const viewport of viewports) {
     await expect(page.locator("#pressedLabelInput")).toHaveValue("Nice'd");
     await expectEmbedFrameReady(page, "#preview iframe");
     await expect(page.locator("#badgePreview img")).toBeVisible();
+    await screenshotWebsiteFullPage(page, `website/stats-loaded-${viewport.name}.png`);
   });
 
   test(`stats missing ${viewport.name}`, async ({ page }) => {
@@ -202,6 +203,7 @@ test("stats saves labels, refreshes the server embed, and rolls back failures", 
   await expect(page.locator("#labelSaveStatus")).toHaveText("Saved");
   await expect(page.locator("#snippet")).toContainText("<iframe");
   await expect(page.frameLocator("#preview iframe").locator("#niceText")).toHaveText("Recommend");
+  await screenshotWebsiteFullPage(page, "website/stats-labels-saved.png");
 
   await installNiceApiMocks(page, {
     buttonPatchStatus: 400,
@@ -215,6 +217,7 @@ test("stats saves labels, refreshes the server embed, and rolls back failures", 
   await expect(page.locator("#labelInput")).toHaveValue("Unsaved");
   await expect(page.locator("#pressedLabelInput")).toHaveValue("Unsaved pressed");
   await expect(page.locator("#labelInput")).toBeFocused();
+  await screenshotWebsiteFullPage(page, "website/stats-labels-rollback.png");
 });
 
 test("stats clap toggle hides and restores the pressed label", async ({ page }) => {
