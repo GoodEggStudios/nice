@@ -276,7 +276,7 @@ test.describe("website create appearance", () => {
     await expect(page.locator("#previewNote")).toContainText("inside the preview iframe area");
     await expect(page.locator("#confetti")).not.toBeChecked();
     await screenshotWebsitePaddedLocator(
-      page.locator("#previewContainer").locator(".."),
+      page.locator('.preview-section:has(#previewContainer)'),
       "website/create-appearance-iframe-confetti.png",
     );
     await screenshotWebsitePaddedLocator(
@@ -287,7 +287,7 @@ test.describe("website create appearance", () => {
     await page.locator("#confetti").check();
     await expect(page.locator("#previewNote")).toContainText("script embeds");
     await screenshotWebsitePaddedLocator(
-      page.locator("#previewContainer").locator(".."),
+      page.locator('.preview-section:has(#previewContainer)'),
       "website/create-appearance-host-confetti.png",
     );
     await screenshotWebsitePaddedLocator(

@@ -41,6 +41,21 @@ async function fulfillJson(route: Route, value: unknown, status = 200) {
   });
 }
 
+function appearanceOverridesFromBody(body: Record<string, unknown>): VisualAppearanceOverrides {
+  return {
+    colors: body.colors === null
+      ? null
+      : typeof body.colors === "object"
+        ? body.colors as VisualAppearanceOverrides["colors"]
+        : undefined,
+    shape: typeof body.shape === "string" ? body.shape as VisualButtonStats["shape"] : undefined,
+    count_visibility: typeof body.count_visibility === "string" ? body.count_visibility as VisualButtonStats["count_visibility"] : undefined,
+    count_position: typeof body.count_position === "string" ? body.count_position as VisualButtonStats["count_position"] : undefined,
+    count_format: typeof body.count_format === "string" ? body.count_format as VisualButtonStats["count_format"] : undefined,
+    animation: typeof body.animation === "string" ? body.animation as VisualButtonStats["animation"] : undefined,
+  };
+}
+
 export async function installNiceApiMocks(page: Page, options: NiceApiMockOptions = {}): Promise<void> {
   const count = options.count ?? 42;
   const multiNice = options.multiNice ?? false;
@@ -141,14 +156,7 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
       multi_nice: typeof body.multi_nice === "boolean" ? body.multi_nice : multiNice,
       label: typeof body.label === "string" ? body.label : "Nice",
       pressed_label: typeof body.pressed_label === "string" ? body.pressed_label : "Nice'd",
-      ...normalizeVisualAppearance({
-        colors,
-        shape: typeof body.shape === "string" ? body.shape as VisualButtonStats["shape"] : undefined,
-        count_visibility: typeof body.count_visibility === "string" ? body.count_visibility as VisualButtonStats["count_visibility"] : undefined,
-        count_position: typeof body.count_position === "string" ? body.count_position as VisualButtonStats["count_position"] : undefined,
-        count_format: typeof body.count_format === "string" ? body.count_format as VisualButtonStats["count_format"] : undefined,
-        animation: typeof body.animation === "string" ? body.animation as VisualButtonStats["animation"] : undefined,
-      }),
+      ...normalizeVisualAppearance({ colors, ...appearanceOverridesFromBody(body) }),
       ...options.createResponse,
     });
     await fulfillJson(route, mockCreateButtonResponse(stats), 201);
@@ -184,18 +192,7 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
       return;
     }
     const body = route.request().postDataJSON() as Record<string, unknown>;
-    const appearance = normalizeVisualAppearance({
-      colors: body.colors === null
-        ? null
-        : typeof body.colors === "object"
-          ? body.colors as VisualAppearanceOverrides["colors"]
-          : undefined,
-      shape: typeof body.shape === "string" ? body.shape as VisualButtonStats["shape"] : undefined,
-      count_visibility: typeof body.count_visibility === "string" ? body.count_visibility as VisualButtonStats["count_visibility"] : undefined,
-      count_position: typeof body.count_position === "string" ? body.count_position as VisualButtonStats["count_position"] : undefined,
-      count_format: typeof body.count_format === "string" ? body.count_format as VisualButtonStats["count_format"] : undefined,
-      animation: typeof body.animation === "string" ? body.animation as VisualButtonStats["animation"] : undefined,
-    }, stats);
+    const appearance = normalizeVisualAppearance(appearanceOverridesFromBody(body), stats);
     stats = mockButtonStats({
       ...stats,
       multi_nice: typeof body.multi_nice === "boolean" ? body.multi_nice : stats.multi_nice,

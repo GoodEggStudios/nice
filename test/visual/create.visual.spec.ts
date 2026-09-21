@@ -18,6 +18,7 @@ async function openCreatePage(page: Page) {
 }
 
 test.describe("create appearance", () => {
+test.describe("defaults and live preview", () => {
 test("create defaults select the expected appearance values", async ({ page }) => {
   await openCreatePage(page);
 
@@ -134,6 +135,10 @@ test("animation choices run locally and reduced motion suppresses them", async (
   await page.locator("#previewButton").click();
   await expect(page.locator("#previewButton")).not.toHaveClass(/is-animating/);
 });
+
+});
+
+test.describe("submission and server reconciliation", () => {
 
 test("create sends the exact appearance contract without leaking it into the embed URL", async ({ page }) => {
   await openCreatePage(page);
@@ -259,6 +264,10 @@ test("successful creation reconciles controls from the normalized server respons
   await expect(page.locator("#resultPreview iframe")).toBeVisible();
 });
 
+});
+
+test.describe("keyboard accessibility", () => {
+
 test("appearance radios remain keyboard-operable", async ({ page }) => {
   await openCreatePage(page);
   const pill = page.locator("input[name='shape'][value='pill']");
@@ -268,5 +277,7 @@ test("appearance radios remain keyboard-operable", async ({ page }) => {
   await expect(pill).toBeChecked();
   await expect(page.locator("#previewButton")).toHaveClass(/shape-pill/);
   await expect(pill.locator(".." )).toHaveCSS("outline-style", "solid");
+});
+
 });
 });
