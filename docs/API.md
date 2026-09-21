@@ -402,7 +402,7 @@ Remove `data-confetti="true"` to keep the button without confetti. This setting 
 
 ### iframe
 
-Use the iframe when a platform allows HTML but blocks external scripts. A standalone iframe cannot draw outside its own rectangle, so it cannot provide host-page confetti. Prefer the generated snippet when using custom labels because its initial width accounts for the stored wording.
+Use the iframe when a platform allows HTML but blocks external scripts. A standalone iframe cannot draw outside its own rectangle, so it cannot provide host-page confetti. The generated snippet sizes the iframe from the button's stored labels and appearance settings; direct iframes also reserve the particle envelope for stored sparkle/confetti animations because they cannot receive resize messages. Appearance query parameters are ignored.
 
 ```html
 <iframe 
@@ -412,7 +412,7 @@ Use the iframe when a platform allows HTML but blocks external scripts. A standa
 </iframe>
 ```
 
-`100px × 36px` is the default-label baseline. For custom labels, use the generated iframe snippet, whose width is calculated from the stored labels.
+`100px × 36px` is the default-label baseline. For custom labels or outside counts, use the generated iframe snippet, whose dimensions are calculated from the stored labels and appearance.
 
 **Query Parameters:**
 

@@ -1,6 +1,8 @@
 export const EMBED_THEMES = ["light", "dark", "minimal", "mono-dark", "mono-light"] as const;
 export const EMBED_SIZES = ["xs", "sm", "md", "lg", "xl"] as const;
 
+import { formatCount } from "../lib/format";
+
 import { MAX_BUTTON_LABEL_CODE_POINTS } from "../lib/button-labels";
 import type {
   ButtonAnimation,
@@ -80,10 +82,7 @@ export function getEmbedInitialDimensions(
   const countIsVisible =
     appearance.count_visibility === "always" ||
     (appearance.count_visibility === "nonzero" && count > 0);
-  const reservesCount =
-    countIsVisible ||
-    (appearance.count_visibility === "nonzero" && appearance.count_position !== "inside");
-  if (reservesCount) {
+  if (countIsVisible) {
     const countText = formatEmbedCount(count > 0 ? count : 0, appearance.count_format);
     // Direct iframe snippets cannot resize when a count crosses a digit
     // boundary, so keep one extra character of headroom for the next value.
@@ -110,10 +109,7 @@ export function getEmbedInitialDimensions(
 
 export function formatEmbedCount(count: number, format: CountFormat): string {
   if (format === "full") return count.toString();
-  if (count >= 1e9) return (count / 1e9).toFixed(1).replace(/\.0$/, "") + "B";
-  if (count >= 1e6) return (count / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
-  if (count >= 1e3) return (count / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
-  return count.toString();
+  return formatCount(count);
 }
 
 export function renderEmbedSizeMapLiteral(): string {

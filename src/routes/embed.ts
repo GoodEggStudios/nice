@@ -11,6 +11,12 @@ import {
   DEFAULT_PRESSED_BUTTON_LABEL,
   getButtonAppearance,
   normalizeStoredButtonLabel,
+  BUTTON_ANIMATIONS,
+  BUTTON_SHAPES,
+  COUNT_FORMATS,
+  COUNT_POSITIONS,
+  COUNT_VISIBILITIES,
+  validateButtonColors,
 } from "../lib";
 import {
   DEFAULT_EMBED_APPEARANCE,
@@ -186,6 +192,7 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 .has-custom-colors .nice-button.niced:hover{background:var(--nice-pressed-background);filter:brightness(.96)}
 .has-custom-colors .nice-button.disabled:hover{filter:none}
 .has-custom-colors .nice-count-outside{color:var(--nice-foreground)}
+.has-custom-colors .nice-button.niced+.nice-count-outside{color:var(--nice-pressed-foreground)}
 
 .nice-text{transition:all .15s ease;white-space:nowrap}
 .nice-count{opacity:0.8}
@@ -247,7 +254,7 @@ function reducedMotion(){return window.matchMedia&&window.matchMedia('(prefers-r
 function clearInteractionAnimation(){if(animationCleanup){animationCleanup();animationCleanup=null;}}
 function playInteractionAnimation(popDuration=300){
 clearInteractionAnimation();
-if(reducedMotion()||ANIMATION==='none')return;
+if(reducedMotion())return;
 if(ANIMATION==='pop'||ANIMATION==='bounce'){
 const className=ANIMATION==='pop'?'animating':'bouncing';
 btn.classList.add(className);
@@ -385,33 +392,28 @@ function normalizeSize(size: string | null): EmbedSize {
 
 function normalizeEmbedAppearance(value: EmbedAppearance | undefined): EmbedAppearance {
   const source = value ?? DEFAULT_EMBED_APPEARANCE;
-  const colors = source.colors;
-  const hasSafeColors = colors && typeof colors === "object" &&
-    Object.keys(colors).length === 6 &&
-    ["background", "foreground", "border", "pressed_background", "pressed_foreground", "pressed_border"]
-      .every((key) => Object.prototype.hasOwnProperty.call(colors, key)) &&
-    Object.values(colors).every((color) => typeof color === "string" && /^#[0-9a-fA-F]{6}$/.test(color));
-  const safeColors = hasSafeColors
+  const validatedColors = validateButtonColors(source.colors);
+  const safeColors = validatedColors.ok && validatedColors.value
     ? {
-        background: colors.background.toUpperCase(),
-        foreground: colors.foreground.toUpperCase(),
-        border: colors.border.toUpperCase(),
-        pressed_background: colors.pressed_background.toUpperCase(),
-        pressed_foreground: colors.pressed_foreground.toUpperCase(),
-        pressed_border: colors.pressed_border.toUpperCase(),
+        background: validatedColors.value.background,
+        foreground: validatedColors.value.foreground,
+        border: validatedColors.value.border,
+        pressed_background: validatedColors.value.pressedBackground,
+        pressed_foreground: validatedColors.value.pressedForeground,
+        pressed_border: validatedColors.value.pressedBorder,
       }
     : null;
-  const safeShape = ["rounded", "pill", "square"].includes(source.shape) ? source.shape : "rounded";
-  const safeVisibility = ["nonzero", "always", "hidden"].includes(source.count_visibility)
+  const safeShape = BUTTON_SHAPES.includes(source.shape) ? source.shape : "rounded";
+  const safeVisibility = COUNT_VISIBILITIES.includes(source.count_visibility)
     ? source.count_visibility
     : "nonzero";
-  const safePosition = ["inside", "beside", "below"].includes(source.count_position)
+  const safePosition = COUNT_POSITIONS.includes(source.count_position)
     ? source.count_position
     : "inside";
-  const safeFormat = ["compact", "full"].includes(source.count_format)
+  const safeFormat = COUNT_FORMATS.includes(source.count_format)
     ? source.count_format
     : "compact";
-  const safeAnimation = ["pop", "bounce", "sparkle", "confetti", "none"].includes(source.animation)
+  const safeAnimation = BUTTON_ANIMATIONS.includes(source.animation)
     ? source.animation
     : "pop";
 
@@ -674,11 +676,11 @@ export async function serveEmbedPage(
           );
           const normalizedAppearance = getButtonAppearance(button);
           const hasValidAppearance = normalizedAppearance.colors !== null ||
-            ["rounded", "pill", "square"].includes(button.shape as string) ||
-            ["nonzero", "always", "hidden"].includes(button.countVisibility as string) ||
-            ["inside", "beside", "below"].includes(button.countPosition as string) ||
-            ["compact", "full"].includes(button.countFormat as string) ||
-            ["pop", "bounce", "sparkle", "confetti", "none"].includes(button.animation as string);
+            BUTTON_SHAPES.includes(button.shape as typeof BUTTON_SHAPES[number]) ||
+            COUNT_VISIBILITIES.includes(button.countVisibility as typeof COUNT_VISIBILITIES[number]) ||
+            COUNT_POSITIONS.includes(button.countPosition as typeof COUNT_POSITIONS[number]) ||
+            COUNT_FORMATS.includes(button.countFormat as typeof COUNT_FORMATS[number]) ||
+            BUTTON_ANIMATIONS.includes(button.animation as typeof BUTTON_ANIMATIONS[number]);
           if (hasValidAppearance) appearance = normalizedAppearance;
           if (multiParam === null && button.multiNice === true) {
             isMulti = true;

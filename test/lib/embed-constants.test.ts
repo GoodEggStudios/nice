@@ -75,11 +75,11 @@ describe("getEmbedInitialDimensions", () => {
     );
     expect(getEmbedInitialDimensions("sm", "Nice", "Nice'd", false, 0, nonzero)).toEqual({
       w: EMBED_DIMENSIONS.sm.w,
-      h: 51,
+      h: EMBED_DIMENSIONS.sm.h,
     });
   });
 
-  it("reserves beside-count width before a nonzero count appears", () => {
+  it("does not reserve hidden nonzero counts before they appear", () => {
     const appearance = {
       colors: null,
       shape: "rounded",
@@ -90,7 +90,7 @@ describe("getEmbedInitialDimensions", () => {
     } as const;
 
     expect(getEmbedInitialDimensions("md", "Nice", "Nice'd", false, 0, appearance)).toEqual({
-      w: 124,
+      w: EMBED_DIMENSIONS.md.w,
       h: EMBED_DIMENSIONS.md.h,
     });
   });
