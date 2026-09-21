@@ -110,4 +110,20 @@ describe("getEmbedInitialDimensions", () => {
       h: EMBED_DIMENSIONS.md.h,
     });
   });
+
+  it("reserves the final envelope for particle animations", () => {
+    const appearance = {
+      colors: null,
+      shape: "rounded",
+      count_visibility: "nonzero",
+      count_position: "inside",
+      count_format: "compact",
+      animation: "confetti",
+    } as const;
+
+    expect(getEmbedInitialDimensions("md", "Nice", "Nice'd", false, 0, appearance)).toEqual({
+      w: 212,
+      h: 84,
+    });
+  });
 });

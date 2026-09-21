@@ -287,6 +287,23 @@ test("embed animations and denied shake honor reduced motion", async ({ page }) 
   await expect(page.locator("#niceBtn")).not.toHaveClass(/shake/);
 });
 
+test("embed none animation does not shake on a denied click", async ({ page }) => {
+  await openEmbed(page, "dark", "md", {
+    appearance: {
+      colors: null,
+      shape: "rounded",
+      count_visibility: "always",
+      count_position: "inside",
+      count_format: "compact",
+      animation: "none",
+    },
+  });
+
+  await page.locator("#niceBtn").click();
+  await page.locator("#niceBtn").click();
+  await expect(page.locator("#niceBtn")).not.toHaveClass(/shake/);
+});
+
 for (const size of ["xs", "xl"] as const) {
   test(`embed maximum-length label fits at ${size}`, async ({ page }) => {
     // Use Bungee-rendered glyphs, not emoji: color-emoji metrics differ on

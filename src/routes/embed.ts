@@ -271,7 +271,7 @@ const timer=window.setTimeout(()=>{particles.forEach((particle)=>particle.remove
 animationCleanup=()=>{window.clearTimeout(timer);particles.forEach((particle)=>particle.remove());notifyResize();};
 }
 function playDeniedAnimation(){
-if(reducedMotion())return;
+if(reducedMotion()||ANIMATION==='none')return;
 btn.classList.add('shake');
 window.setTimeout(()=>btn.classList.remove('shake'),300);
 }
