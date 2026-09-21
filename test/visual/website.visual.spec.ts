@@ -403,7 +403,8 @@ test("stats preserves appearance edits after a network failure", async ({ page }
   await expect(page.locator("#appearanceShape")).toHaveValue("square");
   await expect(page.locator("#appearanceError")).toContainText("Failed to save button appearance");
   await expect(page.locator("#appearanceSettings")).toBeFocused();
-  await expect(page.locator("#appearanceSaveStatus")).not.toHaveClass(/alert/);
+  await expect(page.locator("#appearanceSaveStatus")).toHaveText("Failed to save button appearance. Check your connection and try again.");
+  await expect(page.locator("#appearanceSaveStatus")).toHaveClass(/error/);
 });
 
 test("stats keeps unsaved appearance edits across other settings updates", async ({ page }) => {

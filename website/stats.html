@@ -1082,7 +1082,7 @@
         const message = error instanceof Error && error.message !== 'Failed to fetch'
           ? error.message
           : 'Failed to save button appearance. Check your connection and try again.';
-        status.textContent = '';
+        status.textContent = message;
         status.classList.add('error');
         errorElement.textContent = message;
         focusErrorCode = error.code;
