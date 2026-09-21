@@ -87,9 +87,9 @@ test("every count visibility, position, and format combination updates the previ
   for (const visibility of ["nonzero", "always", "hidden"]) {
     for (const position of ["inside", "beside", "below"]) {
       for (const format of ["compact", "full"]) {
-        await page.locator(`input[name="count_visibility"][value="${visibility}"]`).check();
-        await page.locator(`input[name="count_position"][value="${position}"]`).check();
-        await page.locator(`input[name="count_format"][value="${format}"]`).check();
+        await page.locator(`label.option:has(input[name="count_visibility"][value="${visibility}"])`).click();
+        await page.locator(`label.option:has(input[name="count_position"][value="${position}"])`).click();
+        await page.locator(`label.option:has(input[name="count_format"][value="${format}"])`).click();
 
         const visible = visibility !== "hidden";
         const inside = position === "inside";
@@ -97,7 +97,7 @@ test("every count visibility, position, and format combination updates the previ
         expect(await page.locator("#previewCount").isVisible()).toBe(visible && !inside);
         if (visible) {
           await expect(page.locator(inside ? "#previewCountInside" : "#previewCount"))
-            .toHaveText(format === "full" ? "42" : "42");
+            .toHaveText(format === "full" ? "42000" : "42K");
         }
       }
     }
