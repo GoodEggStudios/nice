@@ -57,7 +57,7 @@ describe("getEmbedInitialDimensions", () => {
     } as const;
 
     expect(getEmbedInitialDimensions("md", "Nice", "Nice'd", false, 123456, appearance)).toEqual({
-      w: 169,
+      w: 158,
       h: EMBED_DIMENSIONS.md.h,
     });
   });
@@ -76,7 +76,7 @@ describe("getEmbedInitialDimensions", () => {
 
     expect(getEmbedInitialDimensions("sm", "Nice", "Nice'd", false, 42, below)).toEqual({
       w: EMBED_DIMENSIONS.sm.w,
-      h: 51,
+      h: 50,
     });
     expect(getEmbedInitialDimensions("sm", "Nice", "Nice'd", false, 42, hidden)).toEqual(
       EMBED_DIMENSIONS.sm
@@ -119,7 +119,7 @@ describe("getEmbedInitialDimensions", () => {
     });
   });
 
-  it("reserves the final envelope for particle animations", () => {
+  it("keeps particle animations at the baseline dimensions", () => {
     const appearance = {
       colors: null,
       shape: "rounded",
@@ -130,12 +130,12 @@ describe("getEmbedInitialDimensions", () => {
     } as const;
 
     expect(getEmbedInitialDimensions("md", "Nice", "Nice'd", false, 0, appearance)).toEqual({
-      w: 212,
-      h: 84,
+      w: EMBED_DIMENSIONS.md.w,
+      h: EMBED_DIMENSIONS.md.h,
     });
   });
 
-  it("stacks beside-count headroom with the confetti particle envelope", () => {
+  it("budgets beside counts without particle padding", () => {
     const appearance = {
       colors: null,
       shape: "pill",
@@ -146,12 +146,12 @@ describe("getEmbedInitialDimensions", () => {
     } as const;
 
     expect(getEmbedInitialDimensions("md", "Nice", "Nice'd", false, 0, appearance)).toEqual({
-      w: 236,
-      h: 84,
+      w: 113,
+      h: EMBED_DIMENSIONS.md.h,
     });
     expect(getEmbedInitialDimensions("md", "Nice", "Nice'd", false, 123456, appearance)).toEqual({
-      w: 281,
-      h: 84,
+      w: 158,
+      h: EMBED_DIMENSIONS.md.h,
     });
   });
 });

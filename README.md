@@ -105,7 +105,7 @@ Button owners can configure the API-managed labels with optional `label` and `pr
 
 The appearance API accepts `colors`, `shape`, `count_visibility`, `count_position`, `count_format`, and `animation` on create and update requests. Appearance values are returned by create, stats, and update responses. Shapes are `rounded`, `pill`, or `square`; count visibility is `nonzero`, `always`, or `hidden`; count position is `inside`, `beside`, or `below`; count format is `compact` or `full`; and animations are `pop`, `bounce`, `sparkle`, `confetti`, or `none`. Their defaults are `rounded`, `nonzero`, `inside`, `compact`, and `pop`. `colors` is either `null` for theme colours or an object containing six strict `#RRGGBB` values; it can be reset with `"colors": null`.
 
-Both embed forms load these persisted labels from the button record; `label` and `pressed_label` URL parameters are ignored. Script embeds resize after the Bungee font settles, and generated iframe snippets start with a label-aware width for custom labels.
+Both embed forms load these persisted labels and appearance settings from the button record; `label`, `pressed_label`, and appearance URL parameters are ignored. Script embeds resize after the Bungee font settles, and generated iframe snippets calculate initial dimensions from custom labels, visible count position/format, and the stored appearance.
 
 **Host-page confetti (script embed only):** Add `data-confetti="true"` to opt in to a confetti celebration on the host page when someone nices. It is off by default. A standalone iframe cannot draw outside its own rectangle.
 

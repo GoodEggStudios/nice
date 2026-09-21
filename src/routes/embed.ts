@@ -12,11 +12,11 @@ import {
   getButtonAppearance,
   hasStoredButtonAppearance,
   normalizeStoredButtonLabel,
-  BUTTON_ANIMATIONS,
-  BUTTON_SHAPES,
-  COUNT_FORMATS,
-  COUNT_POSITIONS,
-  COUNT_VISIBILITIES,
+  normalizeStoredButtonAnimation,
+  normalizeStoredButtonShape,
+  normalizeStoredCountFormat,
+  normalizeStoredCountPosition,
+  normalizeStoredCountVisibility,
   validateButtonColors,
 } from "../lib";
 import {
@@ -167,6 +167,7 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 .theme-dark .nice-button:hover{background:#4b5563}
 .theme-dark .nice-button.niced{background:#fbbf24;color:#000}
 .theme-dark .nice-count-outside{color:#f3f4f6}
+.theme-dark .nice-button.niced+.nice-count-outside{color:#000}
 
 /* Theme: Minimal */
 .theme-minimal .nice-button{background:transparent;color:inherit;border:2px solid currentColor;opacity:.7}
@@ -178,12 +179,14 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 .theme-mono-dark .nice-button:hover{background:#111}
 .theme-mono-dark .nice-button.niced{background:#fff;color:#000;border-color:#fff}
 .theme-mono-dark .nice-count-outside{color:#fff}
+.theme-mono-dark .nice-button.niced+.nice-count-outside{color:#000}
 
 /* Theme: Mono Light (black on white, inverts when niced) */
 .theme-mono-light .nice-button{background:#fff;color:#000;border:1px solid #ddd}
 .theme-mono-light .nice-button:hover{background:#f5f5f5}
 .theme-mono-light .nice-button.niced{background:#000;color:#fff;border-color:#000}
 .theme-mono-light .nice-count-outside{color:#000}
+.theme-mono-light .nice-button.niced+.nice-count-outside{color:#fff}
 
 .shape-pill .nice-button{border-radius:9999px}
 .shape-square .nice-button{border-radius:0}
@@ -405,19 +408,11 @@ function normalizeEmbedAppearance(value: EmbedAppearance | undefined): EmbedAppe
         pressed_border: validatedColors.value.pressedBorder,
       }
     : null;
-  const safeShape = BUTTON_SHAPES.includes(source.shape) ? source.shape : "rounded";
-  const safeVisibility = COUNT_VISIBILITIES.includes(source.count_visibility)
-    ? source.count_visibility
-    : "nonzero";
-  const safePosition = COUNT_POSITIONS.includes(source.count_position)
-    ? source.count_position
-    : "inside";
-  const safeFormat = COUNT_FORMATS.includes(source.count_format)
-    ? source.count_format
-    : "compact";
-  const safeAnimation = BUTTON_ANIMATIONS.includes(source.animation)
-    ? source.animation
-    : "pop";
+  const safeShape = normalizeStoredButtonShape(source.shape);
+  const safeVisibility = normalizeStoredCountVisibility(source.count_visibility);
+  const safePosition = normalizeStoredCountPosition(source.count_position);
+  const safeFormat = normalizeStoredCountFormat(source.count_format);
+  const safeAnimation = normalizeStoredButtonAnimation(source.animation);
 
   return {
     colors: safeColors,
@@ -570,7 +565,10 @@ body{font-family:'Bungee',cursive;background:transparent;display:flex;align-item
 @keyframes confetti{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(14px,24px) rotate(180deg)}}
 .nice-button{position:relative}
 .nice-particle{position:absolute;left:50%;top:50%;width:5px;height:5px;pointer-events:none;background:var(--particle-color)}
-.nice-particle{animation:confetti .7s ease-out forwards}
+.sparkle-particle{border-radius:50%;animation:sparkle .5s ease-out forwards}
+.confetti-particle{width:5px;height:8px;animation:confetti .7s ease-out forwards}
+.sparkle-particle{border-radius:50%;animation:sparkle .5s ease-out forwards}
+.confetti-particle{width:5px;height:8px;animation:confetti .7s ease-out forwards}
 </style>
 </head>
 <body class="theme-{{THEME}} size-{{SIZE}}{{APPEARANCE_CLASSES}}"{{APPEARANCE_STYLE}}>
@@ -595,7 +593,7 @@ const countOutsideEl=document.getElementById('niceCountOutside');
 let count=42,niced=false;
 function formatCount(n){if(n>=1e9)return(n/1e9).toFixed(1).replace(/\.0$/,'')+'B';if(n>=1e6)return(n/1e6).toFixed(1).replace(/\.0$/,'')+'M';if(n>=1e3)return(n/1e3).toFixed(1).replace(/\.0$/,'')+'K';return n.toString();}
 function updateCountDisplay(){const visible=COUNT_VISIBILITY==='always'||(COUNT_VISIBILITY==='nonzero'&&count>0);const value=COUNT_FORMAT==='full'?count.toString():formatCount(count);const inside=visible&&COUNT_POSITION==='inside';const outside=visible&&!inside;countInsideEl.textContent=inside?value:'';countInsideEl.style.display=inside?'':'none';countInsideEl.setAttribute('aria-live',inside?'polite':'off');countOutsideEl.textContent=outside?value:'';countOutsideEl.style.display=outside?'':'none';countOutsideEl.setAttribute('aria-live',outside?'polite':'off');}
-function playInteractionAnimation(){if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches||ANIMATION==='none')return;if(ANIMATION==='pop'){btn.classList.add('animating');setTimeout(()=>btn.classList.remove('animating'),300);}else if(ANIMATION==='bounce'){btn.classList.add('bouncing');setTimeout(()=>btn.classList.remove('bouncing'),400);}else{const particles=[];const amount=ANIMATION==='sparkle'?8:16;for(let i=0;i<amount;i++){const particle=document.createElement('span');particle.className='nice-particle';particle.style.setProperty('--particle-color',['#fbbf24','#f59e0b','#fcd34d','#fde68a','#fff'][i%5]);btn.appendChild(particle);particles.push(particle);}setTimeout(()=>particles.forEach((particle)=>particle.remove()),ANIMATION==='sparkle'?500:700);}}
+function playInteractionAnimation(){if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches||ANIMATION==='none')return;if(ANIMATION==='pop'){btn.classList.add('animating');setTimeout(()=>btn.classList.remove('animating'),300);}else if(ANIMATION==='bounce'){btn.classList.add('bouncing');setTimeout(()=>btn.classList.remove('bouncing'),400);}else{const particles=[];const amount=ANIMATION==='sparkle'?8:16;for(let i=0;i<amount;i++){const particle=document.createElement('span');particle.className='nice-particle '+(ANIMATION==='sparkle'?'sparkle-particle':'confetti-particle');particle.style.setProperty('--particle-color',['#fbbf24','#f59e0b','#fcd34d','#fde68a','#fff'][i%5]);btn.appendChild(particle);particles.push(particle);}setTimeout(()=>particles.forEach((particle)=>particle.remove()),ANIMATION==='sparkle'?500:700);}}
 function updateDisplay(){
 textEl.textContent=niced?PRESSED_LABEL:LABEL;
 updateCountDisplay();
