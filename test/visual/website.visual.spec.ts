@@ -269,15 +269,23 @@ test.describe("website create appearance", () => {
     await expect(page.locator("#previewNote")).toContainText("inside the preview iframe area");
     await expect(page.locator("#confetti")).not.toBeChecked();
     await screenshotWebsitePaddedLocator(
-      page.locator("#previewContainer"),
+      page.locator("#previewContainer").locator(".."),
       "website/create-appearance-iframe-confetti.png",
+    );
+    await screenshotWebsitePaddedLocator(
+      page.locator('label[for="confetti"]'),
+      "website/create-appearance-iframe-confetti-host-control.png",
     );
 
     await page.locator("#confetti").check();
     await expect(page.locator("#previewNote")).toContainText("script embeds");
     await screenshotWebsitePaddedLocator(
-      page.locator("#previewContainer"),
+      page.locator("#previewContainer").locator(".."),
       "website/create-appearance-host-confetti.png",
+    );
+    await screenshotWebsitePaddedLocator(
+      page.locator('label[for="confetti"]'),
+      "website/create-appearance-host-confetti-control.png",
     );
   });
 });
