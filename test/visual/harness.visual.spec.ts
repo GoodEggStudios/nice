@@ -29,7 +29,7 @@ test("visual harness serves static pages and intercepts API routes", async ({ pa
   await page.goto(`${server.origin}/e/${VISUAL_BUTTON_ID}?theme=dark&size=md`);
   await stabilizePage(page);
   await expect(page.locator("#niceBtn")).toBeVisible();
-  await expect(page.locator("#niceCount")).toHaveText("42");
+  await expect(page.locator("#niceCountInside")).toHaveText("42");
   await page.locator("#niceBtn").click();
-  await expect(page.locator("#niceCount")).toHaveText("43");
+  await expect(page.locator("#niceCountInside")).toHaveText("43");
 });

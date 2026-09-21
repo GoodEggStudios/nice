@@ -173,6 +173,40 @@ test("embed count presentation uses the configured outside full count", async ({
   await expect(page.locator("#niceCountInside")).toHaveAttribute("aria-live", "off");
 });
 
+test("embed custom palette controls hover and pressed button colors", async ({ page }) => {
+  await openEmbed(page, "dark", "md", {
+    count: 0,
+    appearance: {
+      colors: {
+        background: "#112233",
+        foreground: "#AABBCC",
+        border: "#334455",
+        pressed_background: "#445566",
+        pressed_foreground: "#DDEEFF",
+        pressed_border: "#556677",
+      },
+      shape: "rounded",
+      count_visibility: "hidden",
+      count_position: "inside",
+      count_format: "compact",
+      animation: "none",
+    },
+  });
+
+  const button = page.locator("#niceBtn");
+  await expect(button).toHaveCSS("background-color", "rgb(17, 34, 51)");
+  await expect(button).toHaveCSS("border-top-color", "rgb(51, 68, 85)");
+  await expect(button).toHaveCSS("border-top-style", "solid");
+
+  await button.hover();
+  await expect(button).toHaveCSS("background-color", "rgb(17, 34, 51)");
+
+  await button.click();
+  await expect(button).toHaveCSS("background-color", "rgb(68, 85, 102)");
+  await expect(button).toHaveCSS("color", "rgb(221, 238, 255)");
+  await expect(button).toHaveCSS("border-top-color", "rgb(85, 102, 119)");
+});
+
 test("embed hides zero nonzero counts and all hidden counts", async ({ page }) => {
   await openEmbed(page, "dark", "md", {
     count: 0,

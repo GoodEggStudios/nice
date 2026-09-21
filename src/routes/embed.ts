@@ -177,10 +177,10 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 
 .shape-pill .nice-button{border-radius:9999px}
 .shape-square .nice-button{border-radius:0}
-.has-custom-colors .nice-button{background:var(--nice-background);color:var(--nice-foreground);border-color:var(--nice-border)}
-.has-custom-colors .nice-button:hover{filter:brightness(.96)}
+.has-custom-colors .nice-button{background:var(--nice-background);color:var(--nice-foreground);border:1px solid var(--nice-border)}
+.has-custom-colors .nice-button:hover{background:var(--nice-background);filter:brightness(.96)}
 .has-custom-colors .nice-button.niced{background:var(--nice-pressed-background);color:var(--nice-pressed-foreground);border-color:var(--nice-pressed-border)}
-.has-custom-colors .nice-button.niced:hover{filter:brightness(.96)}
+.has-custom-colors .nice-button.niced:hover{background:var(--nice-pressed-background);filter:brightness(.96)}
 .has-custom-colors .nice-button.disabled:hover{filter:none}
 .has-custom-colors .nice-count-outside{color:var(--nice-foreground)}
 .has-custom-colors .nice-button.niced+.nice-count-outside{color:var(--nice-pressed-foreground)}
@@ -243,13 +243,13 @@ return n.toString();
 }
 function reducedMotion(){return window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;}
 function clearInteractionAnimation(){if(animationCleanup){animationCleanup();animationCleanup=null;}}
-function playInteractionAnimation(){
+function playInteractionAnimation(popDuration=300){
 clearInteractionAnimation();
 if(reducedMotion()||ANIMATION==='none')return;
 if(ANIMATION==='pop'||ANIMATION==='bounce'){
 const className=ANIMATION==='pop'?'animating':'bouncing';
 btn.classList.add(className);
-const timer=window.setTimeout(()=>{btn.classList.remove(className);animationCleanup=null;notifyResize();},ANIMATION==='pop'?300:400);
+const timer=window.setTimeout(()=>{btn.classList.remove(className);animationCleanup=null;notifyResize();},ANIMATION==='pop'?popDuration:400);
 animationCleanup=()=>{window.clearTimeout(timer);btn.classList.remove(className);notifyResize();};
 return;
 }
@@ -338,7 +338,7 @@ if(IS_MULTI){
 // Optimistic local update + debounced API call
 if(parentOrigin){parent.postMessage({type:'nice-clicked',buttonId:BUTTON_ID,count:count+1},parentOrigin);}
 count++;hasNiced=true;pendingMultiCount++;
-updateDisplay();playInteractionAnimation();
+updateDisplay();playInteractionAnimation(IS_MULTI?150:300);
 clearTimeout(multiTimer);
 multiTimer=setTimeout(flushMultiNice,2000);
 return;
@@ -383,12 +383,20 @@ function normalizeSize(size: string | null): EmbedSize {
 function normalizeEmbedAppearance(value: EmbedAppearance | undefined): EmbedAppearance {
   const source = value ?? DEFAULT_EMBED_APPEARANCE;
   const colors = source.colors;
-  const safeColors = colors && typeof colors === "object" &&
+  const hasSafeColors = colors && typeof colors === "object" &&
     Object.keys(colors).length === 6 &&
     ["background", "foreground", "border", "pressed_background", "pressed_foreground", "pressed_border"]
       .every((key) => Object.prototype.hasOwnProperty.call(colors, key)) &&
-    Object.values(colors).every((color) => typeof color === "string" && /^#[0-9A-F]{6}$/.test(color))
-    ? colors
+    Object.values(colors).every((color) => typeof color === "string" && /^#[0-9a-fA-F]{6}$/.test(color));
+  const safeColors = hasSafeColors
+    ? {
+        background: colors.background.toUpperCase(),
+        foreground: colors.foreground.toUpperCase(),
+        border: colors.border.toUpperCase(),
+        pressed_background: colors.pressed_background.toUpperCase(),
+        pressed_foreground: colors.pressed_foreground.toUpperCase(),
+        pressed_border: colors.pressed_border.toUpperCase(),
+      }
     : null;
   const safeShape = ["rounded", "pill", "square"].includes(source.shape) ? source.shape : "rounded";
   const safeVisibility = ["nonzero", "always", "hidden"].includes(source.count_visibility)
@@ -534,10 +542,12 @@ body{font-family:'Bungee',cursive;background:transparent;display:flex;align-item
 .theme-mono-light .nice-button.niced{background:#000;color:#fff;border-color:#000}
 .shape-pill .nice-button{border-radius:9999px}
 .shape-square .nice-button{border-radius:0}
-.has-custom-colors .nice-button{background:var(--nice-background);color:var(--nice-foreground);border-color:var(--nice-border)}
-.has-custom-colors .nice-button:hover{filter:brightness(.96)}
+.has-custom-colors .nice-button{background:var(--nice-background);color:var(--nice-foreground);border:1px solid var(--nice-border)}
+.has-custom-colors .nice-button:hover{background:var(--nice-background);filter:brightness(.96)}
 .has-custom-colors .nice-button.niced{background:var(--nice-pressed-background);color:var(--nice-pressed-foreground);border-color:var(--nice-pressed-border)}
+.has-custom-colors .nice-button.niced:hover{background:var(--nice-pressed-background);filter:brightness(.96)}
 .has-custom-colors .nice-count-outside{color:var(--nice-foreground)}
+.has-custom-colors .nice-button.niced+.nice-count-outside{color:var(--nice-pressed-foreground)}
 .nice-count{opacity:0.8}
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
 .nice-button.animating{animation:pulse .3s ease}

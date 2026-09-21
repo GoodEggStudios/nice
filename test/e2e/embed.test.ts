@@ -315,6 +315,33 @@ describe("Embed", () => {
       expect(custom).toContain("Recommend</span>");
       expect(custom).toContain('const LABEL="Recommend";');
     });
+
+    it("should normalize renderer palette values before inline CSS serialization", () => {
+      const html = renderEmbedHtml({
+        apiBase: "https://api.nice.sbs",
+        buttonId: "n_abc123456789",
+        theme: "light",
+        size: "md",
+        appearance: {
+          colors: {
+            background: "#aabbcc",
+            foreground: "#ddeeff",
+            border: "#112233",
+            pressed_background: "#445566",
+            pressed_foreground: "#778899",
+            pressed_border: "#a1b2c3",
+          },
+          shape: "rounded",
+          count_visibility: "nonzero",
+          count_position: "inside",
+          count_format: "compact",
+          animation: "pop",
+        },
+      });
+
+      expect(html).toContain("--nice-background:#AABBCC");
+      expect(html).toContain("--nice-pressed-border:#A1B2C3");
+    });
   });
 
   describe("shared embed helpers", () => {
