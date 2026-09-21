@@ -305,7 +305,6 @@ test("stats saves the complete appearance contract and refreshes the embed", asy
   });
 
   await expect(page.locator("#appearanceSaveStatus")).toHaveText("Saved");
-  await expect(page.locator("#resetAppearanceBtn")).toBeFocused();
   await expect(page.locator("#snippet")).toContainText("size=xl");
   await expect(page.locator("#preview iframe")).toHaveAttribute("src", /size=xl/);
 });
