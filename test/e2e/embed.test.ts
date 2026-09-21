@@ -211,7 +211,7 @@ describe("Embed", () => {
       );
 
       const res = await SELF.fetch(
-        `https://api.nice.sbs/embed/${buttonId}?shape=square&count_visibility=hidden&count_position=below&count_format=compact&animation=none`
+        `https://api.nice.sbs/embed/${buttonId}?colors=%7B%22background%22%3A%22%23fff%22%7D&shape=square&count_visibility=hidden&count_position=below&count_format=compact&animation=none`
       );
       const body = await res.text();
 

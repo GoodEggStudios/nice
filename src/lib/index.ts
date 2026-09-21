@@ -62,6 +62,7 @@ export {
   validateAppearance,
   applyAppearanceValues,
   getButtonAppearance,
+  hasStoredButtonAppearance,
   type AppearanceBody,
   type AppearanceValues,
   type ButtonAppearanceFields,

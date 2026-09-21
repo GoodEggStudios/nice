@@ -10,6 +10,7 @@ import {
   DEFAULT_BUTTON_LABEL,
   DEFAULT_PRESSED_BUTTON_LABEL,
   getButtonAppearance,
+  hasStoredButtonAppearance,
   normalizeStoredButtonLabel,
   BUTTON_ANIMATIONS,
   BUTTON_SHAPES,
@@ -255,6 +256,7 @@ function clearInteractionAnimation(){if(animationCleanup){animationCleanup();ani
 function playInteractionAnimation(popDuration=300){
 clearInteractionAnimation();
 if(reducedMotion())return;
+if(ANIMATION==='none')return;
 if(ANIMATION==='pop'||ANIMATION==='bounce'){
 const className=ANIMATION==='pop'?'animating':'bouncing';
 btn.classList.add(className);
@@ -278,7 +280,7 @@ const timer=window.setTimeout(()=>{particles.forEach((particle)=>particle.remove
 animationCleanup=()=>{window.clearTimeout(timer);particles.forEach((particle)=>particle.remove());notifyResize();};
 }
 function playDeniedAnimation(){
-if(reducedMotion()||ANIMATION==='none')return;
+if(reducedMotion())return;
 btn.classList.add('shake');
 window.setTimeout(()=>btn.classList.remove('shake'),300);
 }
@@ -675,12 +677,7 @@ export async function serveEmbedPage(
             DEFAULT_PRESSED_BUTTON_LABEL
           );
           const normalizedAppearance = getButtonAppearance(button);
-          const hasValidAppearance = normalizedAppearance.colors !== null ||
-            BUTTON_SHAPES.includes(button.shape as typeof BUTTON_SHAPES[number]) ||
-            COUNT_VISIBILITIES.includes(button.countVisibility as typeof COUNT_VISIBILITIES[number]) ||
-            COUNT_POSITIONS.includes(button.countPosition as typeof COUNT_POSITIONS[number]) ||
-            COUNT_FORMATS.includes(button.countFormat as typeof COUNT_FORMATS[number]) ||
-            BUTTON_ANIMATIONS.includes(button.animation as typeof BUTTON_ANIMATIONS[number]);
+          const hasValidAppearance = hasStoredButtonAppearance(button);
           if (hasValidAppearance) appearance = normalizedAppearance;
           if (multiParam === null && button.multiNice === true) {
             isMulti = true;

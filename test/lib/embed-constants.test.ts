@@ -1,8 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
   EMBED_DIMENSIONS,
+  formatEmbedCount,
   getEmbedInitialDimensions,
 } from "../../src/routes/embed-constants";
+
+describe("formatEmbedCount", () => {
+  it("uses locale-neutral full counts and compact counts", () => {
+    expect(formatEmbedCount(1234567, "full")).toBe("1234567");
+    expect(formatEmbedCount(1234567, "compact")).toBe("1.2M");
+  });
+});
 
 describe("getEmbedInitialDimensions", () => {
   it("preserves the existing dimensions for default labels", () => {
@@ -95,7 +103,7 @@ describe("getEmbedInitialDimensions", () => {
     });
   });
 
-  it("budgets inside full counts and one digit of growth", () => {
+  it("keeps inside counts within the existing button dimensions", () => {
     const appearance = {
       colors: null,
       shape: "rounded",
@@ -106,12 +114,12 @@ describe("getEmbedInitialDimensions", () => {
     } as const;
 
     expect(getEmbedInitialDimensions("md", "Nice", "Nice'd", false, 9, appearance)).toEqual({
-      w: 124,
+      w: EMBED_DIMENSIONS.md.w,
       h: EMBED_DIMENSIONS.md.h,
     });
   });
 
-  it("reserves the final envelope for particle animations", () => {
+  it("does not reserve permanent space for particle animations", () => {
     const appearance = {
       colors: null,
       shape: "rounded",
@@ -122,12 +130,12 @@ describe("getEmbedInitialDimensions", () => {
     } as const;
 
     expect(getEmbedInitialDimensions("md", "Nice", "Nice'd", false, 0, appearance)).toEqual({
-      w: 212,
-      h: 84,
+      w: EMBED_DIMENSIONS.md.w,
+      h: EMBED_DIMENSIONS.md.h,
     });
   });
 
-  it("stacks beside-count headroom with the confetti particle envelope", () => {
+  it("does not reserve permanent particle space alongside counts", () => {
     const appearance = {
       colors: null,
       shape: "pill",
@@ -138,12 +146,12 @@ describe("getEmbedInitialDimensions", () => {
     } as const;
 
     expect(getEmbedInitialDimensions("md", "Nice", "Nice'd", false, 0, appearance)).toEqual({
-      w: 236,
-      h: 84,
+      w: 124,
+      h: EMBED_DIMENSIONS.md.h,
     });
     expect(getEmbedInitialDimensions("md", "Nice", "Nice'd", false, 123456, appearance)).toEqual({
-      w: 281,
-      h: 84,
+      w: 169,
+      h: EMBED_DIMENSIONS.md.h,
     });
   });
 });

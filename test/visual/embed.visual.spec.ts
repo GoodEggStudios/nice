@@ -287,7 +287,7 @@ test("embed animations and denied shake honor reduced motion", async ({ page }) 
   await expect(page.locator("#niceBtn")).not.toHaveClass(/shake/);
 });
 
-test("embed none animation does not shake on a denied click", async ({ page }) => {
+test("embed none animation suppresses success animation but keeps denied shake", async ({ page }) => {
   await openEmbed(page, "dark", "md", {
     appearance: {
       colors: null,
@@ -300,8 +300,10 @@ test("embed none animation does not shake on a denied click", async ({ page }) =
   });
 
   await page.locator("#niceBtn").click();
+  await expect(page.locator(".nice-particle")).toHaveCount(0);
+  await expect(page.locator("#niceBtn")).not.toHaveClass(/animating|bouncing/);
   await page.locator("#niceBtn").click();
-  await expect(page.locator("#niceBtn")).not.toHaveClass(/shake/);
+  await expect(page.locator("#niceBtn")).toHaveClass(/shake/);
 });
 
 for (const size of ["xs", "xl"] as const) {

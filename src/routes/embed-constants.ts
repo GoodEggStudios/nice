@@ -53,8 +53,6 @@ export const EMBED_FONT_SIZE: Record<EmbedSize, number> = {
 // Reserve enough space for wide glyphs such as CJK characters and emoji in
 // direct iframe snippets, which cannot receive a host-side resize update.
 const EMBED_MAX_GLYPH_WIDTH_EM = 2;
-const PARTICLE_ANIMATION_WIDTH = 112;
-const PARTICLE_ANIMATION_HEIGHT = 48;
 
 export function getEmbedInitialDimensions(
   size: EmbedSize,
@@ -89,9 +87,9 @@ export function getEmbedInitialDimensions(
     const countCharacters = Math.max(2, countText.length + 1);
     const countWidth = countCharacters * EMBED_FONT_SIZE[size] * 0.75;
     const gap = size === "xs" ? 4 : size === "sm" ? 5 : size === "md" ? 6 : size === "lg" ? 7 : 8;
-    if (appearance.count_position === "inside" || appearance.count_position === "beside") {
+    if (appearance.count_position === "beside") {
       width += gap + countWidth;
-    } else {
+    } else if (appearance.count_position === "below") {
       height += gap + Math.ceil(EMBED_FONT_SIZE[size] * 1.2);
     }
   }
@@ -99,11 +97,6 @@ export function getEmbedInitialDimensions(
   // Particle transforms extend beyond the button while the animation runs.
   // Direct iframe snippets cannot receive the loader's resize message, so
   // reserve the final envelope up front for those animations.
-  if (appearance.animation === "sparkle" || appearance.animation === "confetti") {
-    width += PARTICLE_ANIMATION_WIDTH;
-    height += PARTICLE_ANIMATION_HEIGHT;
-  }
-
   return { w: Math.ceil(width), h: Math.ceil(height) };
 }
 
