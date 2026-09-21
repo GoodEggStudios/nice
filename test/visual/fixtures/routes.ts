@@ -121,6 +121,8 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
     const colors = body.colors && typeof body.colors === "object"
       ? body.colors as PublicButtonColors
       : null;
+    // Echo the request by default, then let createResponse win so tests can
+    // simulate a normalized server payload that differs from the submitted form.
     stats = mockButtonStats({
       count,
       multi_nice: typeof body.multi_nice === "boolean" ? body.multi_nice : multiNice,
@@ -132,14 +134,9 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
       count_position: typeof body.count_position === "string" ? body.count_position as VisualButtonStats["count_position"] : "inside",
       count_format: typeof body.count_format === "string" ? body.count_format as VisualButtonStats["count_format"] : "compact",
       animation: typeof body.animation === "string" ? body.animation as VisualButtonStats["animation"] : "pop",
-    });
-    await fulfillJson(route, mockCreateButtonResponse({
       ...options.createResponse,
-      count: stats.count,
-      multi_nice: stats.multi_nice,
-      label: stats.label,
-      pressed_label: stats.pressed_label,
-    }), 201);
+    });
+    await fulfillJson(route, mockCreateButtonResponse(stats), 201);
   });
 
   await page.route(/https:\/\/api\.nice\.sbs\/api\/v1\/buttons\/stats\/ns_.*/, async (route) => {
