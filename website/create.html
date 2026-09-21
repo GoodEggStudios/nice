@@ -238,6 +238,86 @@
       outline: 2px solid #fbbf24;
       outline-offset: 2px;
     }
+
+    .appearance-section {
+      padding: 1rem;
+      background: #151515;
+      border: 1px solid #333;
+      border-radius: 8px;
+    }
+
+    .appearance-section h2 {
+      font-size: 1rem;
+      margin-bottom: 0.375rem;
+      color: #fff;
+    }
+
+    .appearance-hint {
+      color: #888;
+      font-size: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .appearance-group {
+      border: 0;
+      padding: 0;
+      margin: 0 0 1rem;
+    }
+
+    .appearance-group:last-of-type {
+      margin-bottom: 0;
+    }
+
+    .appearance-group legend {
+      color: #ccc;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .appearance-options {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+
+    .color-control {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #aaa;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    .color-control input[type="color"] {
+      width: 2.25rem;
+      height: 2rem;
+      padding: 0.125rem;
+      border: 2px solid #333;
+      border-radius: 5px;
+      background: #1a1a1a;
+      cursor: pointer;
+    }
+
+    .color-control input[type="color"]:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .appearance-error {
+      display: none;
+      color: #ef4444;
+      font-size: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .appearance-error.show {
+      display: block;
+    }
     
     .option-label {
       font-size: 0.75rem;
@@ -386,6 +466,79 @@
     .demo-button.theme-mono-dark.niced { background: #fff; color: #000; border-color: #fff; }
     .demo-button.theme-mono-light { background: #fff; color: #000; border: 1px solid #ddd; }
     .demo-button.theme-mono-light.niced { background: #000; color: #fff; border-color: #000; }
+
+    .demo-button.shape-rounded { border-radius: 8px; }
+    .demo-button.shape-pill { border-radius: 999px; }
+    .demo-button.shape-square { border-radius: 0; }
+
+    .demo-button.custom-colors {
+      background: var(--button-bg);
+      color: var(--button-fg);
+      border: 1px solid var(--button-border);
+      opacity: 1;
+    }
+
+    .demo-button.custom-colors.niced {
+      background: var(--button-pressed-bg);
+      color: var(--button-pressed-fg);
+      border-color: var(--button-pressed-border);
+    }
+
+    .preview-demo.count-position-beside,
+    .preview-demo.count-position-below {
+      padding: 0.75rem;
+    }
+
+    .preview-demo.count-position-beside .demo-button .demo-count {
+      position: absolute;
+      left: calc(100% + 0.5rem);
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .preview-demo.count-position-beside .demo-button {
+      margin-right: 2rem;
+    }
+
+    .preview-demo.count-position-below .demo-button .demo-count {
+      position: absolute;
+      left: 50%;
+      top: calc(100% + 0.5rem);
+      transform: translateX(-50%);
+    }
+
+    .preview-demo.count-position-below .demo-button {
+      margin-bottom: 1.5rem;
+    }
+
+    .demo-button.animation-pop.is-animating { animation: preview-pop 0.3s ease; }
+    .demo-button.animation-bounce.is-animating { animation: preview-bounce 0.45s ease; }
+    .demo-button.animation-sparkle.is-animating { animation: preview-sparkle 0.45s ease; }
+
+    @keyframes preview-pop {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.12); }
+    }
+
+    @keyframes preview-bounce {
+      0%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-7px); }
+      70% { transform: translateY(2px); }
+    }
+
+    @keyframes preview-sparkle {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.7) saturate(1.4); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
 
     .demo-count {
       opacity: 0.8;
@@ -621,25 +774,92 @@
         </label>
       </div>
 
-      <div class="form-group">
-        <label for="confetti" style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 0;">
-          <input type="checkbox" id="confetti" style="width:18px;height:18px;accent-color:#fbbf24;cursor:pointer;">
-          <span>Enable confetti for script embeds</span>
+      <section class="form-group appearance-section" aria-labelledby="appearanceHeading">
+        <h2 id="appearanceHeading">Button appearance</h2>
+        <p class="appearance-hint">Choose how the button looks and presents its count. These settings are stored with the button.</p>
+
+        <fieldset class="appearance-group">
+          <legend>Colours</legend>
+          <label for="customColors" style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 0;">
+            <input type="checkbox" id="customColors" style="width:18px;height:18px;accent-color:#fbbf24;cursor:pointer;">
+            <span>Use custom colours <span class="label-hint">(replaces theme colours)</span></span>
+          </label>
+          <div class="color-grid" id="colorControls">
+            <label class="color-control" for="colorBackground"><input type="color" id="colorBackground" value="#374151" disabled>Idle background</label>
+            <label class="color-control" for="colorForeground"><input type="color" id="colorForeground" value="#F3F4F6" disabled>Idle text</label>
+            <label class="color-control" for="colorBorder"><input type="color" id="colorBorder" value="#374151" disabled>Idle border</label>
+            <label class="color-control" for="colorPressedBackground"><input type="color" id="colorPressedBackground" value="#FBBF24" disabled>Pressed background</label>
+            <label class="color-control" for="colorPressedForeground"><input type="color" id="colorPressedForeground" value="#000000" disabled>Pressed text</label>
+            <label class="color-control" for="colorPressedBorder"><input type="color" id="colorPressedBorder" value="#FBBF24" disabled>Pressed border</label>
+          </div>
+        </fieldset>
+
+        <fieldset class="appearance-group">
+          <legend>Shape</legend>
+          <div class="options-grid appearance-options" id="shapeOptions">
+            <label class="option selected"><input type="radio" name="shape" value="rounded" checked><span class="option-label">Rounded</span></label>
+            <label class="option"><input type="radio" name="shape" value="pill"><span class="option-label">Pill</span></label>
+            <label class="option"><input type="radio" name="shape" value="square"><span class="option-label">Square</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="appearance-group">
+          <legend>Count visibility</legend>
+          <div class="options-grid appearance-options" id="countVisibilityOptions">
+            <label class="option selected"><input type="radio" name="count_visibility" value="nonzero" checked><span class="option-label">Non-zero</span></label>
+            <label class="option"><input type="radio" name="count_visibility" value="always"><span class="option-label">Always</span></label>
+            <label class="option"><input type="radio" name="count_visibility" value="hidden"><span class="option-label">Hidden</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="appearance-group">
+          <legend>Count position</legend>
+          <div class="options-grid appearance-options" id="countPositionOptions">
+            <label class="option selected"><input type="radio" name="count_position" value="inside" checked><span class="option-label">Inside</span></label>
+            <label class="option"><input type="radio" name="count_position" value="beside"><span class="option-label">Beside</span></label>
+            <label class="option"><input type="radio" name="count_position" value="below"><span class="option-label">Below</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="appearance-group">
+          <legend>Count format</legend>
+          <div class="options-grid appearance-options" id="countFormatOptions">
+            <label class="option selected"><input type="radio" name="count_format" value="compact" checked><span class="option-label">Compact</span></label>
+            <label class="option"><input type="radio" name="count_format" value="full"><span class="option-label">Full</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="appearance-group">
+          <legend>Button animation</legend>
+          <div class="options-grid appearance-options" id="animationOptions">
+            <label class="option selected"><input type="radio" name="animation" value="pop" checked><span class="option-label">Pop</span></label>
+            <label class="option"><input type="radio" name="animation" value="bounce"><span class="option-label">Bounce</span></label>
+            <label class="option"><input type="radio" name="animation" value="sparkle"><span class="option-label">Sparkle</span></label>
+            <label class="option"><input type="radio" name="animation" value="confetti"><span class="option-label">Confetti</span></label>
+            <label class="option"><input type="radio" name="animation" value="none"><span class="option-label">None</span></label>
+          </div>
+        </fieldset>
+
+        <label for="confetti" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:8px 0;">
+          <input type="checkbox" id="confetti" style="width:18px;height:18px;accent-color:#fbbf24;cursor:pointer;flex:0 0 auto;">
+          <span>Allow full-page host confetti for this embed<span class="label-hint" style="display:block;">Stored animation affects the button iframe. Host confetti is a separate opt-in; direct iframes cannot draw outside their rectangle.</span></span>
         </label>
-      </div>
+        <div class="appearance-error" id="appearanceError" role="alert"></div>
+      </section>
       
       <div class="preview-section">
         <div class="preview-label">Preview</div>
         <div class="preview-container" id="previewContainer">
           <div class="preview-demo" id="previewDemo">
             <canvas class="preview-canvas" id="previewCanvas"></canvas>
-            <button type="button" class="demo-button theme-dark size-md" id="previewButton" aria-label="Preview Nice button">
+            <button type="button" class="demo-button theme-dark size-md shape-rounded" id="previewButton" aria-label="Preview Nice button">
               <span id="previewText">Nice</span>
               <span class="demo-count" id="previewCount">42</span>
             </button>
           </div>
         </div>
-        <div class="preview-note" id="previewNote">Preview updates live as you change theme, size, labels, multi nice, and confetti.</div>
+        <button type="button" id="previewZeroToggle" class="preview-note" style="display:block;width:auto;margin:0.75rem auto 0;background:transparent;border:0;color:#888;cursor:pointer;text-decoration:underline;">Preview zero count</button>
+        <div class="preview-note" id="previewNote">Preview updates live as you change theme, size, labels, multi nice, and appearance.</div>
       </div>
       
       <div class="form-group">
@@ -765,8 +985,20 @@
     const submitBtn = document.getElementById('submitBtn');
     const errorBox = document.getElementById('errorBox');
     const resultDiv = document.getElementById('result');
+    const previewDemo = document.getElementById('previewDemo');
+    const previewZeroToggle = document.getElementById('previewZeroToggle');
     const multiNiceInput = document.getElementById('multiNice');
     const confettiInput = document.getElementById('confetti');
+    const customColorsInput = document.getElementById('customColors');
+    const appearanceError = document.getElementById('appearanceError');
+    const colorInputs = {
+      background: document.getElementById('colorBackground'),
+      foreground: document.getElementById('colorForeground'),
+      border: document.getElementById('colorBorder'),
+      pressed_background: document.getElementById('colorPressedBackground'),
+      pressed_foreground: document.getElementById('colorPressedForeground'),
+      pressed_border: document.getElementById('colorPressedBorder')
+    };
     const snippetNote = document.getElementById('snippetNote');
     const labelInput = document.getElementById('labelInput');
     const pressedLabelInput = document.getElementById('pressedLabelInput');
@@ -776,6 +1008,16 @@
     const DEFAULT_LABEL = 'Nice';
     const DEFAULT_PRESSED_LABEL = "Nice'd";
     const MAX_LABEL_CODE_POINTS = 32;
+    const THEME_PALETTES = {
+      light: { background: '#F3F4F6', foreground: '#374151', border: '#D1D5DB', pressed_background: '#FEF3C7', pressed_foreground: '#92400E', pressed_border: '#F59E0B' },
+      dark: { background: '#374151', foreground: '#F3F4F6', border: '#4B5563', pressed_background: '#FBBF24', pressed_foreground: '#000000', pressed_border: '#F59E0B' },
+      minimal: { background: '#FFFFFF', foreground: '#374151', border: '#374151', pressed_background: '#FBBF24', pressed_foreground: '#000000', pressed_border: '#FBBF24' },
+      'mono-dark': { background: '#000000', foreground: '#FFFFFF', border: '#333333', pressed_background: '#FFFFFF', pressed_foreground: '#000000', pressed_border: '#FFFFFF' },
+      'mono-light': { background: '#FFFFFF', foreground: '#000000', border: '#DDDDDD', pressed_background: '#000000', pressed_foreground: '#FFFFFF', pressed_border: '#000000' }
+    };
+    let customColorsSeeded = false;
+    let appearanceErrorTarget = null;
+    let formErrorFocusTarget = null;
     
     // Protocol state
     let protocol = 'https://';
@@ -846,7 +1088,10 @@
     const previewState = {
       count: 42,
       hasNiced: false,
-      confettiLock: false
+      confettiLock: false,
+      zeroPreview: false,
+      animationTimer: null,
+      animationFrame: null
     };
     
     // Restriction descriptions
@@ -874,8 +1119,68 @@
       });
     });
 
+    document.querySelectorAll('.option input[type="radio"]').forEach(input => {
+      input.addEventListener('change', () => {
+        const option = input.closest('.option');
+        const group = option.closest('.options-grid, .restriction-options');
+        group.querySelectorAll('.option').forEach(o => o.classList.toggle('selected', o.contains(input) || o.querySelector('input:checked') === o.querySelector('input')));
+        updatePreview();
+        updateRestrictionDesc();
+      });
+    });
+
     [multiNiceInput, confettiInput].forEach(input => {
       input.addEventListener('change', updatePreview);
+    });
+
+    function getSelectedAppearanceValue(name, fallback) {
+      return document.querySelector('input[name="' + name + '"]:checked')?.value || fallback;
+    }
+
+    function selectedTheme() {
+      return getSelectedAppearanceValue('theme', 'dark');
+    }
+
+    function seedCustomColors() {
+      const palette = THEME_PALETTES[selectedTheme()] || THEME_PALETTES.dark;
+      Object.keys(colorInputs).forEach(key => {
+        colorInputs[key].value = palette[key].toUpperCase();
+      });
+      customColorsSeeded = true;
+    }
+
+    function updateCustomColorControls() {
+      Object.values(colorInputs).forEach(input => {
+        input.disabled = !customColorsInput.checked;
+      });
+      previewButton.classList.toggle('custom-colors', customColorsInput.checked);
+    }
+
+    function applyCustomColorVariables() {
+      if (!customColorsInput.checked) return;
+      const variables = {
+        '--button-bg': colorInputs.background.value.toUpperCase(),
+        '--button-fg': colorInputs.foreground.value.toUpperCase(),
+        '--button-border': colorInputs.border.value.toUpperCase(),
+        '--button-pressed-bg': colorInputs.pressed_background.value.toUpperCase(),
+        '--button-pressed-fg': colorInputs.pressed_foreground.value.toUpperCase(),
+        '--button-pressed-border': colorInputs.pressed_border.value.toUpperCase()
+      };
+      Object.entries(variables).forEach(([name, value]) => previewButton.style.setProperty(name, value));
+    }
+
+    customColorsInput.addEventListener('change', () => {
+      if (customColorsInput.checked && !customColorsSeeded) seedCustomColors();
+      updateCustomColorControls();
+      applyCustomColorVariables();
+      updatePreview();
+    });
+
+    Object.values(colorInputs).forEach(input => {
+      input.addEventListener('input', () => {
+        applyCustomColorVariables();
+        updatePreview();
+      });
     });
 
     function showLabelError(input, errorElement, message) {
@@ -977,29 +1282,89 @@
     }
 
     function updatePreviewButtonClasses(theme, size) {
-      previewButton.className = 'demo-button theme-' + theme + ' size-' + size;
+      const shape = getSelectedAppearanceValue('shape', 'rounded');
+      const animation = getSelectedAppearanceValue('animation', 'pop');
+      const position = getSelectedAppearanceValue('count_position', 'inside');
+      previewButton.className = 'demo-button theme-' + theme + ' size-' + size + ' shape-' + shape + ' animation-' + animation;
+      previewDemo.classList.remove('count-position-inside', 'count-position-beside', 'count-position-below');
+      previewDemo.classList.add('count-position-' + position);
+      updateCustomColorControls();
+      applyCustomColorVariables();
       if (previewState.hasNiced) {
         previewButton.classList.add('niced');
       }
     }
 
+    function formatPreviewCount(count) {
+      if (getSelectedAppearanceValue('count_format', 'compact') === 'full') return String(count);
+      if (count >= 1e9) return (count / 1e9).toFixed(1).replace(/\.0$/, '') + 'B';
+      if (count >= 1e6) return (count / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+      if (count >= 1e3) return (count / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
+      return String(count);
+    }
+
+    function updatePreviewCount() {
+      const visibility = getSelectedAppearanceValue('count_visibility', 'nonzero');
+      const shouldShow = visibility !== 'hidden' && (visibility === 'always' || previewState.count > 0);
+      previewCount.textContent = formatPreviewCount(previewState.count);
+      previewCount.hidden = !shouldShow;
+      previewCount.setAttribute('aria-hidden', String(!shouldShow));
+    }
+
+    function updatePreviewNote() {
+      const notes = [];
+      if (getSelectedAppearanceValue('count_visibility', 'nonzero') === 'hidden') notes.push('The count is hidden.');
+      if (customColorsInput.checked && selectedTheme() === 'minimal') notes.push('Custom colours replace minimal theme transparency.');
+      if (multiNiceInput.checked) notes.push('Clap-style buttons retain the idle text.');
+      if (getSelectedAppearanceValue('animation', 'pop') === 'confetti') notes.push('Button confetti stays inside the preview iframe area.');
+      if (confettiInput.checked) notes.push('Host confetti is a separate opt-in for script embeds; direct iframes stay inside their rectangle.');
+      previewNote.textContent = notes.length
+        ? notes.join(' ')
+        : 'Preview updates live as you change theme, size, labels, multi nice, and appearance.';
+      previewNote.classList.toggle('show', notes.length > 0);
+    }
+
     function resetPreviewState() {
-      previewState.count = 42;
+      previewState.count = previewState.zeroPreview ? 0 : 42;
       previewState.hasNiced = false;
       previewState.confettiLock = false;
+      if (previewState.animationTimer) clearTimeout(previewState.animationTimer);
+      previewState.animationTimer = null;
+      if (previewState.animationFrame) cancelAnimationFrame(previewState.animationFrame);
+      previewState.animationFrame = null;
       renderPreviewText();
-      previewCount.textContent = '42';
       previewButton.setAttribute('aria-pressed', 'false');
       previewButton.classList.remove('niced');
+      previewButton.classList.remove('is-animating');
+      updatePreviewCount();
       const ctx = previewCanvas.getContext('2d');
       if (ctx) {
         ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
       }
     }
 
+    function animatePreviewButton() {
+      const animation = getSelectedAppearanceValue('animation', 'pop');
+      if (animation === 'none' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      if (animation === 'confetti') {
+        launchPreviewConfetti();
+        return;
+      }
+      previewButton.classList.remove('is-animating');
+      void previewButton.offsetWidth;
+      previewButton.classList.add('is-animating');
+      if (previewState.animationTimer) clearTimeout(previewState.animationTimer);
+      previewState.animationTimer = setTimeout(() => {
+        previewButton.classList.remove('is-animating');
+        previewState.animationTimer = null;
+      }, animation === 'pop' ? 300 : 450);
+    }
+
     function launchPreviewConfetti() {
       const ctx = previewCanvas.getContext('2d');
       if (!ctx) return;
+
+      if (previewState.animationFrame) cancelAnimationFrame(previewState.animationFrame);
 
       const canvasRect = previewCanvas.getBoundingClientRect();
       previewCanvas.width = Math.max(Math.ceil(canvasRect.width), 1);
@@ -1061,36 +1426,28 @@
 
         frame += 1;
         if (alive && frame < 240) {
-          requestAnimationFrame(tick);
+          previewState.animationFrame = requestAnimationFrame(tick);
         } else {
           ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+          previewState.animationFrame = null;
         }
       }
 
-      requestAnimationFrame(tick);
+      previewState.animationFrame = requestAnimationFrame(tick);
     }
     
     // Update preview on changes
     function updatePreview() {
       const theme = document.querySelector('input[name="theme"]:checked').value;
       const size = document.querySelector('input[name="size"]:checked').value;
-      const confetti = confettiInput.checked;
       updatePreviewButtonClasses(theme, size);
       resetPreviewState();
-      previewNote.textContent = confetti
-        ? multiNiceInput.checked
-          ? 'Clap-style buttons keep the same text on every click. Confetti is available for script embeds.'
-          : 'Confetti is available for script embeds. Direct iframe embeds stay confetti-free.'
-        : multiNiceInput.checked
-          ? 'Clap-style buttons keep the same text on every click.'
-          : 'Preview updates live as you change theme, size, labels, multi nice, and confetti.';
-      previewNote.classList.toggle('show', confetti);
+      updatePreviewNote();
       updateLabelEditor();
     }
 
     previewButton.addEventListener('click', () => {
       const multiNice = multiNiceInput.checked;
-      const confetti = confettiInput.checked;
 
       if (multiNice) {
         previewState.count += 1;
@@ -1098,10 +1455,8 @@
         previewButton.classList.add('niced');
         renderPreviewText();
         previewButton.setAttribute('aria-pressed', 'true');
-        previewCount.textContent = String(previewState.count);
-        if (confetti) {
-          launchPreviewConfetti();
-        }
+        updatePreviewCount();
+        animatePreviewButton();
         return;
       }
 
@@ -1114,12 +1469,88 @@
       previewButton.classList.add('niced');
       renderPreviewText();
       previewButton.setAttribute('aria-pressed', 'true');
-      previewCount.textContent = String(previewState.count);
-      if (confetti && !previewState.confettiLock) {
-        launchPreviewConfetti();
+      updatePreviewCount();
+      animatePreviewButton();
+      if (getSelectedAppearanceValue('animation', 'pop') === 'confetti' && !previewState.confettiLock) {
         previewState.confettiLock = true;
       }
     });
+
+    previewZeroToggle.addEventListener('click', () => {
+      previewState.zeroPreview = !previewState.zeroPreview;
+      previewZeroToggle.textContent = previewState.zeroPreview ? 'Preview count 42' : 'Preview zero count';
+      updatePreview();
+    });
+
+    function getAppearancePayload() {
+      return {
+        colors: customColorsInput.checked
+          ? Object.fromEntries(Object.entries(colorInputs).map(([key, input]) => [key, input.value.toUpperCase()]))
+          : null,
+        shape: getSelectedAppearanceValue('shape', 'rounded'),
+        count_visibility: getSelectedAppearanceValue('count_visibility', 'nonzero'),
+        count_position: getSelectedAppearanceValue('count_position', 'inside'),
+        count_format: getSelectedAppearanceValue('count_format', 'compact'),
+        animation: getSelectedAppearanceValue('animation', 'pop')
+      };
+    }
+
+    function setAppearanceRadio(name, value) {
+      const input = document.querySelector('input[name="' + name + '"][value="' + value + '"]');
+      if (!input) return;
+      input.checked = true;
+      const group = input.closest('.options-grid');
+      group.querySelectorAll('.option').forEach(option => option.classList.toggle('selected', option.contains(input)));
+    }
+
+    function applyAppearanceResponse(data) {
+      const colors = data.colors;
+      customColorsInput.checked = !!colors;
+      if (colors) {
+        colorInputs.background.value = colors.background;
+        colorInputs.foreground.value = colors.foreground;
+        colorInputs.border.value = colors.border;
+        colorInputs.pressed_background.value = colors.pressed_background;
+        colorInputs.pressed_foreground.value = colors.pressed_foreground;
+        colorInputs.pressed_border.value = colors.pressed_border;
+        customColorsSeeded = true;
+      }
+      setAppearanceRadio('shape', data.shape || 'rounded');
+      setAppearanceRadio('count_visibility', data.count_visibility || 'nonzero');
+      setAppearanceRadio('count_position', data.count_position || 'inside');
+      setAppearanceRadio('count_format', data.count_format || 'compact');
+      setAppearanceRadio('animation', data.animation || 'pop');
+      updatePreview();
+    }
+
+    function setFormBusy(isBusy) {
+      form.querySelectorAll('input, button').forEach(control => {
+        control.disabled = isBusy;
+      });
+      if (!isBusy) {
+        updateLabelEditor();
+        updateCustomColorControls();
+      }
+    }
+
+    function showAppearanceError(message, code) {
+      appearanceError.textContent = message;
+      appearanceError.classList.add('show');
+      let target = customColorsInput;
+      if (code === 'INVALID_SHAPE' || code === 'INVALID_COUNT_VISIBILITY' || code === 'INVALID_COUNT_POSITION' || code === 'INVALID_COUNT_FORMAT' || code === 'INVALID_ANIMATION') {
+        const name = {
+          INVALID_SHAPE: 'shape',
+          INVALID_COUNT_VISIBILITY: 'count_visibility',
+          INVALID_COUNT_POSITION: 'count_position',
+          INVALID_COUNT_FORMAT: 'count_format',
+          INVALID_ANIMATION: 'animation'
+        }[code];
+        target = document.querySelector('input[name="' + name + '"]');
+      } else if (code === 'INVALID_COLORS') {
+        target = colorInputs.background;
+      }
+      appearanceErrorTarget = target;
+    }
     
     // Form submission
     form.addEventListener('submit', async (e) => {
@@ -1135,9 +1566,10 @@
         return;
       }
       
-      submitBtn.disabled = true;
+      setFormBusy(true);
       submitBtn.textContent = 'Creating...';
       errorBox.classList.remove('show');
+      appearanceError.classList.remove('show');
       resultDiv.classList.remove('show');
       
       const url = getFullUrl();
@@ -1147,6 +1579,7 @@
       const multiNice = multiNiceInput.checked;
       const label = labelInput.value.trim();
       const pressedLabel = pressedLabelInput.value.trim();
+      const appearance = getAppearancePayload();
       
       try {
         const response = await fetch('https://api.nice.sbs/api/v1/buttons', {
@@ -1159,6 +1592,7 @@
             restriction,
             multi_nice: multiNice,
             label,
+            ...appearance,
             ...(multiNice ? {} : { pressed_label: pressedLabel }),
           })
         });
@@ -1171,6 +1605,7 @@
           throw error;
         }
 
+        applyAppearanceResponse(data);
         labelInput.value = data.label || DEFAULT_LABEL;
         pressedLabelInput.value = data.pressed_label || DEFAULT_PRESSED_LABEL;
         resetPreviewState();
@@ -1209,19 +1644,28 @@
       } catch (err) {
         if (err.code === 'INVALID_LABEL') {
           showLabelError(labelInput, labelError, err.message);
-          labelInput.focus();
+          formErrorFocusTarget = labelInput;
         } else if (err.code === 'INVALID_PRESSED_LABEL') {
           showLabelError(pressedLabelInput, pressedLabelError, err.message);
-          pressedLabelInput.focus();
+          formErrorFocusTarget = pressedLabelInput;
+        } else if (['INVALID_COLORS', 'INVALID_SHAPE', 'INVALID_COUNT_VISIBILITY', 'INVALID_COUNT_POSITION', 'INVALID_COUNT_FORMAT', 'INVALID_ANIMATION'].includes(err.code)) {
+          showAppearanceError(err.message, err.code);
         } else if (err.message.toLowerCase().includes('url')) {
           showUrlError(err.message);
+          formErrorFocusTarget = urlInput;
         } else {
           errorBox.textContent = err.message;
           errorBox.classList.add('show');
         }
       } finally {
-        submitBtn.disabled = false;
+        setFormBusy(false);
         submitBtn.textContent = 'Create Button';
+        const focusTarget = formErrorFocusTarget || appearanceErrorTarget;
+        if (focusTarget) {
+          focusTarget.focus();
+        }
+        formErrorFocusTarget = null;
+        appearanceErrorTarget = null;
       }
     });
     
