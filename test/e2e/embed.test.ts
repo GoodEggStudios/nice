@@ -175,6 +175,46 @@ describe("Embed", () => {
       expect(body).toContain("textEl.textContent=IS_MULTI?LABEL:PRESSED_LABEL;");
     });
 
+    it("should render stored appearance and ignore appearance query overrides", async () => {
+      const buttonId = "n_appear1234";
+      await env.NICE_KV.put(
+        `btn:${buttonId}`,
+        JSON.stringify({
+          colors: {
+            background: "#112233",
+            foreground: "#AABBCC",
+            border: "#334455",
+            pressedBackground: "#445566",
+            pressedForeground: "#DDEEFF",
+            pressedBorder: "#556677",
+          },
+          shape: "pill",
+          countVisibility: "always",
+          countPosition: "beside",
+          countFormat: "full",
+          animation: "bounce",
+        })
+      );
+
+      const res = await SELF.fetch(
+        `https://api.nice.sbs/embed/${buttonId}?shape=square&count_visibility=hidden&count_position=below&count_format=compact&animation=none`
+      );
+      const body = await res.text();
+
+      expect(body).toContain('class="theme-light size-md shape-pill count-position-beside has-custom-colors"');
+      expect(body).toContain("--nice-background:#112233");
+      expect(body).toContain("--nice-pressed-foreground:#DDEEFF");
+      expect(body).toContain("const COUNT_VISIBILITY='always';");
+      expect(body).toContain("const COUNT_POSITION='beside';");
+      expect(body).toContain("const COUNT_FORMAT='full';");
+      expect(body).toContain("const ANIMATION='bounce';");
+      expect(body).not.toContain('class="theme-light size-md shape-square');
+      expect(body).not.toContain("COUNT_VISIBILITY='hidden'");
+      expect(body).not.toContain("COUNT_POSITION='below'");
+      expect(body).not.toContain("COUNT_FORMAT='compact'");
+      expect(body).not.toContain("ANIMATION='none'");
+    });
+
     it("should keep malformed stored labels inert and defaulted", async () => {
       const buttonId = "n_malformed12";
       const payload = "<img src=x onerror=alert(1)>";
@@ -193,6 +233,40 @@ describe("Embed", () => {
       expect(body).toContain('const PRESSED_LABEL="Nice\'d";');
       expect(body).not.toContain("<img src=x onerror=alert(1)>");
       expect(body).not.toContain("onerror");
+    });
+
+    it("should ignore malformed stored appearance values without injecting CSS", async () => {
+      const buttonId = "n_badappear12";
+      await env.NICE_KV.put(
+        `btn:${buttonId}`,
+        JSON.stringify({
+          colors: {
+            background: "red; color: red",
+            foreground: "#112233",
+            border: "#112233",
+            pressedBackground: "#112233",
+            pressedForeground: "#112233",
+            pressedBorder: "#112233",
+          },
+          shape: "url(javascript:alert(1))",
+          countVisibility: "announce-all",
+          countPosition: "beside<script>",
+          countFormat: "locale",
+          animation: "spin",
+        })
+      );
+
+      const res = await SELF.fetch(`https://api.nice.sbs/embed/${buttonId}`);
+      const body = await res.text();
+
+      expect(body).toContain('class="theme-light size-md"');
+      expect(body).toContain("const COUNT_VISIBILITY='nonzero';");
+      expect(body).toContain("const COUNT_POSITION='inside';");
+      expect(body).toContain("const COUNT_FORMAT='compact';");
+      expect(body).toContain("const ANIMATION='pop';");
+      expect(body).not.toContain("red; color: red");
+      expect(body).not.toContain("javascript:alert");
+      expect(body).not.toContain("beside<script>");
     });
   });
 
@@ -317,6 +391,7 @@ describe("Embed", () => {
         expect(script).toContain("data.type==='nice-recorded'&&!isMultiNice&&!hasConfettied");
         expect(script).toContain("isMultiNice=true;launchConfetti()");
         expect(script).toContain("hasConfettied=true;launchConfetti()");
+        expect(script).toContain("prefers-reduced-motion: reduce");
       });
     });
   });

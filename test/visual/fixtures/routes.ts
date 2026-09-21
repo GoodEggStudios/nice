@@ -1,6 +1,7 @@
 import type { Page, Route } from "@playwright/test";
 import { generateBadge, normalizeTheme } from "../../../src/lib/badge";
 import { renderEmbedHtml, renderDemoEmbedHtml, renderEmbedScript, type EmbedSize, type EmbedTheme } from "../../../src/routes/embed";
+import type { EmbedAppearance } from "../../../src/routes/embed-constants";
 import { mockButtonStats, mockCreateButtonResponse, VISUAL_BUTTON_ID, type VisualButtonStats } from "./data";
 
 export interface NiceApiMockOptions {
@@ -10,6 +11,7 @@ export interface NiceApiMockOptions {
   multiNice?: boolean;
   label?: string;
   pressedLabel?: string;
+  appearance?: EmbedAppearance;
   createStatus?: number;
   createErrorCode?: string;
   createError?: string;
@@ -55,6 +57,7 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
           size,
           label: stats.label,
           pressedLabel: stats.pressed_label,
+          appearance: options.appearance,
         })
       : renderEmbedHtml({
           apiBase: "https://api.nice.sbs",
@@ -64,6 +67,7 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
           multiNice: url.searchParams.get("multi") === "1" || multiNice,
           label: stats.label,
           pressedLabel: stats.pressed_label,
+          appearance: options.appearance,
         });
     await route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body });
   });

@@ -37,4 +37,44 @@ describe("getEmbedInitialDimensions", () => {
       h: EMBED_DIMENSIONS.md.h,
     });
   });
+
+  it("budgets visible outside counts using the selected formatter", () => {
+    const appearance = {
+      colors: null,
+      shape: "rounded",
+      count_visibility: "always",
+      count_position: "beside",
+      count_format: "full",
+      animation: "pop",
+    } as const;
+
+    expect(getEmbedInitialDimensions("md", "Nice", "Nice'd", false, 123456, appearance)).toEqual({
+      w: 160,
+      h: EMBED_DIMENSIONS.md.h,
+    });
+  });
+
+  it("adds below-count height but reserves no space for hidden or zero nonzero counts", () => {
+    const below = {
+      colors: null,
+      shape: "rounded",
+      count_visibility: "always",
+      count_position: "below",
+      count_format: "compact",
+      animation: "pop",
+    } as const;
+    const hidden = { ...below, count_visibility: "hidden" } as const;
+    const nonzero = { ...below, count_visibility: "nonzero" } as const;
+
+    expect(getEmbedInitialDimensions("sm", "Nice", "Nice'd", false, 42, below)).toEqual({
+      w: EMBED_DIMENSIONS.sm.w,
+      h: 51,
+    });
+    expect(getEmbedInitialDimensions("sm", "Nice", "Nice'd", false, 42, hidden)).toEqual(
+      EMBED_DIMENSIONS.sm
+    );
+    expect(getEmbedInitialDimensions("sm", "Nice", "Nice'd", false, 0, nonzero)).toEqual(
+      EMBED_DIMENSIONS.sm
+    );
+  });
 });
