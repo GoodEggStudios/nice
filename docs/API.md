@@ -30,6 +30,12 @@ Response:
   "size": "md",
   "label": "Nice",
   "pressed_label": "Nice'd",
+  "colors": null,
+  "shape": "rounded",
+  "count_visibility": "nonzero",
+  "count_position": "inside",
+  "count_format": "compact",
+  "animation": "pop",
   "count": 0,
   "created_at": "2026-02-18T10:00:00Z",
   "embed": {
