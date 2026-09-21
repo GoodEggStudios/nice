@@ -86,9 +86,9 @@ describe("Embed", () => {
       )).text();
 
       expect(darkBody).toContain(".theme-dark .nice-count-outside{color:#f3f4f6}");
-      expect(darkBody).toContain(".theme-dark .nice-button.niced+.nice-count-outside{color:#000}");
+      expect(darkBody).not.toContain(".theme-dark .nice-button.niced+.nice-count-outside");
       expect(monoDarkBody).toContain(".theme-mono-dark .nice-count-outside{color:#fff}");
-      expect(monoDarkBody).toContain(".theme-mono-dark .nice-button.niced+.nice-count-outside{color:#000}");
+      expect(monoDarkBody).not.toContain(".theme-mono-dark .nice-button.niced+.nice-count-outside");
     });
 
     it("should apply size parameter", async () => {

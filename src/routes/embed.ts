@@ -160,7 +160,6 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 .theme-dark .nice-button:hover{background:#4b5563}
 .theme-dark .nice-button.niced{background:#fbbf24;color:#000}
 .theme-dark .nice-count-outside{color:#f3f4f6}
-.theme-dark .nice-button.niced+.nice-count-outside{color:#000}
 
 /* Theme: Minimal */
 .theme-minimal .nice-button{background:transparent;color:inherit;border:2px solid currentColor;opacity:.7}
@@ -172,14 +171,12 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 .theme-mono-dark .nice-button:hover{background:#111}
 .theme-mono-dark .nice-button.niced{background:#fff;color:#000;border-color:#fff}
 .theme-mono-dark .nice-count-outside{color:#fff}
-.theme-mono-dark .nice-button.niced+.nice-count-outside{color:#000}
 
 /* Theme: Mono Light (black on white, inverts when niced) */
 .theme-mono-light .nice-button{background:#fff;color:#000;border:1px solid #ddd}
 .theme-mono-light .nice-button:hover{background:#f5f5f5}
 .theme-mono-light .nice-button.niced{background:#000;color:#fff;border-color:#000}
 .theme-mono-light .nice-count-outside{color:#000}
-.theme-mono-light .nice-button.niced+.nice-count-outside{color:#fff}
 
 .shape-pill .nice-button{border-radius:9999px}
 .shape-square .nice-button{border-radius:0}
@@ -189,7 +186,6 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 .has-custom-colors .nice-button.niced:hover{background:var(--nice-pressed-background);filter:brightness(.96)}
 .has-custom-colors .nice-button.disabled:hover{filter:none}
 .has-custom-colors .nice-count-outside{color:var(--nice-foreground)}
-.has-custom-colors .nice-button.niced+.nice-count-outside{color:var(--nice-pressed-foreground)}
 
 .nice-text{transition:all .15s ease;white-space:nowrap}
 .nice-count{opacity:0.8}
