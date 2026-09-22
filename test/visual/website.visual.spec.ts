@@ -230,225 +230,351 @@ test("stats clap toggle hides and restores the pressed label", async ({ page }) 
   await expect(page.locator("#pressedLabelInput")).toHaveValue("Still here");
 });
 
-test("stats loads the default button appearance editor", async ({ page }) => {
-  await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0]);
+test.describe("website create appearance", () => {
+  for (const viewport of viewports) {
+    test(`appearance controls and preview ${viewport.name}`, async ({ page }) => {
+      await openPage(page, "/create", viewport);
+      await expect(page.getByRole("heading", { name: "Button appearance" })).toBeVisible();
+      await expect(page.locator("#previewButton")).toBeVisible();
+      if (viewport.name === "mobile") {
+        await expect(page.locator(".appearance-section")).toHaveScreenshot(
+          `website/create-appearance-controls-${viewport.name}.png`,
+          { animations: "disabled", scale: "css", omitBackground: false },
+        );
+      } else {
+        await screenshotWebsitePaddedLocator(
+          page.locator(".appearance-section"),
+          `website/create-appearance-controls-${viewport.name}.png`,
+        );
+      }
+      await screenshotWebsitePaddedLocator(
+        page.locator("#previewContainer"),
+        `website/create-appearance-preview-${viewport.name}.png`,
+      );
+    });
+  }
 
-  const appearance = page.locator("#appearanceSettings");
-  await expect(appearance).toBeVisible();
-  await expect(appearance.getByRole("heading", { name: "Button appearance" })).toBeVisible();
-  await expect(page.locator("#appearanceCustomColors")).not.toBeChecked();
-  await expect(page.locator("#appearanceShape")).toHaveValue("rounded");
-  await expect(page.locator("#appearanceCountVisibility")).toHaveValue("nonzero");
-  await expect(page.locator("#appearanceCountPosition")).toHaveValue("inside");
-  await expect(page.locator("#appearanceCountFormat")).toHaveValue("compact");
-  await expect(page.locator("#appearanceAnimation")).toHaveValue("pop");
-  await expect(page.locator("#appearanceColors input[type=color]")).toHaveCount(6);
-  await expect(page.locator("#appearanceColors input[type=color]").first()).toBeDisabled();
-  await expect(page.locator("#appearanceColors .color-value").first()).toHaveText("#374151");
+  test("custom palette pill below count preview", async ({ page }) => {
+    await openPage(page, "/create", viewports[0]);
+    await page.locator("#customColors").check();
+    await page.locator("#colorBackground").fill("#112233");
+    await page.locator("#colorForeground").fill("#aabbcc");
+    await page.getByText("Pill", { exact: true }).click();
+    await page.getByText("Below", { exact: true }).click();
+    await page.getByText("Always", { exact: true }).click();
+    await expect(page.locator("#previewButton")).toHaveClass(/shape-pill/);
+    await expect(page.locator("#previewDemo")).toHaveClass(/count-position-below/);
+    await screenshotWebsitePaddedLocator(
+      page.locator("#previewContainer"),
+      "website/create-appearance-custom-pill-below.png",
+    );
+  });
+
+  test("iframe animation vs host confetti distinction", async ({ page }) => {
+    await openPage(page, "/create", viewports[0]);
+    await page.getByText("Confetti", { exact: true }).click();
+    await expect(page.locator("#previewNote")).toContainText("inside the preview iframe area");
+    await expect(page.locator("#confetti")).not.toBeChecked();
+    await screenshotWebsitePaddedLocator(
+      page.locator('.preview-section:has(#previewContainer)'),
+      "website/create-appearance-iframe-confetti.png",
+    );
+    await screenshotWebsitePaddedLocator(
+      page.locator('label[for="confetti"]'),
+      "website/create-appearance-iframe-confetti-host-control.png",
+    );
+
+    await page.locator("#confetti").check();
+    await expect(page.locator("#previewNote")).toContainText("script embeds");
+    await screenshotWebsitePaddedLocator(
+      page.locator('.preview-section:has(#previewContainer)'),
+      "website/create-appearance-host-confetti.png",
+    );
+    await screenshotWebsitePaddedLocator(
+      page.locator('label[for="confetti"]'),
+      "website/create-appearance-host-confetti-control.png",
+    );
+  });
 });
 
-test("stats hydrates a customized button appearance", async ({ page }) => {
-  await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0], {
-    appearance: {
-      colors: {
-        background: "#123456",
-        foreground: "#abcdef",
-        border: "#654321",
-        pressed_background: "#fedcba",
-        pressed_foreground: "#0f0f0f",
-        pressed_border: "#f1e2d3",
+test.describe("website stats appearance", () => {
+  test("loads the default button appearance editor", async ({ page }) => {
+    await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0]);
+
+    const appearance = page.locator("#appearanceSettings");
+    await expect(appearance).toBeVisible();
+    await expect(appearance.getByRole("heading", { name: "Button appearance" })).toBeVisible();
+    await expect(page.locator("#appearanceCustomColors")).not.toBeChecked();
+    await expect(page.locator("#appearanceShape")).toHaveValue("rounded");
+    await expect(page.locator("#appearanceCountVisibility")).toHaveValue("nonzero");
+    await expect(page.locator("#appearanceCountPosition")).toHaveValue("inside");
+    await expect(page.locator("#appearanceCountFormat")).toHaveValue("compact");
+    await expect(page.locator("#appearanceAnimation")).toHaveValue("pop");
+    await expect(page.locator("#appearanceColors input[type=color]")).toHaveCount(6);
+    await expect(page.locator("#appearanceColors input[type=color]").first()).toBeDisabled();
+    await expect(page.locator("#appearanceColors .color-value").first()).toHaveText("#374151");
+    await screenshotWebsitePaddedLocator(appearance, "website/stats-appearance-default.png");
+  });
+
+  test("hydrates a customized button appearance", async ({ page }) => {
+    await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0], {
+      appearance: {
+        colors: {
+          background: "#123456",
+          foreground: "#abcdef",
+          border: "#654321",
+          pressed_background: "#fedcba",
+          pressed_foreground: "#0f0f0f",
+          pressed_border: "#f1e2d3",
+        },
+        shape: "pill",
+        count_visibility: "always",
+        count_position: "below",
+        count_format: "full",
+        animation: "sparkle",
       },
+    });
+
+    await expect(page.locator("#appearanceCustomColors")).toBeChecked();
+    await expect(page.locator("#appearanceShape")).toHaveValue("pill");
+    await expect(page.locator("#appearanceCountVisibility")).toHaveValue("always");
+    await expect(page.locator("#appearanceCountPosition")).toHaveValue("below");
+    await expect(page.locator("#appearanceCountFormat")).toHaveValue("full");
+    await expect(page.locator("#appearanceAnimation")).toHaveValue("sparkle");
+    await expect(page.locator("#appearanceBackground")).toHaveValue("#123456");
+    await expect(page.locator("[data-color-value=pressed_foreground]")).toHaveText("#0F0F0F");
+    await screenshotWebsitePaddedLocator(
+      page.locator("#appearanceSettings"),
+      "website/stats-appearance-customized.png",
+    );
+  });
+
+  test("seeds editable minimal colours when custom colours are enabled", async ({ page }) => {
+    await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0], { theme: "minimal" });
+
+    await expect(page.locator("#appearanceBackground")).toHaveValue("#111827");
+    await page.locator("#appearanceCustomColors").check();
+    await expect(page.locator("#appearanceBackground")).toHaveValue("#ffffff");
+    await expect(page.locator("#appearanceForeground")).toHaveValue("#374151");
+    await expect(page.locator("#appearancePressedBackground")).toHaveValue("#fef3c7");
+  });
+
+  test("saves the complete appearance contract and refreshes the embed", async ({ page }) => {
+    await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0], {
+      buttonPatchDelay: 250,
+      buttonPatchResponse: { size: "xl" },
+    });
+
+    await expect(page.locator("#saveAppearanceBtn")).toBeDisabled();
+    await page.locator("#appearanceShape").selectOption("pill");
+    await expect(page.locator("#saveAppearanceBtn")).toBeEnabled();
+    await screenshotWebsitePaddedLocator(
+      page.locator("#appearanceSettings"),
+      "website/stats-appearance-dirty.png",
+    );
+
+    const requestPromise = page.waitForRequest("https://api.nice.sbs/api/v1/buttons/ns_visual00000000000001");
+    await page.locator("#saveAppearanceBtn").click();
+    await expect(page.locator("#saveAppearanceBtn")).toBeDisabled();
+    await expect(page.locator("#appearanceShape")).toBeDisabled();
+    await expect(page.locator("#appearanceAnimation")).toBeDisabled();
+    await expect(page.locator("#multiNiceToggle")).toBeEnabled();
+
+    const request = await requestPromise;
+    expect(request.method()).toBe("PATCH");
+    expect(request.postDataJSON()).toEqual({
+      colors: null,
       shape: "pill",
-      count_visibility: "always",
-      count_position: "below",
-      count_format: "full",
-      animation: "sparkle",
-    },
+      count_visibility: "nonzero",
+      count_position: "inside",
+      count_format: "compact",
+      animation: "pop",
+    });
+
+    await expect(page.locator("#appearanceSaveStatus")).toHaveText("Saved");
+    await expect(page.locator("#snippet")).toContainText("size=xl");
+    await expect(page.locator("#preview iframe")).toHaveAttribute("src", /size=xl/);
+    await screenshotWebsitePaddedLocator(
+      page.locator("#appearanceSettings"),
+      "website/stats-appearance-saved.png",
+    );
   });
 
-  await expect(page.locator("#appearanceCustomColors")).toBeChecked();
-  await expect(page.locator("#appearanceShape")).toHaveValue("pill");
-  await expect(page.locator("#appearanceCountVisibility")).toHaveValue("always");
-  await expect(page.locator("#appearanceCountPosition")).toHaveValue("below");
-  await expect(page.locator("#appearanceCountFormat")).toHaveValue("full");
-  await expect(page.locator("#appearanceAnimation")).toHaveValue("sparkle");
-  await expect(page.locator("#appearanceBackground")).toHaveValue("#123456");
-  await expect(page.locator("[data-color-value=pressed_foreground]")).toHaveText("#0F0F0F");
-});
+  test("appearance saves persist into the refreshed embed", async ({ page }) => {
+    await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0]);
 
-test("stats seeds editable minimal colours when custom colours are enabled", async ({ page }) => {
-  await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0], { theme: "minimal" });
-
-  await expect(page.locator("#appearanceBackground")).toHaveValue("#111827");
-  await page.locator("#appearanceCustomColors").check();
-  await expect(page.locator("#appearanceBackground")).toHaveValue("#ffffff");
-  await expect(page.locator("#appearanceForeground")).toHaveValue("#374151");
-  await expect(page.locator("#appearancePressedBackground")).toHaveValue("#fef3c7");
-});
-
-test("stats saves the complete appearance contract and refreshes the embed", async ({ page }) => {
-  await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0], {
-    buttonPatchDelay: 250,
-    buttonPatchResponse: { size: "xl" },
-  });
-
-  await expect(page.locator("#saveAppearanceBtn")).toBeDisabled();
-  await page.locator("#appearanceShape").selectOption("pill");
-  await expect(page.locator("#saveAppearanceBtn")).toBeEnabled();
-
-  const requestPromise = page.waitForRequest("https://api.nice.sbs/api/v1/buttons/ns_visual00000000000001");
-  await page.locator("#saveAppearanceBtn").click();
-  await expect(page.locator("#saveAppearanceBtn")).toBeDisabled();
-  await expect(page.locator("#appearanceShape")).toBeDisabled();
-  await expect(page.locator("#appearanceAnimation")).toBeDisabled();
-  await expect(page.locator("#multiNiceToggle")).toBeEnabled();
-
-  const request = await requestPromise;
-  expect(request.method()).toBe("PATCH");
-  expect(request.postDataJSON()).toEqual({
-    colors: null,
-    shape: "pill",
-    count_visibility: "nonzero",
-    count_position: "inside",
-    count_format: "compact",
-    animation: "pop",
-  });
-
-  await expect(page.locator("#appearanceSaveStatus")).toHaveText("Saved");
-  await expect(page.locator("#snippet")).toContainText("size=xl");
-  await expect(page.locator("#preview iframe")).toHaveAttribute("src", /size=xl/);
-});
-
-test("stats reset confirms accessibly and only resets appearance", async ({ page }) => {
-  await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0], {
-    multiNice: true,
-    label: "Keep this label",
-    appearance: {
-      colors: {
-        background: "#123456",
-        foreground: "#abcdef",
-        border: "#654321",
-        pressed_background: "#fedcba",
-        pressed_foreground: "#0f0f0f",
-        pressed_border: "#f1e2d3",
-      },
-      shape: "pill",
-      count_visibility: "always",
-      count_position: "below",
-      count_format: "full",
-      animation: "sparkle",
-    },
-  });
-
-  const resetButton = page.locator("#resetAppearanceBtn");
-  page.once("dialog", (dialog) => dialog.dismiss());
-  await resetButton.click();
-  await expect(resetButton).toBeFocused();
-  await expect(page.locator("#appearanceShape")).toHaveValue("pill");
-  await expect(page.locator("#labelInput")).toHaveValue("Keep this label");
-  await expect(page.locator("#multiNiceToggle")).toBeChecked();
-
-  const requestPromise = page.waitForRequest("https://api.nice.sbs/api/v1/buttons/ns_visual00000000000001");
-  page.once("dialog", (dialog) => dialog.accept());
-  await resetButton.click();
-  const request = await requestPromise;
-  expect(request.postDataJSON()).toEqual({
-    colors: null,
-    shape: "rounded",
-    count_visibility: "nonzero",
-    count_position: "inside",
-    count_format: "compact",
-    animation: "pop",
-  });
-  await expect(page.locator("#appearanceSaveStatus")).toHaveText("Saved");
-  await expect(page.locator("#appearanceCustomColors")).not.toBeChecked();
-  await expect(page.locator("#labelInput")).toHaveValue("Keep this label");
-  await expect(page.locator("#multiNiceToggle")).toBeChecked();
-});
-
-const appearanceErrorCases = [
-  { code: "INVALID_COLORS", control: "#appearanceCustomColors", edit: async (page: Page) => {
     await page.locator("#appearanceCustomColors").check();
     await page.locator("#appearanceBackground").fill("#112233");
-  } },
-  { code: "INVALID_SHAPE", control: "#appearanceShape", edit: (page: Page) => page.locator("#appearanceShape").selectOption("pill") },
-  { code: "INVALID_COUNT_VISIBILITY", control: "#appearanceCountVisibility", edit: (page: Page) => page.locator("#appearanceCountVisibility").selectOption("always") },
-  { code: "INVALID_COUNT_POSITION", control: "#appearanceCountPosition", edit: (page: Page) => page.locator("#appearanceCountPosition").selectOption("below") },
-  { code: "INVALID_COUNT_FORMAT", control: "#appearanceCountFormat", edit: (page: Page) => page.locator("#appearanceCountFormat").selectOption("full") },
-  { code: "INVALID_ANIMATION", control: "#appearanceAnimation", edit: (page: Page) => page.locator("#appearanceAnimation").selectOption("sparkle") },
-] as const;
-
-for (const errorCase of appearanceErrorCases) {
-  test(`stats preserves appearance edits for ${errorCase.code}`, async ({ page }) => {
-    await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0], {
-      buttonPatchStatus: 400,
-      buttonPatchErrorCode: errorCase.code,
-      buttonPatchError: `Rejected ${errorCase.code}`,
-    });
-    await errorCase.edit(page);
+    await page.locator("#appearanceShape").selectOption("pill");
     await page.locator("#saveAppearanceBtn").click();
 
-    await expect(page.locator("#appearanceError")).toContainText(`Rejected ${errorCase.code}`);
-    await expect(page.locator(errorCase.control)).toBeFocused();
+    await expect(page.locator("#appearanceSaveStatus")).toHaveText("Saved");
+    const previewFrame = page.frameLocator("#preview iframe");
+    await expect(previewFrame.locator("body")).toHaveClass(/shape-pill/);
+    await expect(previewFrame.locator("#niceBtn")).toHaveCSS("background-color", "rgb(17, 34, 51)");
   });
-}
 
-test("stats preserves appearance edits after a network failure", async ({ page }) => {
-  await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0], {
-    buttonPatchNetworkError: true,
+  test("reset confirms accessibly and only resets appearance", async ({ page }) => {
+    await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0], {
+      multiNice: true,
+      label: "Keep this label",
+      appearance: {
+        colors: {
+          background: "#123456",
+          foreground: "#abcdef",
+          border: "#654321",
+          pressed_background: "#fedcba",
+          pressed_foreground: "#0f0f0f",
+          pressed_border: "#f1e2d3",
+        },
+        shape: "pill",
+        count_visibility: "always",
+        count_position: "below",
+        count_format: "full",
+        animation: "sparkle",
+      },
+    });
+
+    const resetButton = page.locator("#resetAppearanceBtn");
+    page.once("dialog", (dialog) => dialog.dismiss());
+    await resetButton.click();
+    await expect(resetButton).toBeFocused();
+    await expect(page.locator("#appearanceShape")).toHaveValue("pill");
+    await expect(page.locator("#labelInput")).toHaveValue("Keep this label");
+    await expect(page.locator("#multiNiceToggle")).toBeChecked();
+    await screenshotWebsitePaddedLocator(
+      page.locator("#appearanceSettings"),
+      "website/stats-appearance-reset-confirm.png",
+    );
+
+    const requestPromise = page.waitForRequest("https://api.nice.sbs/api/v1/buttons/ns_visual00000000000001");
+    page.once("dialog", (dialog) => dialog.accept());
+    await resetButton.click();
+    const request = await requestPromise;
+    expect(request.postDataJSON()).toEqual({
+      colors: null,
+      shape: "rounded",
+      count_visibility: "nonzero",
+      count_position: "inside",
+      count_format: "compact",
+      animation: "pop",
+    });
+    await expect(page.locator("#appearanceSaveStatus")).toHaveText("Saved");
+    await expect(page.locator("#appearanceCustomColors")).not.toBeChecked();
+    await expect(page.locator("#labelInput")).toHaveValue("Keep this label");
+    await expect(page.locator("#multiNiceToggle")).toBeChecked();
+    await screenshotWebsitePaddedLocator(
+      page.locator("#appearanceSettings"),
+      "website/stats-appearance-reset-default.png",
+    );
   });
-  await page.locator("#appearanceShape").selectOption("square");
-  await page.locator("#saveAppearanceBtn").click();
 
-  await expect(page.locator("#appearanceShape")).toHaveValue("square");
-  await expect(page.locator("#appearanceError")).toContainText("Failed to save button appearance");
-  await expect(page.locator("#appearanceSettings")).toBeFocused();
-  await expect(page.locator("#appearanceSaveStatus")).toHaveText("Failed to save button appearance. Check your connection and try again.");
-  await expect(page.locator("#appearanceSaveStatus")).toHaveClass(/error/);
-});
+  const appearanceErrorCases = [
+    { code: "INVALID_COLORS", control: "#appearanceCustomColors", edit: async (page: Page) => {
+      await page.locator("#appearanceCustomColors").check();
+      await page.locator("#appearanceBackground").fill("#112233");
+    } },
+    { code: "INVALID_SHAPE", control: "#appearanceShape", edit: (page: Page) => page.locator("#appearanceShape").selectOption("pill") },
+    { code: "INVALID_COUNT_VISIBILITY", control: "#appearanceCountVisibility", edit: (page: Page) => page.locator("#appearanceCountVisibility").selectOption("always") },
+    { code: "INVALID_COUNT_POSITION", control: "#appearanceCountPosition", edit: (page: Page) => page.locator("#appearanceCountPosition").selectOption("below") },
+    { code: "INVALID_COUNT_FORMAT", control: "#appearanceCountFormat", edit: (page: Page) => page.locator("#appearanceCountFormat").selectOption("full") },
+    { code: "INVALID_ANIMATION", control: "#appearanceAnimation", edit: (page: Page) => page.locator("#appearanceAnimation").selectOption("sparkle") },
+  ] as const;
 
-test("stats keeps unsaved appearance edits across other settings updates", async ({ page }) => {
-  await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0]);
-  await page.locator("#appearanceShape").selectOption("square");
-  await page.locator("#appearanceCustomColors").check();
-  await page.locator("#appearanceBackground").fill("#112233");
-  await expect(page.locator("#saveAppearanceBtn")).toBeEnabled();
+  for (const errorCase of appearanceErrorCases) {
+    test(`preserves appearance edits for ${errorCase.code}`, async ({ page }) => {
+      await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0], {
+        buttonPatchStatus: 400,
+        buttonPatchErrorCode: errorCase.code,
+        buttonPatchError: `Rejected ${errorCase.code}`,
+      });
+      await errorCase.edit(page);
+      await page.locator("#saveAppearanceBtn").click();
 
-  await page.locator("#labelInput").fill("Recommend");
-  await page.locator("#pressedLabelInput").fill("Recommended");
-  await page.locator("#saveLabelsBtn").click();
-  await expect(page.locator("#labelSaveStatus")).toHaveText("Saved");
-  await expect(page.locator("#appearanceShape")).toHaveValue("square");
-  await expect(page.locator("#appearanceBackground")).toHaveValue("#112233");
+      await expect(page.locator("#appearanceError")).toContainText(`Rejected ${errorCase.code}`);
+      await expect(page.locator(errorCase.control)).toBeFocused();
+    });
+  }
 
-  await page.locator("#restrictionOptions [data-value=domain]").click();
-  await expect(page.locator("#restrictionOptions [data-value=domain]")).toHaveClass(/active/);
-  await expect(page.locator("#appearanceShape")).toHaveValue("square");
+  test("preserves appearance edits after a network failure", async ({ page }) => {
+    await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0], {
+      buttonPatchNetworkError: true,
+    });
+    await page.locator("#appearanceShape").selectOption("square");
+    await page.locator("#saveAppearanceBtn").click();
 
-  await page.locator("#multiNiceToggle").check();
-  await expect(page.locator("#multiNiceLabel")).toHaveText("On");
-  await expect(page.locator("#appearanceShape")).toHaveValue("square");
-  await expect(page.locator("#appearanceBackground")).toHaveValue("#112233");
-  await expect(page.locator("#saveAppearanceBtn")).toBeEnabled();
-});
+    await expect(page.locator("#appearanceShape")).toHaveValue("square");
+    await expect(page.locator("#appearanceError")).toContainText("Failed to save button appearance");
+    await expect(page.locator("#appearanceSettings")).toBeFocused();
+    await expect(page.locator("#appearanceSaveStatus")).toHaveText("Failed to save button appearance. Check your connection and try again.");
+    await expect(page.locator("#appearanceSaveStatus")).toHaveClass(/error/);
+    await screenshotWebsitePaddedLocator(
+      page.locator("#appearanceSettings"),
+      "website/stats-appearance-network-error.png",
+    );
+  });
 
-test("stats appearance controls remain usable at 375px with keyboard input", async ({ page }) => {
-  await installNiceApiMocks(page);
-  await page.setViewportSize({ width: 375, height: 844 });
-  await page.goto(`${server.origin}/stats?id=${VISUAL_PRIVATE_ID}`);
-  await stabilizeWebsitePage(page);
+  test("preserves appearance edits for validation error with retained values", async ({ page }) => {
+    await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0], {
+      buttonPatchStatus: 400,
+      buttonPatchErrorCode: "INVALID_SHAPE",
+      buttonPatchError: "Rejected INVALID_SHAPE",
+    });
+    await page.locator("#appearanceShape").selectOption("pill");
+    await page.locator("#appearanceCountPosition").selectOption("below");
+    await page.locator("#saveAppearanceBtn").click();
+    await expect(page.locator("#appearanceError")).toContainText("Rejected INVALID_SHAPE");
+    await expect(page.locator("#appearanceShape")).toHaveValue("pill");
+    await expect(page.locator("#appearanceCountPosition")).toHaveValue("below");
+    await screenshotWebsitePaddedLocator(
+      page.locator("#appearanceSettings"),
+      "website/stats-appearance-validation-error.png",
+    );
+  });
 
-  await expect(page.locator("#appearanceSettings")).toBeVisible();
-  await expect(page.locator("#appearanceColors")).toContainText("Background");
-  await expect(page.locator("#appearanceColors legend")).toHaveText("Custom colours");
+  test("keeps unsaved appearance edits across other settings updates", async ({ page }) => {
+    await openPage(page, `/stats?id=${VISUAL_PRIVATE_ID}`, viewports[0]);
+    await page.locator("#appearanceShape").selectOption("square");
+    await page.locator("#appearanceCustomColors").check();
+    await page.locator("#appearanceBackground").fill("#112233");
+    await expect(page.locator("#saveAppearanceBtn")).toBeEnabled();
 
-  await page.locator("#appearanceShape").focus();
-  await expect(page.locator("#appearanceShape")).toBeFocused();
-  await page.locator("#appearanceCustomColors").focus();
-  await page.locator("#appearanceCustomColors").press("Space");
-  await expect(page.locator("#appearanceBackground")).toBeEnabled();
+    await page.locator("#labelInput").fill("Recommend");
+    await page.locator("#pressedLabelInput").fill("Recommended");
+    await page.locator("#saveLabelsBtn").click();
+    await expect(page.locator("#labelSaveStatus")).toHaveText("Saved");
+    await expect(page.locator("#appearanceShape")).toHaveValue("square");
+    await expect(page.locator("#appearanceBackground")).toHaveValue("#112233");
 
-  const appearanceBox = await page.locator("#appearanceSettings").boundingBox();
-  expect(appearanceBox).not.toBeNull();
-  expect(appearanceBox!.width).toBeLessThanOrEqual(343);
+    await page.locator("#restrictionOptions [data-value=domain]").click();
+    await expect(page.locator("#restrictionOptions [data-value=domain]")).toHaveClass(/active/);
+    await expect(page.locator("#appearanceShape")).toHaveValue("square");
+
+    await page.locator("#multiNiceToggle").check();
+    await expect(page.locator("#multiNiceLabel")).toHaveText("On");
+    await expect(page.locator("#appearanceShape")).toHaveValue("square");
+    await expect(page.locator("#appearanceBackground")).toHaveValue("#112233");
+    await expect(page.locator("#saveAppearanceBtn")).toBeEnabled();
+  });
+
+  test("appearance controls remain usable at 375px with keyboard input", async ({ page }) => {
+    await installNiceApiMocks(page);
+    await page.setViewportSize({ width: 375, height: 844 });
+    await page.goto(`${server.origin}/stats?id=${VISUAL_PRIVATE_ID}`);
+    await stabilizeWebsitePage(page);
+
+    await expect(page.locator("#appearanceSettings")).toBeVisible();
+    await expect(page.locator("#appearanceColors")).toContainText("Background");
+    await expect(page.locator("#appearanceColors legend")).toHaveText("Custom colours");
+
+    await page.locator("#appearanceShape").focus();
+    await expect(page.locator("#appearanceShape")).toBeFocused();
+    await page.locator("#appearanceCustomColors").focus();
+    await page.locator("#appearanceCustomColors").press("Space");
+    await expect(page.locator("#appearanceBackground")).toBeEnabled();
+
+    const appearanceBox = await page.locator("#appearanceSettings").boundingBox();
+    expect(appearanceBox).not.toBeNull();
+    expect(appearanceBox!.width).toBeLessThanOrEqual(343);
+  });
 });

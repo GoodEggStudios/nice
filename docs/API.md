@@ -30,6 +30,12 @@ Response:
   "size": "md",
   "label": "Nice",
   "pressed_label": "Nice'd",
+  "colors": null,
+  "shape": "rounded",
+  "count_visibility": "nonzero",
+  "count_position": "inside",
+  "count_format": "compact",
+  "animation": "pop",
   "count": 0,
   "created_at": "2026-02-18T10:00:00Z",
   "embed": {
@@ -68,8 +74,9 @@ Create, stats, and update responses always include the normalized appearance fie
 
 Create and update requests may provide `shape` (`rounded`, `pill`, `square`), `count_visibility` (`nonzero`, `always`, `hidden`), `count_position` (`inside`, `beside`, `below`), `count_format` (`compact`, `full`), and `animation` (`pop`, `bounce`, `sparkle`, `confetti`, `none`). Omitted values use the defaults above; omitted PATCH fields preserve their stored values.
 
-`colors` is either `null`, meaning theme colours, or a complete object with exactly these six keys: `background`, `foreground`, `border`, `pressed_background`, `pressed_foreground`, and `pressed_border`. Every value must be a whitespace-free `#RRGGBB` color. Values are normalized to uppercase. PATCH replaces the complete palette atomically, and `"colors": null` clears it. Invalid appearance values return HTTP 400 with `INVALID_COLORS`, `INVALID_SHAPE`, `INVALID_COUNT_VISIBILITY`, `INVALID_COUNT_POSITION`, `INVALID_COUNT_FORMAT`, or `INVALID_ANIMATION`.
+`colors` is either `null`, meaning theme colours, or a complete object with exactly these six keys: `background`, `foreground`, `border`, `pressed_background`, `pressed_foreground`, and `pressed_border`. Every value must be a whitespace-free `#RRGGBB` color. Values are normalized to uppercase. When a custom palette is present, it overrides theme colours for the button; theme and size remain placement parameters on the embed URL. PATCH replaces the complete palette atomically, and `"colors": null` clears it. Invalid appearance values return HTTP 400 with `INVALID_COLORS`, `INVALID_SHAPE`, `INVALID_COUNT_VISIBILITY`, `INVALID_COUNT_POSITION`, `INVALID_COUNT_FORMAT`, or `INVALID_ANIMATION`.
 
+Count visibility/position/format control how the count is shown. Stored iframe animation runs inside the embed and honors reduced motion; it never grants host-page animation permission. Script-embed `data-confetti` is a separate placement-level host effect. Appearance URL parameters are ignored. SVG badges do not support custom appearance.
 ---
 
 ## API Endpoints
@@ -127,6 +134,12 @@ Content-Type: application/json
   "size": "md",
   "label": "Nice",
   "pressed_label": "Nice'd",
+  "colors": null,
+  "shape": "rounded",
+  "count_visibility": "nonzero",
+  "count_position": "inside",
+  "count_format": "compact",
+  "animation": "pop",
   "count": 0,
   "created_at": "2026-02-18T10:00:00Z",
   "embed": {
@@ -158,6 +171,12 @@ Get button statistics. Requires the private ID.
   "size": "md",
   "label": "Nice",
   "pressed_label": "Nice'd",
+  "colors": null,
+  "shape": "rounded",
+  "count_visibility": "nonzero",
+  "count_position": "inside",
+  "count_format": "compact",
+  "animation": "pop",
   "created_at": "2026-02-18T10:00:00Z",
   "embed": { ... }
 }
@@ -209,6 +228,12 @@ Update button settings. Requires the private ID.
   "size": "md",
   "label": "Nice",
   "pressed_label": "Nice'd",
+  "colors": null,
+  "shape": "rounded",
+  "count_visibility": "nonzero",
+  "count_position": "inside",
+  "count_format": "compact",
+  "animation": "pop",
   "created_at": "2026-02-18T10:00:00Z",
   "embed": { ... }
 }
@@ -402,7 +427,7 @@ Remove `data-confetti="true"` to keep the button without confetti. This setting 
 
 ### iframe
 
-Use the iframe when a platform allows HTML but blocks external scripts. A standalone iframe cannot draw outside its own rectangle, so it cannot provide host-page confetti. The generated snippet sizes the iframe from the button's stored labels and appearance settings (visible count position/format). Script embeds expand for particle animations via resize messages; direct iframes keep baseline dimensions. Appearance query parameters are ignored.
+Use the iframe when a platform allows HTML but blocks external scripts. A standalone iframe cannot draw outside its own rectangle, so it cannot provide host-page confetti. The generated snippet sizes the iframe from the button's stored labels and appearance settings (visible count position/format). Script embeds expand for particle animations via resize messages; direct iframes keep baseline dimensions — refresh generated snippets after material count or layout changes. Appearance query parameters are ignored.
 
 ```html
 <iframe 
@@ -456,6 +481,12 @@ Use the iframe when a platform allows HTML but blocks external scripts. A standa
 | `INVALID_RESTRICTION` | 400 | Invalid restriction mode |
 | `INVALID_LABEL` | 400 | Invalid or empty `label` |
 | `INVALID_PRESSED_LABEL` | 400 | Invalid or empty `pressed_label` |
+| `INVALID_COLORS` | 400 | Invalid or incomplete custom palette |
+| `INVALID_SHAPE` | 400 | Invalid shape value |
+| `INVALID_COUNT_VISIBILITY` | 400 | Invalid count visibility value |
+| `INVALID_COUNT_POSITION` | 400 | Invalid count position value |
+| `INVALID_COUNT_FORMAT` | 400 | Invalid count format value |
+| `INVALID_ANIMATION` | 400 | Invalid animation value |
 | `NOT_FOUND` | 404 | Button not found |
 | `INVALID_BUTTON_ID` | 400 | Public button ID format invalid |
 | `BUTTON_NOT_FOUND` | 404 | Public button not found |

@@ -172,6 +172,9 @@ export async function screenshotWebsiteFullPage(page: Page, name: string): Promi
 
 export async function screenshotWebsitePaddedLocator(locator: Locator, name: string, padding = 8): Promise<void> {
   const page = locator.page();
+  await locator.scrollIntoViewIfNeeded();
+  // Re-measure after scroll so below-fold clips are not clamped to the page top.
+  await page.waitForTimeout(50);
   const box = await locator.boundingBox();
   if (!box) {
     throw new Error(`Cannot screenshot ${name}: locator has no bounding box`);
@@ -183,6 +186,9 @@ export async function screenshotWebsitePaddedLocator(locator: Locator, name: str
   }
 
   const clip = centeredPaddedClip(box, padding, viewport);
+  if (box.y + box.height < 0 || box.y > viewport.height) {
+    throw new Error(`Cannot screenshot ${name}: locator is outside the viewport after scroll`);
+  }
 
   await expect(page).toHaveScreenshot(name, {
     animations: "disabled",

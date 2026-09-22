@@ -15,7 +15,17 @@ body:json {
     "label": "Recommend",
     "shape": "pill",
     "count_visibility": "always",
-    "animation": "bounce"
+    "count_position": "below",
+    "count_format": "full",
+    "animation": "bounce",
+    "colors": {
+      "background": "#112233",
+      "foreground": "#AABBCC",
+      "border": "#334455",
+      "pressed_background": "#445566",
+      "pressed_foreground": "#DDEEFF",
+      "pressed_border": "#556677"
+    }
   }
 }
 
@@ -32,7 +42,7 @@ docs {
   
   ## Request Body
   
-  All fields are optional. Only provided fields will be updated.
+  All fields are optional. Only provided fields will be updated. Appearance fields are applied atomically when present. Clear a custom palette with `"colors": null`.
   
   | Field | Type | Values |
   |-------|------|--------|
@@ -62,14 +72,29 @@ docs {
     "size": "md",
     "label": "Recommend",
     "pressed_label": "Nice'd",
-    "colors": null,
+    "colors": {
+      "background": "#112233",
+      "foreground": "#AABBCC",
+      "border": "#334455",
+      "pressed_background": "#445566",
+      "pressed_foreground": "#DDEEFF",
+      "pressed_border": "#556677"
+    },
     "shape": "pill",
     "count_visibility": "always",
-    "count_position": "inside",
-    "count_format": "compact",
+    "count_position": "below",
+    "count_format": "full",
     "animation": "bounce",
     "created_at": "...",
     "embed": { ... }
+  }
+  ```
+
+  ## Reset colours example
+
+  ```json
+  {
+    "colors": null
   }
   ```
 }
