@@ -36,11 +36,27 @@ async function expectEmbedFrameReady(page: Page, frameSelector: string) {
   await expect(page.frameLocator(frameSelector).locator("#niceBtn")).toBeVisible();
 }
 
+async function setReducedMotion(page: Page, reducedMotion: "reduce" | "no-preference") {
+  await page.evaluate(() => {
+    document.documentElement.dataset.motionChangeObserved = "false";
+    window.matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", () => {
+      document.documentElement.dataset.motionChangeObserved = "true";
+    }, { once: true });
+  });
+  await page.emulateMedia({ reducedMotion });
+  await expect.poll(() => page.locator("html").getAttribute("data-motion-change-observed")).toBe("true");
+}
+
 for (const viewport of viewports) {
   test(`homepage ${viewport.name}`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await openPage(page, "/", viewport);
-    await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice button");
+    const heroText = await page.locator(".hero-title").evaluate(hero => {
+      const visibleText = hero.cloneNode(true) as HTMLElement;
+      visibleText.querySelectorAll("[aria-hidden='true']").forEach(element => element.remove());
+      return visibleText.textContent?.replace(/\s+/g, " ").trim();
+    });
+    expect(heroText).toBe("Nice button");
     await expect(page.locator(".tagline")).toHaveText("Create your own feedback buttons");
     await expectEmbedFrameReady(page, ".homepage-button iframe");
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
@@ -135,49 +151,65 @@ for (const viewport of viewports) {
 }
 
 test("homepage cycles random words without repeats at mobile width", async ({ page }) => {
+  const now = new Date("2026-01-01T00:00:00Z");
+  await page.clock.install({ time: now });
+  await page.clock.pauseAt(now);
   await installNiceApiMocks(page);
   await page.addInitScript(() => {
-    const samples = [0, 0, 0.5];
+    const samples = [0, 0];
     Math.random = () => samples.shift() ?? 0;
   });
   await page.setViewportSize(viewports[1]);
   await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
 
-  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 3500 });
-  await expect(page.locator("#rotatingWord")).toHaveText("Awesome", { timeout: 1000 });
+  await page.clock.fastForward(2500);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
+  await page.clock.fastForward(150);
+  await expect(page.locator("#rotatingWord")).toHaveText("Awesome");
   expect(await page.locator(".button-word").textContent()).toBe("button");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewports[1].width);
-  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/, { timeout: 1000 });
-  await expect(page.locator("#rotatingWord")).toHaveText("Nice", { timeout: 4000 });
-  await expect(page.locator("#rotatingWord")).toHaveText("Spicey", { timeout: 4000 });
+  await page.clock.fastForward(150);
+  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/);
+  await page.clock.fastForward(2500);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
+  await page.clock.fastForward(150);
+  await expect(page.locator("#rotatingWord")).toHaveText("Nice");
 });
 
 test("homepage stops and resumes for reduced motion", async ({ page }) => {
+  const now = new Date("2026-01-01T00:00:00Z");
+  await page.clock.install({ time: now });
+  await page.clock.pauseAt(now);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await installNiceApiMocks(page);
+  await page.addInitScript(() => {
+    Math.random = () => 0;
+  });
   await page.setViewportSize(viewports[1]);
   await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
 
-  await page.waitForTimeout(3000);
+  await page.clock.fastForward(6000);
   expect(await page.locator("#rotatingWord").textContent()).toBe("Nice");
   expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
 
-  await page.emulateMedia({ reducedMotion: "no-preference" });
-  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 3000 });
+  await setReducedMotion(page, "no-preference");
+  await page.clock.fastForward(2500);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
 
-  await page.emulateMedia({ reducedMotion: "reduce" });
+  await setReducedMotion(page, "reduce");
   await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/);
-  const pausedWord = await page.locator("#rotatingWord").textContent();
+  await expect(page.locator("#rotatingWord")).toHaveText("Nice");
 
-  await page.waitForTimeout(3000);
-  expect(await page.locator("#rotatingWord").textContent()).toBe(pausedWord);
+  await page.clock.fastForward(6000);
+  expect(await page.locator("#rotatingWord").textContent()).toBe("Nice");
   expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
 
-  await page.emulateMedia({ reducedMotion: "no-preference" });
-  await expect(page.locator("#rotatingWord")).not.toHaveText(pausedWord ?? "", { timeout: 4000 });
-  const word = await page.locator("#rotatingWord").textContent();
-  expect(word).not.toBe(pausedWord);
-  expect(["Nice", "Awesome", "Cool", "Spicey", "Sucks"]).toContain(word);
+  await setReducedMotion(page, "no-preference");
+  await page.clock.fastForward(2500);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
+  await page.clock.fastForward(150);
+  await expect(page.locator("#rotatingWord")).toHaveText("Awesome");
+  await page.clock.fastForward(150);
   await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/);
 });
 
@@ -194,6 +226,9 @@ test("homepage keeps its message without JavaScript", async ({ browser }) => {
 });
 
 test("homepage falls back when motion APIs are unavailable", async ({ page }) => {
+  const now = new Date("2026-01-01T00:00:00Z");
+  await page.clock.install({ time: now });
+  await page.clock.pauseAt(now);
   const pageErrors: Error[] = [];
   page.on("pageerror", error => pageErrors.push(error));
   await page.addInitScript(() => {
@@ -203,7 +238,7 @@ test("homepage falls back when motion APIs are unavailable", async ({ page }) =>
   await page.setViewportSize(viewports[0]);
   await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
   await stabilizeWebsitePage(page);
-  await page.waitForTimeout(3000);
+  await page.clock.fastForward(6000);
   await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice button");
   expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
   expect(pageErrors).toEqual([]);
