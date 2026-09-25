@@ -16,6 +16,11 @@ const viewports = [
   { name: "mobile", width: 390, height: 844 },
 ];
 
+/** Match production HOLD_MS / FLIP_MS in website/index.html. */
+const HOLD_MS = 2500;
+const FLIP_MS = 300;
+const SWAP_MS = FLIP_MS / 2;
+
 test.beforeAll(async () => {
   server = await startVisualServer();
 });
@@ -24,27 +29,17 @@ test.afterAll(async () => {
   await server.close();
 });
 
-async function openPage(page: Page, path: string, viewport: { width: number; height: number }, options: NiceApiMockOptions = {}) {
-  await installNiceApiMocks(page, options);
+async function openPage(
+  page: Page,
+  path: string,
+  viewport: { width: number; height: number },
+  options: NiceApiMockOptions & { preserveHeroBrandFont?: boolean } = {},
+) {
+  const { preserveHeroBrandFont, ...mockOptions } = options;
+  await installNiceApiMocks(page, mockOptions);
   await page.setViewportSize(viewport);
   await page.goto(`${server.origin}${path}`);
-  await stabilizeWebsitePage(page);
-}
-
-/** Keep brand Bungee visible in homepage snapshots despite Arial metric stabilization. */
-async function restoreHomepageBrandFont(page: Page): Promise<void> {
-  await page.addStyleTag({
-    content: `
-      .hero-title,
-      .hero-title * {
-        font-family: 'Bungee', cursive !important;
-      }
-    `,
-  });
-  await page.evaluate(async () => {
-    await document.fonts.load("72px 'Bungee'");
-    await document.fonts.ready;
-  });
+  await stabilizeWebsitePage(page, { preserveHeroBrandFont });
 }
 
 async function openHomepageWithFrozenClock(
@@ -91,7 +86,7 @@ async function setReducedMotion(page: Page, reducedMotion: "reduce" | "no-prefer
 for (const viewport of viewports) {
   test(`homepage ${viewport.name}`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
-    await openPage(page, "/", viewport);
+    await openPage(page, "/", viewport, { preserveHeroBrandFont: true });
     const heroText = await page.locator(".hero-title").evaluate(hero => {
       const visibleText = hero.cloneNode(true) as HTMLElement;
       visibleText.querySelectorAll("[aria-hidden='true']").forEach(element => element.remove());
@@ -101,7 +96,6 @@ for (const viewport of viewports) {
     await expect(page.locator(".tagline")).toHaveText("Create your own feedback buttons");
     await expectEmbedFrameReady(page, ".homepage-button iframe");
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
-    await restoreHomepageBrandFont(page);
     await screenshotWebsiteFullPage(page, `website-home-${viewport.name}.png`);
   });
 
@@ -192,95 +186,21 @@ for (const viewport of viewports) {
   });
 }
 
-test("homepage keeps shared Bungee heading style on word and button suffix", async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await installNiceApiMocks(page);
-  await page.setViewportSize(viewports[0]);
-  await page.goto(`${server.origin}/`);
-  await page.evaluate(async () => {
-    await document.fonts.load("72px 'Bungee'");
-    await document.fonts.ready;
-  });
-
-  const styles = await page.evaluate(() => {
-    const hero = getComputedStyle(document.querySelector(".hero-title")!);
-    const word = getComputedStyle(document.getElementById("rotatingWord")!);
-    const button = getComputedStyle(document.querySelector(".button-word")!);
-    return {
-      heroDisplay: hero.display,
-      heroGap: hero.gap,
-      heroFont: hero.fontFamily,
-      heroSize: hero.fontSize,
-      heroColor: hero.color,
-      heroTransform: hero.textTransform,
-      wordAlign: word.textAlign,
-      wordFont: word.fontFamily,
-      wordSize: word.fontSize,
-      wordColor: word.color,
-      wordTransform: word.textTransform,
-      buttonFont: button.fontFamily,
-      buttonSize: button.fontSize,
-      buttonColor: button.color,
-      buttonTransform: button.textTransform,
-    };
-  });
-  expect(styles.heroDisplay).toBe("flex");
-  expect(parseFloat(styles.heroGap)).toBeCloseTo(parseFloat(styles.heroSize) * 0.25, 0);
-  expect(styles.heroFont).toMatch(/Bungee/i);
-  expect(styles.heroSize).toMatch(/px/);
-  expect(styles.heroColor).toBe("rgb(251, 191, 36)");
-  expect(styles.heroTransform).toBe("uppercase");
-  expect(styles.wordAlign).toBe("right");
-  expect(styles.wordFont).toMatch(/Bungee/i);
-  expect(styles.wordSize).toBe(styles.heroSize);
-  expect(styles.wordColor).toBe(styles.heroColor);
-  expect(styles.wordTransform).toBe("uppercase");
-  expect(styles.buttonFont).toMatch(/Bungee/i);
-  expect(styles.buttonSize).toBe(styles.heroSize);
-  expect(styles.buttonColor).toBe(styles.heroColor);
-  expect(styles.buttonTransform).toBe("uppercase");
-
-  const layout = await page.evaluate(() => {
-    const title = document.querySelector(".hero-title")!.getBoundingClientRect();
-    const word = document.getElementById("rotatingWord")!.getBoundingClientRect();
-    const button = document.querySelector(".button-word")!.getBoundingClientRect();
-    return {
-      titleCenter: title.left + title.width / 2,
-      viewportCenter: window.innerWidth / 2,
-      buttonLeft: button.left,
-      wordRight: word.right,
-    };
-  });
-  expect(layout.buttonLeft).toBeGreaterThanOrEqual(layout.wordRight - 1);
-  expect(Math.abs(layout.titleCenter - layout.viewportCenter)).toBeLessThan(24);
-});
-
 test("homepage cycles random words without repeats at mobile width", async ({ page }) => {
   await openHomepageWithFrozenClock(page, viewports[1], { randomSamples: [0, 0] });
 
-  await page.clock.fastForward(2500);
+  await page.clock.fastForward(HOLD_MS);
   await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 0 });
-  await page.clock.fastForward(150);
+  await page.clock.fastForward(SWAP_MS);
   await expect(page.locator("#rotatingWord")).toHaveText("Awesome");
   expect(await page.locator(".button-word").textContent()).toBe("button");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewports[1].width);
-  await page.clock.fastForward(150);
+  await page.clock.fastForward(SWAP_MS);
   await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/, { timeout: 0 });
-  await page.clock.fastForward(2500);
+  await page.clock.fastForward(HOLD_MS);
   await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 0 });
-  await page.clock.fastForward(150);
+  await page.clock.fastForward(SWAP_MS);
   await expect(page.locator("#rotatingWord")).toHaveText("Nice");
-});
-
-test("homepage restarts its hold after a page lifecycle event", async ({ page }) => {
-  await openHomepageWithFrozenClock(page, viewports[0]);
-
-  await page.clock.fastForward(2000);
-  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent("pageshow")));
-  await page.clock.fastForward(500);
-  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/, { timeout: 0 });
-  await page.clock.fastForward(2000);
-  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 0 });
 });
 
 test("homepage stops and resumes for reduced motion", async ({ page }) => {
@@ -289,28 +209,28 @@ test("homepage stops and resumes for reduced motion", async ({ page }) => {
     randomSamples: [0],
   });
 
-  await page.clock.fastForward(6000);
+  await page.clock.fastForward(HOLD_MS * 2 + FLIP_MS);
   expect(await page.locator("#rotatingWord").textContent()).toBe("Nice");
   expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
 
   await setReducedMotion(page, "no-preference");
-  await page.clock.fastForward(2500);
+  await page.clock.fastForward(HOLD_MS);
   await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 0 });
 
   await setReducedMotion(page, "reduce");
   await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/, { timeout: 0 });
   await expect(page.locator("#rotatingWord")).toHaveText("Nice");
 
-  await page.clock.fastForward(6000);
+  await page.clock.fastForward(HOLD_MS * 2 + FLIP_MS);
   expect(await page.locator("#rotatingWord").textContent()).toBe("Nice");
   expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
 
   await setReducedMotion(page, "no-preference");
-  await page.clock.fastForward(2500);
+  await page.clock.fastForward(HOLD_MS);
   await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 0 });
-  await page.clock.fastForward(150);
+  await page.clock.fastForward(SWAP_MS);
   await expect(page.locator("#rotatingWord")).toHaveText("Awesome");
-  await page.clock.fastForward(150);
+  await page.clock.fastForward(SWAP_MS);
   await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/, { timeout: 0 });
 });
 

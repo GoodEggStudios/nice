@@ -114,7 +114,6 @@
         }
 
         .hero-title {
-            --flip-ms: 300;
             font-family: 'Bungee', cursive;
             font-size: clamp(24px, 7vw, 72px);
             color: #fbbf24;
@@ -185,7 +184,7 @@
         }
 
         .rotating-word.is-flipping {
-            animation: flip-word calc(var(--flip-ms) * 1ms) ease-in-out;
+            animation: flip-word 300ms ease-in-out;
             transform-origin: center;
         }
 
@@ -270,11 +269,9 @@
             let finishTimeoutId = null;
 
             const rotatingWord = document.getElementById("rotatingWord");
-            const heroTitle = document.querySelector(".hero-title");
-            if (!rotatingWord || !heroTitle || ROTATING_WORDS.length < 2 || typeof window.matchMedia !== "function") return;
+            if (!rotatingWord || ROTATING_WORDS.length < 2 || typeof window.matchMedia !== "function") return;
 
-            // Keep in sync with --flip-ms on .hero-title (single CSS source of truth).
-            const FLIP_MS = Number.parseFloat(getComputedStyle(heroTitle).getPropertyValue("--flip-ms")) || 300;
+            const FLIP_MS = 300;
 
             const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
             if (
@@ -306,7 +303,7 @@
                     swapTimeoutId = null;
                     rotatingWord.textContent = ROTATING_WORDS[nextIndex];
                     currentIndex = nextIndex;
-                }, FLIP_MS / 2);
+                }, 150);
                 finishTimeoutId = window.setTimeout(() => {
                     finishTimeoutId = null;
                     rotatingWord.classList.remove("is-flipping");
