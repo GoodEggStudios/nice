@@ -137,7 +137,7 @@ for (const viewport of viewports) {
 test("homepage cycles random words without repeats at mobile width", async ({ page }) => {
   await installNiceApiMocks(page);
   await page.addInitScript(() => {
-    const samples = [0, 0];
+    const samples = [0.5, 0];
     Math.random = () => samples.shift() ?? 0;
   });
   await page.clock.pauseAt(new Date("2026-01-01T00:00:00Z"));
@@ -147,7 +147,7 @@ test("homepage cycles random words without repeats at mobile width", async ({ pa
   await page.clock.runFor(2500);
   await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
   await page.clock.runFor(150);
-  await expect(page.locator("#rotatingWord")).toHaveText("Awesome");
+  await expect(page.locator("#rotatingWord")).toHaveText("Spicy");
   expect(await page.locator(".button-word").textContent()).toBe("button");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewports[1].width);
   await page.clock.runFor(150);
@@ -187,7 +187,7 @@ test("homepage stops and resumes for reduced motion", async ({ page }) => {
   await page.clock.runFor(2500 + 150 + 150);
   const word = await page.locator("#rotatingWord").textContent();
   expect(word).not.toBe("Nice");
-  expect(["Awesome", "Cool", "Spicey", "Sucks"]).toContain(word);
+  expect(["Awesome", "Cool", "Spicy", "Sucks"]).toContain(word);
   expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
 });
 
