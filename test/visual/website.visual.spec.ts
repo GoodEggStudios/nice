@@ -137,7 +137,7 @@ for (const viewport of viewports) {
 test("homepage cycles random words without repeats at mobile width", async ({ page }) => {
   await installNiceApiMocks(page);
   await page.addInitScript(() => {
-    const samples = [0.5, 0];
+    const samples = [0, 0, 0.5];
     Math.random = () => samples.shift() ?? 0;
   });
   await page.clock.pauseAt(new Date("2026-01-01T00:00:00Z"));
@@ -147,48 +147,44 @@ test("homepage cycles random words without repeats at mobile width", async ({ pa
   await page.clock.runFor(2500);
   await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
   await page.clock.runFor(150);
-  await expect(page.locator("#rotatingWord")).toHaveText("Spicy");
+  await expect(page.locator("#rotatingWord")).toHaveText("Awesome");
   expect(await page.locator(".button-word").textContent()).toBe("button");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewports[1].width);
   await page.clock.runFor(150);
   await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/);
   await page.clock.runFor(2500 + 150);
   await expect(page.locator("#rotatingWord")).toHaveText("Nice");
+  await page.clock.runFor(150 + 2500 + 150);
+  await expect(page.locator("#rotatingWord")).toHaveText("Spicey");
 });
 
 test("homepage stops and resumes for reduced motion", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await installNiceApiMocks(page);
-  await page.clock.pauseAt(new Date("2026-01-01T00:00:00Z"));
   await page.setViewportSize(viewports[1]);
   await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
 
-  await page.clock.runFor(6000);
+  await page.waitForTimeout(3000);
   expect(await page.locator("#rotatingWord").textContent()).toBe("Nice");
   expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
 
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  // pauseAt blocks async MediaQueryList delivery; visibilitychange shares syncCycling.
-  await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
-  await page.clock.runFor(2500);
-  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 3000 });
 
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
-  expect(await page.locator("#rotatingWord").textContent()).toBe("Nice");
-  expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
+  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/);
+  const pausedWord = await page.locator("#rotatingWord").textContent();
 
-  await page.clock.runFor(6000);
-  expect(await page.locator("#rotatingWord").textContent()).toBe("Nice");
+  await page.waitForTimeout(3000);
+  expect(await page.locator("#rotatingWord").textContent()).toBe(pausedWord);
   expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
 
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
-  await page.clock.runFor(2500 + 150 + 150);
+  await expect(page.locator("#rotatingWord")).not.toHaveText(pausedWord ?? "", { timeout: 4000 });
   const word = await page.locator("#rotatingWord").textContent();
-  expect(word).not.toBe("Nice");
-  expect(["Awesome", "Cool", "Spicy", "Sucks"]).toContain(word);
-  expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
+  expect(word).not.toBe(pausedWord);
+  expect(["Nice", "Awesome", "Cool", "Spicey", "Sucks"]).toContain(word);
+  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/);
 });
 
 test("homepage keeps its message without JavaScript", async ({ browser }) => {
