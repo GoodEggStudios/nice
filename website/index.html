@@ -106,12 +106,46 @@
             fill: currentColor;
         }
 
-        h1 {
+        .hero {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hero-title {
             font-family: 'Bungee', cursive;
-            font-size: 72px;
+            font-size: clamp(24px, 7vw, 72px);
             color: #fbbf24;
             margin-bottom: 24px;
             text-transform: uppercase;
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            white-space: nowrap;
+            gap: .25em;
+            perspective: 600px;
+            max-width: 100%;
+        }
+
+        .rotating-word-slot {
+            display: grid;
+        }
+
+        .rotating-word-slot > span {
+            grid-area: 1 / 1;
+        }
+
+        .rotating-word-sizer {
+            visibility: hidden;
+        }
+
+        .rotating-word {
+            text-align: right;
+        }
+
+        .button-word {
+            display: inline-block;
         }
 
         .tagline {
@@ -122,43 +156,45 @@
             margin-bottom: 32px;
         }
 
-        .subtitle {
-            font-size: 14px;
-            color: #666;
-            margin-top: -16px;
-            margin-bottom: 24px;
-        }
-
-        .cta {
+        .homepage-button {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            font-size: 18px;
-            color: #9ca3af;
-            flex-wrap: wrap;
+            min-width: 100px;
+            min-height: 36px;
         }
 
-        .cta-text {
-            line-height: 1.6;
+        @keyframes flip-word {
+            0% {
+                opacity: 1;
+                transform: rotateX(0deg);
+            }
+            49% {
+                opacity: 0;
+                transform: rotateX(90deg);
+            }
+            50% {
+                opacity: 0;
+                transform: rotateX(-90deg);
+            }
+            100% {
+                opacity: 1;
+                transform: rotateX(0deg);
+            }
         }
 
-        .nice-inline {
-            display: inline-flex;
-            vertical-align: middle;
+        .rotating-word.is-flipping {
+            animation: flip-word 300ms ease-in-out;
+            transform-origin: center;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .rotating-word.is-flipping {
+                animation: none;
+            }
         }
 
         @media (max-width: 600px) {
-            h1 {
-                font-size: 48px;
-            }
-            .subtitle {
-                font-size: 12px;
-            }
-            .cta {
-                font-size: 16px;
-                gap: 6px;
-            }
             .header-nav {
                 top: 16px;
                 right: 16px;
@@ -205,20 +241,98 @@
         <a href="/create" class="get-started">CREATE →</a>
     </nav>
 
-    <h1>Nice</h1>
-    <p class="subtitle">(button)</p>
-    
-    <p class="tagline">Likes suck! "Nice" everything instead.</p>
-    
-    <div class="cta">
-        <span class="cta-text">I know what you're thinking,</span>
-        <span class="nice-inline">
+    <main class="hero">
+        <h1 class="hero-title">
+            <span class="rotating-word-slot">
+                <span class="rotating-word-sizer" aria-hidden="true">Awesome</span>
+                <span id="rotatingWord" class="rotating-word">Nice</span>
+            </span>
+            <span class="button-word">button</span>
+        </h1>
+        <p class="tagline">Create your own feedback buttons</p>
+        <div class="homepage-button">
             <script src="https://api.nice.sbs/embed.js" data-button="n_iSoPXADYGp0Q" data-theme="dark" data-size="md" data-confetti async></script>
-        </span>
-    </div>
+        </div>
+    </main>
 
     <div class="footer">
         built with ❤️ by <a href="https://bsky.app/profile/daio.io" target="_blank" rel="noopener">Dai</a>
     </div>
+
+    <script>
+        (() => {
+            const ROTATING_WORDS = ["Nice", "Awesome", "Cool", "Spicey", "Sucks"];
+            const HOLD_MS = 2500;
+            const FLIP_MS = 300;
+            let currentIndex = 0;
+            let holdTimeoutId = null;
+            let swapTimeoutId = null;
+            let finishTimeoutId = null;
+
+            const rotatingWord = document.getElementById("rotatingWord");
+            if (!rotatingWord || ROTATING_WORDS.length < 2 || typeof window.matchMedia !== "function") return;
+
+            const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+            if (
+                typeof motionQuery.addEventListener !== "function" &&
+                typeof motionQuery.addListener !== "function"
+            ) return;
+
+            function pickNextWordIndex() {
+                const candidate = Math.floor(Math.random() * (ROTATING_WORDS.length - 1));
+                return candidate >= currentIndex ? candidate + 1 : candidate;
+            }
+
+            function scheduleNextFlip() {
+                if (
+                    holdTimeoutId ||
+                    swapTimeoutId ||
+                    finishTimeoutId ||
+                    document.hidden ||
+                    motionQuery.matches
+                ) return;
+                holdTimeoutId = window.setTimeout(startFlip, HOLD_MS);
+            }
+
+            function startFlip() {
+                holdTimeoutId = null;
+                const nextIndex = pickNextWordIndex();
+                rotatingWord.classList.add("is-flipping");
+                swapTimeoutId = window.setTimeout(() => {
+                    swapTimeoutId = null;
+                    rotatingWord.textContent = ROTATING_WORDS[nextIndex];
+                    currentIndex = nextIndex;
+                }, FLIP_MS / 2);
+                finishTimeoutId = window.setTimeout(() => {
+                    finishTimeoutId = null;
+                    rotatingWord.classList.remove("is-flipping");
+                    scheduleNextFlip();
+                }, FLIP_MS);
+            }
+
+            function stopCycling() {
+                window.clearTimeout(holdTimeoutId);
+                window.clearTimeout(swapTimeoutId);
+                window.clearTimeout(finishTimeoutId);
+                holdTimeoutId = swapTimeoutId = finishTimeoutId = null;
+                rotatingWord.classList.remove("is-flipping");
+            }
+
+            function syncCycling() {
+                stopCycling();
+                scheduleNextFlip();
+            }
+
+            if (typeof motionQuery.addEventListener === "function") {
+                motionQuery.addEventListener("change", syncCycling);
+            } else {
+                motionQuery.addListener(syncCycling);
+            }
+            document.addEventListener("visibilitychange", syncCycling);
+            window.addEventListener("pagehide", stopCycling);
+            window.addEventListener("pageshow", syncCycling);
+            syncCycling();
+        })();
+    </script>
 </body>
 </html>

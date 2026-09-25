@@ -38,9 +38,13 @@ async function expectEmbedFrameReady(page: Page, frameSelector: string) {
 
 for (const viewport of viewports) {
   test(`homepage ${viewport.name}`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await openPage(page, "/", viewport);
-    await expect(page.locator("h1")).toHaveText("Nice");
-    await screenshotWebsiteFullPage(page, `website/home-${viewport.name}.png`);
+    await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice button");
+    await expect(page.locator(".tagline")).toHaveText("Create your own feedback buttons");
+    await expectEmbedFrameReady(page, ".homepage-button iframe");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
+    await screenshotWebsiteFullPage(page, `website-home-${viewport.name}.png`);
   });
 
   test(`create empty ${viewport.name}`, async ({ page }) => {
@@ -129,6 +133,117 @@ for (const viewport of viewports) {
     await screenshotWebsiteFullPage(page, `website/stats-missing-${viewport.name}.png`);
   });
 }
+
+test("homepage cycles random words without repeats at mobile width", async ({ page }) => {
+  await installNiceApiMocks(page);
+  await page.addInitScript(() => {
+    const samples = [0, 0];
+    Math.random = () => samples.shift() ?? 0;
+  });
+  await page.clock.pauseAt(new Date("2026-01-01T00:00:00Z"));
+  await page.setViewportSize(viewports[1]);
+  await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
+
+  await page.clock.runFor(2500);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
+  await page.clock.runFor(150);
+  await expect(page.locator("#rotatingWord")).toHaveText("Awesome");
+  expect(await page.locator(".button-word").textContent()).toBe("button");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewports[1].width);
+  await page.clock.runFor(150);
+  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/);
+  await page.clock.runFor(2500 + 150);
+  await expect(page.locator("#rotatingWord")).toHaveText("Nice");
+});
+
+test("homepage stops and resumes for reduced motion", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await installNiceApiMocks(page);
+  await page.clock.pauseAt(new Date("2026-01-01T00:00:00Z"));
+  await page.setViewportSize(viewports[1]);
+  await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
+
+  await page.clock.runFor(6000);
+  expect(await page.locator("#rotatingWord").textContent()).toBe("Nice");
+  expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
+
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  // pauseAt blocks async MediaQueryList delivery; visibilitychange shares syncCycling.
+  await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+  await page.clock.runFor(2500);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+  expect(await page.locator("#rotatingWord").textContent()).toBe("Nice");
+  expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
+
+  await page.clock.runFor(6000);
+  expect(await page.locator("#rotatingWord").textContent()).toBe("Nice");
+  expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
+
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+  await page.clock.runFor(2500 + 150 + 150);
+  const word = await page.locator("#rotatingWord").textContent();
+  expect(word).not.toBe("Nice");
+  expect(["Awesome", "Cool", "Spicey", "Sucks"]).toContain(word);
+  expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
+});
+
+test("homepage keeps its message without JavaScript", async ({ browser }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false, viewport: viewports[0] });
+  try {
+    const page = await context.newPage();
+    await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice button");
+    await expect(page.locator(".tagline")).toHaveText("Create your own feedback buttons");
+  } finally {
+    await context.close();
+  }
+});
+
+test("homepage falls back when motion APIs are unavailable", async ({ page }) => {
+  const pageErrors: Error[] = [];
+  page.on("pageerror", error => pageErrors.push(error));
+  await page.addInitScript(() => {
+    window.matchMedia = undefined as unknown as typeof window.matchMedia;
+  });
+  await installNiceApiMocks(page);
+  await page.clock.pauseAt(new Date("2026-01-01T00:00:00Z"));
+  await page.setViewportSize(viewports[0]);
+  await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
+  await stabilizeWebsitePage(page);
+  await page.clock.runFor(6000);
+  await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice button");
+  expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
+  expect(pageErrors).toEqual([]);
+});
+
+test("homepage keeps its hero when the embed script fails", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.route("https://api.nice.sbs/embed.js", route => route.abort());
+  await page.setViewportSize(viewports[0]);
+  await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
+  await stabilizeWebsitePage(page);
+  await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice button");
+  await expect(page.locator(".tagline")).toHaveText("Create your own feedback buttons");
+  await expect(page.locator(".homepage-button iframe")).toHaveCount(0);
+  const box = await page.locator(".homepage-button").boundingBox();
+  expect(box?.width).toBeGreaterThanOrEqual(100);
+  expect(box?.height).toBeGreaterThanOrEqual(36);
+});
+
+test("homepage keeps its layout when the Bungee font fails", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.route("https://fonts.googleapis.com/**", route => route.abort());
+  await page.route("https://fonts.gstatic.com/**", route => route.abort());
+  await openPage(page, "/", viewports[1]);
+  await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice button");
+  await expect(page.locator(".tagline")).toHaveText("Create your own feedback buttons");
+  await expectEmbedFrameReady(page, ".homepage-button iframe");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewports[1].width);
+});
 
 test("script tag insertion host page", async ({ page }) => {
   await installNiceApiMocks(page);
