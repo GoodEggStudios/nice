@@ -131,10 +131,7 @@ export async function stabilizePage(page: Page): Promise<void> {
   });
 }
 
-export async function stabilizeWebsitePage(
-  page: Page,
-  options: { preserveHeroBrandFont?: boolean } = {},
-): Promise<void> {
+export async function stabilizeWebsitePage(page: Page): Promise<void> {
   await page.addStyleTag({
     content: `
       *, *::before, *::after {
@@ -151,21 +148,6 @@ export async function stabilizeWebsitePage(
       }
     `,
   });
-  if (options.preserveHeroBrandFont) {
-    await page.addStyleTag({
-      content: `
-        .hero-title,
-        .hero-title * {
-          font-family: 'Bungee', cursive !important;
-        }
-      `,
-    });
-    await page.evaluate(async () => {
-      await document.fonts.load("72px 'Bungee'");
-      await document.fonts.ready;
-    });
-    return;
-  }
   await page.evaluate(async () => {
     await document.fonts.ready;
   });

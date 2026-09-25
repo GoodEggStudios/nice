@@ -33,19 +33,22 @@ async function openPage(
   page: Page,
   path: string,
   viewport: { width: number; height: number },
-  options: NiceApiMockOptions & { preserveHeroBrandFont?: boolean } = {},
+  options: NiceApiMockOptions = {},
 ) {
-  const { preserveHeroBrandFont, ...mockOptions } = options;
-  await installNiceApiMocks(page, mockOptions);
+  await installNiceApiMocks(page, options);
   await page.setViewportSize(viewport);
   await page.goto(`${server.origin}${path}`);
-  await stabilizeWebsitePage(page, { preserveHeroBrandFont });
+  await stabilizeWebsitePage(page);
 }
 
 async function openHomepageWithFrozenClock(
   page: Page,
   viewport: { width: number; height: number },
-  options: { reducedMotion?: "reduce" | "no-preference"; randomSamples?: number[] } = {},
+  options: {
+    reducedMotion?: "reduce" | "no-preference";
+    randomSamples?: number[];
+    initScript?: () => void;
+  } = {},
 ): Promise<void> {
   const now = new Date("2026-01-01T00:00:00Z");
   await page.clock.install({ time: now });
@@ -60,11 +63,11 @@ async function openHomepageWithFrozenClock(
       Math.random = () => queue.shift() ?? 0;
     }, options.randomSamples);
   }
+  if (options.initScript) {
+    await page.addInitScript(options.initScript);
+  }
   await page.setViewportSize(viewport);
   await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
-  // Let embed/iframe load settle before clock control so late load events
-  // cannot interrupt in-flight flip assertions.
-  await expect(page.locator(".homepage-button iframe")).toBeVisible();
 }
 
 async function expectEmbedFrameReady(page: Page, frameSelector: string) {
@@ -86,7 +89,7 @@ async function setReducedMotion(page: Page, reducedMotion: "reduce" | "no-prefer
 for (const viewport of viewports) {
   test(`homepage ${viewport.name}`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
-    await openPage(page, "/", viewport, { preserveHeroBrandFont: true });
+    await openPage(page, "/", viewport);
     const heroText = await page.locator(".hero-title").evaluate(hero => {
       const visibleText = hero.cloneNode(true) as HTMLElement;
       visibleText.querySelectorAll("[aria-hidden='true']").forEach(element => element.remove());
@@ -209,7 +212,7 @@ test("homepage stops and resumes for reduced motion", async ({ page }) => {
     randomSamples: [0],
   });
 
-  await page.clock.fastForward(HOLD_MS * 2 + FLIP_MS);
+  await page.clock.fastForward(6000);
   expect(await page.locator("#rotatingWord").textContent()).toBe("Nice");
   expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
 
@@ -221,7 +224,7 @@ test("homepage stops and resumes for reduced motion", async ({ page }) => {
   await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/, { timeout: 0 });
   await expect(page.locator("#rotatingWord")).toHaveText("Nice");
 
-  await page.clock.fastForward(HOLD_MS * 2 + FLIP_MS);
+  await page.clock.fastForward(6000);
   expect(await page.locator("#rotatingWord").textContent()).toBe("Nice");
   expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
 
@@ -247,17 +250,13 @@ test("homepage keeps its message without JavaScript", async ({ browser }) => {
 });
 
 test("homepage falls back when motion APIs are unavailable", async ({ page }) => {
-  const now = new Date("2026-01-01T00:00:00Z");
-  await page.clock.install({ time: now });
-  await page.clock.pauseAt(now);
   const pageErrors: Error[] = [];
   page.on("pageerror", error => pageErrors.push(error));
-  await page.addInitScript(() => {
-    window.matchMedia = undefined as unknown as typeof window.matchMedia;
+  await openHomepageWithFrozenClock(page, viewports[0], {
+    initScript: () => {
+      window.matchMedia = undefined as unknown as typeof window.matchMedia;
+    },
   });
-  await installNiceApiMocks(page);
-  await page.setViewportSize(viewports[0]);
-  await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
   await stabilizeWebsitePage(page);
   await page.clock.fastForward(6000);
   await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice button");

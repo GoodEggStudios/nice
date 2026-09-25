@@ -263,6 +263,7 @@
         (() => {
             const ROTATING_WORDS = ["Nice", "Awesome", "Cool", "Spicey", "Sucks"];
             const HOLD_MS = 2500;
+            const FLIP_MS = 300;
             let currentIndex = 0;
             let holdTimeoutId = null;
             let swapTimeoutId = null;
@@ -270,8 +271,6 @@
 
             const rotatingWord = document.getElementById("rotatingWord");
             if (!rotatingWord || ROTATING_WORDS.length < 2 || typeof window.matchMedia !== "function") return;
-
-            const FLIP_MS = 300;
 
             const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
             if (
@@ -303,7 +302,7 @@
                     swapTimeoutId = null;
                     rotatingWord.textContent = ROTATING_WORDS[nextIndex];
                     currentIndex = nextIndex;
-                }, 150);
+                }, FLIP_MS / 2);
                 finishTimeoutId = window.setTimeout(() => {
                     finishTimeoutId = null;
                     rotatingWord.classList.remove("is-flipping");
