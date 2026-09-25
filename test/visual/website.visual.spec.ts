@@ -41,6 +41,22 @@ async function openPage(
   await stabilizeWebsitePage(page);
 }
 
+/** Keep brand Bungee visible in homepage snapshots despite Arial metric stabilization. */
+async function restoreHomepageBrandFont(page: Page): Promise<void> {
+  await page.addStyleTag({
+    content: `
+      .hero-title,
+      .hero-title * {
+        font-family: 'Bungee', cursive !important;
+      }
+    `,
+  });
+  await page.evaluate(async () => {
+    await document.fonts.load("72px 'Bungee'");
+    await document.fonts.ready;
+  });
+}
+
 async function openHomepageWithFrozenClock(
   page: Page,
   viewport: { width: number; height: number },
@@ -113,9 +129,40 @@ for (const viewport of viewports) {
     const buttonFont = await page.locator(".button-word").evaluate(el => getComputedStyle(el).fontFamily);
     const taglineFont = await page.locator(".tagline").evaluate(el => getComputedStyle(el).fontFamily);
     expect(buttonFont).toBe(taglineFont);
+    const heroTitleRuleFont = await page.evaluate(() => {
+      for (const sheet of Array.from(document.styleSheets)) {
+        let rules: CSSRuleList;
+        try {
+          rules = sheet.cssRules;
+        } catch {
+          continue;
+        }
+        for (const rule of Array.from(rules)) {
+          if (rule instanceof CSSStyleRule && rule.selectorText === ".hero-title") {
+            return rule.style.fontFamily;
+          }
+        }
+      }
+      return "";
+    });
+    expect(heroTitleRuleFont).toMatch(/Bungee/i);
+    const layout = await page.evaluate(() => {
+      const word = document.getElementById("rotatingWord")!;
+      const range = document.createRange();
+      range.selectNodeContents(word);
+      const text = range.getBoundingClientRect();
+      return {
+        textAlign: getComputedStyle(word).textAlign,
+        textCenter: text.left + text.width / 2,
+        viewportCenter: window.innerWidth / 2,
+      };
+    });
+    expect(layout.textAlign).toBe("center");
+    expect(Math.abs(layout.textCenter - layout.viewportCenter)).toBeLessThan(8);
     await expect(page.locator(".tagline")).toHaveText("Create your own feedback buttons");
     await expectEmbedFrameReady(page, ".homepage-button iframe");
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
+    await restoreHomepageBrandFont(page);
     await screenshotWebsiteFullPage(page, `website-home-${viewport.name}.png`);
   });
 
