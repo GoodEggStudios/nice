@@ -35,8 +35,8 @@ async function openPage(page: Page, path: string, viewport: { width: number; hei
 async function restoreHomepageBrandFont(page: Page): Promise<void> {
   await page.addStyleTag({
     content: `
-      .rotating-word-slot,
-      .rotating-word-slot * {
+      .hero-title,
+      .hero-title * {
         font-family: 'Bungee', cursive !important;
       }
     `,
@@ -45,6 +45,31 @@ async function restoreHomepageBrandFont(page: Page): Promise<void> {
     await document.fonts.load("72px 'Bungee'");
     await document.fonts.ready;
   });
+}
+
+async function openHomepageWithFrozenClock(
+  page: Page,
+  viewport: { width: number; height: number },
+  options: { reducedMotion?: "reduce" | "no-preference"; randomSamples?: number[] } = {},
+): Promise<void> {
+  const now = new Date("2026-01-01T00:00:00Z");
+  await page.clock.install({ time: now });
+  await page.clock.pauseAt(now);
+  if (options.reducedMotion) {
+    await page.emulateMedia({ reducedMotion: options.reducedMotion });
+  }
+  await installNiceApiMocks(page);
+  if (options.randomSamples) {
+    await page.addInitScript((samples: number[]) => {
+      const queue = samples.slice();
+      Math.random = () => queue.shift() ?? 0;
+    }, options.randomSamples);
+  }
+  await page.setViewportSize(viewport);
+  await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
+  // Let embed/iframe load settle before clock control so late load events
+  // cannot interrupt in-flight flip assertions.
+  await expect(page.locator(".homepage-button iframe")).toBeVisible();
 }
 
 async function expectEmbedFrameReady(page: Page, frameSelector: string) {
@@ -167,7 +192,7 @@ for (const viewport of viewports) {
   });
 }
 
-test("homepage keeps Nice in Bungee with subtitle-style button to its right", async ({ page }) => {
+test("homepage keeps shared Bungee heading style on word and button suffix", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await installNiceApiMocks(page);
   await page.setViewportSize(viewports[0]);
@@ -178,50 +203,60 @@ test("homepage keeps Nice in Bungee with subtitle-style button to its right", as
   });
 
   const styles = await page.evaluate(() => {
+    const hero = getComputedStyle(document.querySelector(".hero-title")!);
     const word = getComputedStyle(document.getElementById("rotatingWord")!);
     const button = getComputedStyle(document.querySelector(".button-word")!);
     return {
+      heroDisplay: hero.display,
+      heroGap: hero.gap,
+      heroFont: hero.fontFamily,
+      heroSize: hero.fontSize,
+      heroColor: hero.color,
+      heroTransform: hero.textTransform,
+      wordAlign: word.textAlign,
       wordFont: word.fontFamily,
+      wordSize: word.fontSize,
+      wordColor: word.color,
       wordTransform: word.textTransform,
+      buttonFont: button.fontFamily,
       buttonSize: button.fontSize,
-      buttonTransform: button.textTransform,
       buttonColor: button.color,
+      buttonTransform: button.textTransform,
     };
   });
+  expect(styles.heroDisplay).toBe("flex");
+  expect(parseFloat(styles.heroGap)).toBeCloseTo(parseFloat(styles.heroSize) * 0.25, 0);
+  expect(styles.heroFont).toMatch(/Bungee/i);
+  expect(styles.heroSize).toMatch(/px/);
+  expect(styles.heroColor).toBe("rgb(251, 191, 36)");
+  expect(styles.heroTransform).toBe("uppercase");
+  expect(styles.wordAlign).toBe("right");
   expect(styles.wordFont).toMatch(/Bungee/i);
+  expect(styles.wordSize).toBe(styles.heroSize);
+  expect(styles.wordColor).toBe(styles.heroColor);
   expect(styles.wordTransform).toBe("uppercase");
-  expect(styles.buttonSize).toBe("14px");
-  expect(styles.buttonTransform).toBe("none");
-  expect(styles.buttonColor).toBe("rgb(102, 102, 102)");
+  expect(styles.buttonFont).toMatch(/Bungee/i);
+  expect(styles.buttonSize).toBe(styles.heroSize);
+  expect(styles.buttonColor).toBe(styles.heroColor);
+  expect(styles.buttonTransform).toBe("uppercase");
 
   const layout = await page.evaluate(() => {
+    const title = document.querySelector(".hero-title")!.getBoundingClientRect();
     const word = document.getElementById("rotatingWord")!.getBoundingClientRect();
     const button = document.querySelector(".button-word")!.getBoundingClientRect();
     return {
-      wordCenter: word.left + word.width / 2,
+      titleCenter: title.left + title.width / 2,
       viewportCenter: window.innerWidth / 2,
       buttonLeft: button.left,
       wordRight: word.right,
     };
   });
   expect(layout.buttonLeft).toBeGreaterThanOrEqual(layout.wordRight - 1);
-  expect(Math.abs(layout.wordCenter - layout.viewportCenter)).toBeLessThan(24);
+  expect(Math.abs(layout.titleCenter - layout.viewportCenter)).toBeLessThan(24);
 });
 
 test("homepage cycles random words without repeats at mobile width", async ({ page }) => {
-  const now = new Date("2026-01-01T00:00:00Z");
-  await page.clock.install({ time: now });
-  await page.clock.pauseAt(now);
-  await installNiceApiMocks(page);
-  await page.addInitScript(() => {
-    const samples = [0, 0];
-    Math.random = () => samples.shift() ?? 0;
-  });
-  await page.setViewportSize(viewports[1]);
-  await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
-  // Let embed/iframe load settle before clock control so late load events
-  // cannot interrupt the in-flight flip assertion.
-  await expect(page.locator(".homepage-button iframe")).toBeVisible();
+  await openHomepageWithFrozenClock(page, viewports[1], { randomSamples: [0, 0] });
 
   await page.clock.fastForward(2500);
   await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 0 });
@@ -238,13 +273,7 @@ test("homepage cycles random words without repeats at mobile width", async ({ pa
 });
 
 test("homepage restarts its hold after a page lifecycle event", async ({ page }) => {
-  const now = new Date("2026-01-01T00:00:00Z");
-  await page.clock.install({ time: now });
-  await page.clock.pauseAt(now);
-  await installNiceApiMocks(page);
-  await page.setViewportSize(viewports[0]);
-  await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
-  await expect(page.locator(".homepage-button iframe")).toBeVisible();
+  await openHomepageWithFrozenClock(page, viewports[0]);
 
   await page.clock.fastForward(2000);
   await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent("pageshow")));
@@ -255,17 +284,10 @@ test("homepage restarts its hold after a page lifecycle event", async ({ page })
 });
 
 test("homepage stops and resumes for reduced motion", async ({ page }) => {
-  const now = new Date("2026-01-01T00:00:00Z");
-  await page.clock.install({ time: now });
-  await page.clock.pauseAt(now);
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await installNiceApiMocks(page);
-  await page.addInitScript(() => {
-    Math.random = () => 0;
+  await openHomepageWithFrozenClock(page, viewports[1], {
+    reducedMotion: "reduce",
+    randomSamples: [0],
   });
-  await page.setViewportSize(viewports[1]);
-  await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
-  await expect(page.locator(".homepage-button iframe")).toBeVisible();
 
   await page.clock.fastForward(6000);
   expect(await page.locator("#rotatingWord").textContent()).toBe("Nice");

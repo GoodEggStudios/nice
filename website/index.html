@@ -114,24 +114,23 @@
         }
 
         .hero-title {
-            margin-bottom: 24px;
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            align-items: baseline;
-            column-gap: 8px;
-            white-space: nowrap;
-            perspective: 600px;
-            max-width: 100%;
-            width: 100%;
-        }
-
-        .rotating-word-slot {
-            grid-column: 2;
-            display: grid;
+            --flip-ms: 300;
             font-family: 'Bungee', cursive;
             font-size: clamp(24px, 7vw, 72px);
             color: #fbbf24;
+            margin-bottom: 24px;
             text-transform: uppercase;
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            white-space: nowrap;
+            gap: .25em;
+            perspective: 600px;
+            max-width: 100%;
+        }
+
+        .rotating-word-slot {
+            display: grid;
         }
 
         .rotating-word-slot > span {
@@ -143,16 +142,11 @@
         }
 
         .rotating-word {
-            text-align: center;
+            text-align: right;
         }
 
         .button-word {
-            grid-column: 3;
-            justify-self: start;
             display: inline-block;
-            font-size: 14px;
-            color: #666;
-            text-transform: none;
         }
 
         .tagline {
@@ -191,7 +185,7 @@
         }
 
         .rotating-word.is-flipping {
-            animation: flip-word 300ms ease-in-out;
+            animation: flip-word calc(var(--flip-ms) * 1ms) ease-in-out;
             transform-origin: center;
         }
 
@@ -218,9 +212,6 @@
             .github-link svg {
                 width: 22px;
                 height: 22px;
-            }
-            .button-word {
-                font-size: 12px;
             }
         }
 
@@ -273,14 +264,17 @@
         (() => {
             const ROTATING_WORDS = ["Nice", "Awesome", "Cool", "Spicey", "Sucks"];
             const HOLD_MS = 2500;
-            const FLIP_MS = 300;
             let currentIndex = 0;
             let holdTimeoutId = null;
             let swapTimeoutId = null;
             let finishTimeoutId = null;
 
             const rotatingWord = document.getElementById("rotatingWord");
-            if (!rotatingWord || ROTATING_WORDS.length < 2 || typeof window.matchMedia !== "function") return;
+            const heroTitle = document.querySelector(".hero-title");
+            if (!rotatingWord || !heroTitle || ROTATING_WORDS.length < 2 || typeof window.matchMedia !== "function") return;
+
+            // Keep in sync with --flip-ms on .hero-title (single CSS source of truth).
+            const FLIP_MS = Number.parseFloat(getComputedStyle(heroTitle).getPropertyValue("--flip-ms")) || 300;
 
             const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
             if (
