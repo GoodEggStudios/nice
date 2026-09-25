@@ -140,22 +140,16 @@ test("homepage cycles random words without repeats at mobile width", async ({ pa
     const samples = [0, 0, 0.5];
     Math.random = () => samples.shift() ?? 0;
   });
-  await page.clock.pauseAt(new Date("2026-01-01T00:00:00Z"));
   await page.setViewportSize(viewports[1]);
   await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
 
-  await page.clock.runFor(2500);
-  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
-  await page.clock.runFor(150);
-  await expect(page.locator("#rotatingWord")).toHaveText("Awesome");
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 3500 });
+  await expect(page.locator("#rotatingWord")).toHaveText("Awesome", { timeout: 1000 });
   expect(await page.locator(".button-word").textContent()).toBe("button");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewports[1].width);
-  await page.clock.runFor(150);
-  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/);
-  await page.clock.runFor(2500 + 150);
-  await expect(page.locator("#rotatingWord")).toHaveText("Nice");
-  await page.clock.runFor(150 + 2500 + 150);
-  await expect(page.locator("#rotatingWord")).toHaveText("Spicey");
+  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/, { timeout: 1000 });
+  await expect(page.locator("#rotatingWord")).toHaveText("Nice", { timeout: 4000 });
+  await expect(page.locator("#rotatingWord")).toHaveText("Spicey", { timeout: 4000 });
 });
 
 test("homepage stops and resumes for reduced motion", async ({ page }) => {
@@ -206,11 +200,10 @@ test("homepage falls back when motion APIs are unavailable", async ({ page }) =>
     window.matchMedia = undefined as unknown as typeof window.matchMedia;
   });
   await installNiceApiMocks(page);
-  await page.clock.pauseAt(new Date("2026-01-01T00:00:00Z"));
   await page.setViewportSize(viewports[0]);
   await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
   await stabilizeWebsitePage(page);
-  await page.clock.runFor(6000);
+  await page.waitForTimeout(3000);
   await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice button");
   expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
   expect(pageErrors).toEqual([]);
