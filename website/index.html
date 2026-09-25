@@ -117,13 +117,12 @@
             font-family: 'Bungee', cursive;
             font-size: clamp(24px, 7vw, 72px);
             color: #fbbf24;
-            margin-bottom: 24px;
+            margin-bottom: 8px;
             text-transform: uppercase;
             display: flex;
             align-items: baseline;
             justify-content: center;
             white-space: nowrap;
-            gap: .25em;
             perspective: 600px;
             max-width: 100%;
         }
@@ -145,7 +144,10 @@
         }
 
         .button-word {
-            display: inline-block;
+            font-size: 18px;
+            color: #9ca3af;
+            line-height: 1.6;
+            margin-bottom: 8px;
         }
 
         .tagline {
@@ -247,8 +249,8 @@
                 <span class="rotating-word-sizer" aria-hidden="true">Awesome</span>
                 <span id="rotatingWord" class="rotating-word">Nice</span>
             </span>
-            <span class="button-word">button</span>
         </h1>
+        <p class="button-word">button</p>
         <p class="tagline">Create your own feedback buttons</p>
         <div class="homepage-button">
             <script src="https://api.nice.sbs/embed.js" data-button="n_iSoPXADYGp0Q" data-theme="dark" data-size="md" data-confetti async></script>

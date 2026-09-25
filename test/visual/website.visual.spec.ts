@@ -95,7 +95,24 @@ for (const viewport of viewports) {
       visibleText.querySelectorAll("[aria-hidden='true']").forEach(element => element.remove());
       return visibleText.textContent?.replace(/\s+/g, " ").trim();
     });
-    expect(heroText).toBe("Nice button");
+    expect(heroText).toBe("Nice");
+    await expect(page.locator(".button-word")).toHaveText("button");
+    const stackOrder = await page.evaluate(() => {
+      const title = document.querySelector(".hero-title")!.getBoundingClientRect();
+      const button = document.querySelector(".button-word")!.getBoundingClientRect();
+      const tagline = document.querySelector(".tagline")!.getBoundingClientRect();
+      return {
+        titleBottom: title.bottom,
+        buttonTop: button.top,
+        buttonBottom: button.bottom,
+        taglineTop: tagline.top,
+      };
+    });
+    expect(stackOrder.buttonTop).toBeGreaterThanOrEqual(stackOrder.titleBottom);
+    expect(stackOrder.taglineTop).toBeGreaterThanOrEqual(stackOrder.buttonBottom);
+    const buttonFont = await page.locator(".button-word").evaluate(el => getComputedStyle(el).fontFamily);
+    const taglineFont = await page.locator(".tagline").evaluate(el => getComputedStyle(el).fontFamily);
+    expect(buttonFont).toBe(taglineFont);
     await expect(page.locator(".tagline")).toHaveText("Create your own feedback buttons");
     await expectEmbedFrameReady(page, ".homepage-button iframe");
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
@@ -242,7 +259,8 @@ test("homepage keeps its message without JavaScript", async ({ browser }) => {
   try {
     const page = await context.newPage();
     await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
-    await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice button");
+    await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice");
+    await expect(page.locator(".button-word")).toHaveText("button");
     await expect(page.locator(".tagline")).toHaveText("Create your own feedback buttons");
   } finally {
     await context.close();
@@ -259,7 +277,8 @@ test("homepage falls back when motion APIs are unavailable", async ({ page }) =>
   });
   await stabilizeWebsitePage(page);
   await page.clock.fastForward(6000);
-  await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice button");
+  await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice");
+  await expect(page.locator(".button-word")).toHaveText("button");
   expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
   expect(pageErrors).toEqual([]);
 });
@@ -270,7 +289,8 @@ test("homepage keeps its hero when the embed script fails", async ({ page }) => 
   await page.setViewportSize(viewports[0]);
   await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
   await stabilizeWebsitePage(page);
-  await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice button");
+  await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice");
+  await expect(page.locator(".button-word")).toHaveText("button");
   await expect(page.locator(".tagline")).toHaveText("Create your own feedback buttons");
   await expect(page.locator(".homepage-button iframe")).toHaveCount(0);
   const box = await page.locator(".homepage-button").boundingBox();
@@ -283,7 +303,8 @@ test("homepage keeps its layout when the Bungee font fails", async ({ page }) =>
   await page.route("https://fonts.googleapis.com/**", route => route.abort());
   await page.route("https://fonts.gstatic.com/**", route => route.abort());
   await openPage(page, "/", viewports[1]);
-  await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice button");
+  await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice");
+  await expect(page.locator(".button-word")).toHaveText("button");
   await expect(page.locator(".tagline")).toHaveText("Create your own feedback buttons");
   await expectEmbedFrameReady(page, ".homepage-button iframe");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewports[1].width);
