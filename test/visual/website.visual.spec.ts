@@ -161,17 +161,20 @@ test("homepage cycles random words without repeats at mobile width", async ({ pa
   });
   await page.setViewportSize(viewports[1]);
   await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
+  // Let embed/iframe load settle before clock control so late load events
+  // cannot interrupt the in-flight flip assertion.
+  await expect(page.locator(".homepage-button iframe")).toBeVisible();
 
   await page.clock.fastForward(2500);
-  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 0 });
   await page.clock.fastForward(150);
   await expect(page.locator("#rotatingWord")).toHaveText("Awesome");
   expect(await page.locator(".button-word").textContent()).toBe("button");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewports[1].width);
   await page.clock.fastForward(150);
-  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/);
+  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/, { timeout: 0 });
   await page.clock.fastForward(2500);
-  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 0 });
   await page.clock.fastForward(150);
   await expect(page.locator("#rotatingWord")).toHaveText("Nice");
 });
@@ -187,6 +190,7 @@ test("homepage stops and resumes for reduced motion", async ({ page }) => {
   });
   await page.setViewportSize(viewports[1]);
   await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator(".homepage-button iframe")).toBeVisible();
 
   await page.clock.fastForward(6000);
   expect(await page.locator("#rotatingWord").textContent()).toBe("Nice");
@@ -194,10 +198,10 @@ test("homepage stops and resumes for reduced motion", async ({ page }) => {
 
   await setReducedMotion(page, "no-preference");
   await page.clock.fastForward(2500);
-  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 0 });
 
   await setReducedMotion(page, "reduce");
-  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/);
+  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/, { timeout: 0 });
   await expect(page.locator("#rotatingWord")).toHaveText("Nice");
 
   await page.clock.fastForward(6000);
@@ -206,11 +210,11 @@ test("homepage stops and resumes for reduced motion", async ({ page }) => {
 
   await setReducedMotion(page, "no-preference");
   await page.clock.fastForward(2500);
-  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 0 });
   await page.clock.fastForward(150);
   await expect(page.locator("#rotatingWord")).toHaveText("Awesome");
   await page.clock.fastForward(150);
-  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/);
+  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/, { timeout: 0 });
 });
 
 test("homepage keeps its message without JavaScript", async ({ browser }) => {
