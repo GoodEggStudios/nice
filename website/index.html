@@ -114,22 +114,24 @@
         }
 
         .hero-title {
-            font-family: 'Bungee', cursive;
-            font-size: clamp(24px, 7vw, 72px);
-            color: #fbbf24;
             margin-bottom: 24px;
-            text-transform: uppercase;
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
             align-items: baseline;
-            justify-content: center;
+            column-gap: 8px;
             white-space: nowrap;
-            gap: .25em;
             perspective: 600px;
             max-width: 100%;
+            width: 100%;
         }
 
         .rotating-word-slot {
+            grid-column: 2;
             display: grid;
+            font-family: 'Bungee', cursive;
+            font-size: clamp(24px, 7vw, 72px);
+            color: #fbbf24;
+            text-transform: uppercase;
         }
 
         .rotating-word-slot > span {
@@ -141,11 +143,16 @@
         }
 
         .rotating-word {
-            text-align: right;
+            text-align: center;
         }
 
         .button-word {
+            grid-column: 3;
+            justify-self: start;
             display: inline-block;
+            font-size: 14px;
+            color: #666;
+            text-transform: none;
         }
 
         .tagline {
@@ -211,6 +218,9 @@
             .github-link svg {
                 width: 22px;
                 height: 22px;
+            }
+            .button-word {
+                font-size: 12px;
             }
         }
 

@@ -31,6 +31,22 @@ async function openPage(page: Page, path: string, viewport: { width: number; hei
   await stabilizeWebsitePage(page);
 }
 
+/** Keep brand Bungee visible in homepage snapshots despite Arial metric stabilization. */
+async function restoreHomepageBrandFont(page: Page): Promise<void> {
+  await page.addStyleTag({
+    content: `
+      .rotating-word-slot,
+      .rotating-word-slot * {
+        font-family: 'Bungee', cursive !important;
+      }
+    `,
+  });
+  await page.evaluate(async () => {
+    await document.fonts.load("72px 'Bungee'");
+    await document.fonts.ready;
+  });
+}
+
 async function expectEmbedFrameReady(page: Page, frameSelector: string) {
   await expect(page.locator(frameSelector)).toBeVisible();
   await expect(page.frameLocator(frameSelector).locator("#niceBtn")).toBeVisible();
@@ -60,6 +76,7 @@ for (const viewport of viewports) {
     await expect(page.locator(".tagline")).toHaveText("Create your own feedback buttons");
     await expectEmbedFrameReady(page, ".homepage-button iframe");
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
+    await restoreHomepageBrandFont(page);
     await screenshotWebsiteFullPage(page, `website-home-${viewport.name}.png`);
   });
 
@@ -149,6 +166,47 @@ for (const viewport of viewports) {
     await screenshotWebsiteFullPage(page, `website/stats-missing-${viewport.name}.png`);
   });
 }
+
+test("homepage keeps Nice in Bungee with subtitle-style button to its right", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await installNiceApiMocks(page);
+  await page.setViewportSize(viewports[0]);
+  await page.goto(`${server.origin}/`);
+  await page.evaluate(async () => {
+    await document.fonts.load("72px 'Bungee'");
+    await document.fonts.ready;
+  });
+
+  const styles = await page.evaluate(() => {
+    const word = getComputedStyle(document.getElementById("rotatingWord")!);
+    const button = getComputedStyle(document.querySelector(".button-word")!);
+    return {
+      wordFont: word.fontFamily,
+      wordTransform: word.textTransform,
+      buttonSize: button.fontSize,
+      buttonTransform: button.textTransform,
+      buttonColor: button.color,
+    };
+  });
+  expect(styles.wordFont).toMatch(/Bungee/i);
+  expect(styles.wordTransform).toBe("uppercase");
+  expect(styles.buttonSize).toBe("14px");
+  expect(styles.buttonTransform).toBe("none");
+  expect(styles.buttonColor).toBe("rgb(102, 102, 102)");
+
+  const layout = await page.evaluate(() => {
+    const word = document.getElementById("rotatingWord")!.getBoundingClientRect();
+    const button = document.querySelector(".button-word")!.getBoundingClientRect();
+    return {
+      wordCenter: word.left + word.width / 2,
+      viewportCenter: window.innerWidth / 2,
+      buttonLeft: button.left,
+      wordRight: word.right,
+    };
+  });
+  expect(layout.buttonLeft).toBeGreaterThanOrEqual(layout.wordRight - 1);
+  expect(Math.abs(layout.wordCenter - layout.viewportCenter)).toBeLessThan(24);
+});
 
 test("homepage cycles random words without repeats at mobile width", async ({ page }) => {
   const now = new Date("2026-01-01T00:00:00Z");
