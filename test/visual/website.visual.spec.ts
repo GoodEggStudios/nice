@@ -179,6 +179,23 @@ test("homepage cycles random words without repeats at mobile width", async ({ pa
   await expect(page.locator("#rotatingWord")).toHaveText("Nice");
 });
 
+test("homepage restarts its hold after a page lifecycle event", async ({ page }) => {
+  const now = new Date("2026-01-01T00:00:00Z");
+  await page.clock.install({ time: now });
+  await page.clock.pauseAt(now);
+  await installNiceApiMocks(page);
+  await page.setViewportSize(viewports[0]);
+  await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator(".homepage-button iframe")).toBeVisible();
+
+  await page.clock.fastForward(2000);
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent("pageshow")));
+  await page.clock.fastForward(500);
+  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/, { timeout: 0 });
+  await page.clock.fastForward(2000);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 0 });
+});
+
 test("homepage stops and resumes for reduced motion", async ({ page }) => {
   const now = new Date("2026-01-01T00:00:00Z");
   await page.clock.install({ time: now });

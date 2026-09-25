@@ -319,11 +319,7 @@
             }
 
             function syncCycling() {
-                if (document.hidden || motionQuery.matches) {
-                    stopCycling();
-                    return;
-                }
-                if (holdTimeoutId || swapTimeoutId || finishTimeoutId) return;
+                stopCycling();
                 scheduleNextFlip();
             }
 
