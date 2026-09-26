@@ -16,6 +16,11 @@ const viewports = [
   { name: "mobile", width: 390, height: 844 },
 ];
 
+/** Match production HOLD_MS / FLIP_MS in website/index.html. */
+const HOLD_MS = 2500;
+const FLIP_MS = 300;
+const SWAP_MS = FLIP_MS / 2;
+
 test.beforeAll(async () => {
   server = await startVisualServer();
 });
@@ -24,11 +29,61 @@ test.afterAll(async () => {
   await server.close();
 });
 
-async function openPage(page: Page, path: string, viewport: { width: number; height: number }, options: NiceApiMockOptions = {}) {
+async function openPage(
+  page: Page,
+  path: string,
+  viewport: { width: number; height: number },
+  options: NiceApiMockOptions = {},
+) {
   await installNiceApiMocks(page, options);
   await page.setViewportSize(viewport);
   await page.goto(`${server.origin}${path}`);
   await stabilizeWebsitePage(page);
+}
+
+/** Keep brand Bungee visible in homepage snapshots despite Arial metric stabilization. */
+async function restoreHomepageBrandFont(page: Page): Promise<void> {
+  await page.addStyleTag({
+    content: `
+      .hero-title,
+      .hero-title * {
+        font-family: 'Bungee', cursive !important;
+      }
+    `,
+  });
+  await page.evaluate(async () => {
+    await document.fonts.load("72px 'Bungee'");
+    await document.fonts.ready;
+  });
+}
+
+async function openHomepageWithFrozenClock(
+  page: Page,
+  viewport: { width: number; height: number },
+  options: {
+    reducedMotion?: "reduce" | "no-preference";
+    randomSamples?: number[];
+    initScript?: () => void;
+  } = {},
+): Promise<void> {
+  const now = new Date("2026-01-01T00:00:00Z");
+  await page.clock.install({ time: now });
+  await page.clock.pauseAt(now);
+  if (options.reducedMotion) {
+    await page.emulateMedia({ reducedMotion: options.reducedMotion });
+  }
+  await installNiceApiMocks(page);
+  if (options.randomSamples) {
+    await page.addInitScript((samples: number[]) => {
+      const queue = samples.slice();
+      Math.random = () => queue.shift() ?? 0;
+    }, options.randomSamples);
+  }
+  if (options.initScript) {
+    await page.addInitScript(options.initScript);
+  }
+  await page.setViewportSize(viewport);
+  await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
 }
 
 async function expectEmbedFrameReady(page: Page, frameSelector: string) {
@@ -36,11 +91,79 @@ async function expectEmbedFrameReady(page: Page, frameSelector: string) {
   await expect(page.frameLocator(frameSelector).locator("#niceBtn")).toBeVisible();
 }
 
+async function setReducedMotion(page: Page, reducedMotion: "reduce" | "no-preference") {
+  await page.evaluate(() => {
+    document.documentElement.dataset.motionChangeObserved = "false";
+    window.matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", () => {
+      document.documentElement.dataset.motionChangeObserved = "true";
+    }, { once: true });
+  });
+  await page.emulateMedia({ reducedMotion });
+  await expect.poll(() => page.locator("html").getAttribute("data-motion-change-observed")).toBe("true");
+}
+
 for (const viewport of viewports) {
   test(`homepage ${viewport.name}`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await openPage(page, "/", viewport);
-    await expect(page.locator("h1")).toHaveText("Nice");
-    await screenshotWebsiteFullPage(page, `website/home-${viewport.name}.png`);
+    const heroText = await page.locator(".hero-title").evaluate(hero => {
+      const visibleText = hero.cloneNode(true) as HTMLElement;
+      visibleText.querySelectorAll("[aria-hidden='true']").forEach(element => element.remove());
+      return visibleText.textContent?.replace(/\s+/g, " ").trim();
+    });
+    expect(heroText).toBe("Nice");
+    await expect(page.locator(".button-word")).toHaveText("button");
+    const stackOrder = await page.evaluate(() => {
+      const title = document.querySelector(".hero-title")!.getBoundingClientRect();
+      const button = document.querySelector(".button-word")!.getBoundingClientRect();
+      const tagline = document.querySelector(".tagline")!.getBoundingClientRect();
+      return {
+        titleBottom: title.bottom,
+        buttonTop: button.top,
+        buttonBottom: button.bottom,
+        taglineTop: tagline.top,
+      };
+    });
+    expect(stackOrder.buttonTop).toBeGreaterThanOrEqual(stackOrder.titleBottom);
+    expect(stackOrder.taglineTop).toBeGreaterThanOrEqual(stackOrder.buttonBottom);
+    const buttonFont = await page.locator(".button-word").evaluate(el => getComputedStyle(el).fontFamily);
+    const taglineFont = await page.locator(".tagline").evaluate(el => getComputedStyle(el).fontFamily);
+    expect(buttonFont).toBe(taglineFont);
+    const heroTitleRuleFont = await page.evaluate(() => {
+      for (const sheet of Array.from(document.styleSheets)) {
+        let rules: CSSRuleList;
+        try {
+          rules = sheet.cssRules;
+        } catch {
+          continue;
+        }
+        for (const rule of Array.from(rules)) {
+          if (rule instanceof CSSStyleRule && rule.selectorText === ".hero-title") {
+            return rule.style.fontFamily;
+          }
+        }
+      }
+      return "";
+    });
+    expect(heroTitleRuleFont).toMatch(/Bungee/i);
+    const layout = await page.evaluate(() => {
+      const word = document.getElementById("rotatingWord")!;
+      const range = document.createRange();
+      range.selectNodeContents(word);
+      const text = range.getBoundingClientRect();
+      return {
+        textAlign: getComputedStyle(word).textAlign,
+        textCenter: text.left + text.width / 2,
+        viewportCenter: window.innerWidth / 2,
+      };
+    });
+    expect(layout.textAlign).toBe("center");
+    expect(Math.abs(layout.textCenter - layout.viewportCenter)).toBeLessThan(8);
+    await expect(page.locator(".tagline")).toHaveText("Create your own feedback buttons");
+    await expectEmbedFrameReady(page, ".homepage-button iframe");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
+    await restoreHomepageBrandFont(page);
+    await screenshotWebsiteFullPage(page, `website-home-${viewport.name}.png`);
   });
 
   test(`create empty ${viewport.name}`, async ({ page }) => {
@@ -129,6 +252,110 @@ for (const viewport of viewports) {
     await screenshotWebsiteFullPage(page, `website/stats-missing-${viewport.name}.png`);
   });
 }
+
+test("homepage cycles random words without repeats at mobile width", async ({ page }) => {
+  await openHomepageWithFrozenClock(page, viewports[1], { randomSamples: [0, 0] });
+
+  await page.clock.fastForward(HOLD_MS);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 0 });
+  await page.clock.fastForward(SWAP_MS);
+  await expect(page.locator("#rotatingWord")).toHaveText("Awesome");
+  expect(await page.locator(".button-word").textContent()).toBe("button");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewports[1].width);
+  await page.clock.fastForward(SWAP_MS);
+  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/, { timeout: 0 });
+  await page.clock.fastForward(HOLD_MS);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 0 });
+  await page.clock.fastForward(SWAP_MS);
+  await expect(page.locator("#rotatingWord")).toHaveText("Nice");
+});
+
+test("homepage stops and resumes for reduced motion", async ({ page }) => {
+  await openHomepageWithFrozenClock(page, viewports[1], {
+    reducedMotion: "reduce",
+    randomSamples: [0],
+  });
+
+  await page.clock.fastForward(6000);
+  expect(await page.locator("#rotatingWord").textContent()).toBe("Nice");
+  expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
+
+  await setReducedMotion(page, "no-preference");
+  await page.clock.fastForward(HOLD_MS);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 0 });
+
+  await setReducedMotion(page, "reduce");
+  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/, { timeout: 0 });
+  await expect(page.locator("#rotatingWord")).toHaveText("Nice");
+
+  await page.clock.fastForward(6000);
+  expect(await page.locator("#rotatingWord").textContent()).toBe("Nice");
+  expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
+
+  await setReducedMotion(page, "no-preference");
+  await page.clock.fastForward(HOLD_MS);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 0 });
+  await page.clock.fastForward(SWAP_MS);
+  await expect(page.locator("#rotatingWord")).toHaveText("Awesome");
+  await page.clock.fastForward(SWAP_MS);
+  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/, { timeout: 0 });
+});
+
+test("homepage keeps its message without JavaScript", async ({ browser }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false, viewport: viewports[0] });
+  try {
+    const page = await context.newPage();
+    await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice");
+    await expect(page.locator(".button-word")).toHaveText("button");
+    await expect(page.locator(".tagline")).toHaveText("Create your own feedback buttons");
+  } finally {
+    await context.close();
+  }
+});
+
+test("homepage falls back when motion APIs are unavailable", async ({ page }) => {
+  const pageErrors: Error[] = [];
+  page.on("pageerror", error => pageErrors.push(error));
+  await openHomepageWithFrozenClock(page, viewports[0], {
+    initScript: () => {
+      window.matchMedia = undefined as unknown as typeof window.matchMedia;
+    },
+  });
+  await stabilizeWebsitePage(page);
+  await page.clock.fastForward(6000);
+  await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice");
+  await expect(page.locator(".button-word")).toHaveText("button");
+  expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
+  expect(pageErrors).toEqual([]);
+});
+
+test("homepage keeps its hero when the embed script fails", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.route("https://api.nice.sbs/embed.js", route => route.abort());
+  await page.setViewportSize(viewports[0]);
+  await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
+  await stabilizeWebsitePage(page);
+  await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice");
+  await expect(page.locator(".button-word")).toHaveText("button");
+  await expect(page.locator(".tagline")).toHaveText("Create your own feedback buttons");
+  await expect(page.locator(".homepage-button iframe")).toHaveCount(0);
+  const box = await page.locator(".homepage-button").boundingBox();
+  expect(box?.width).toBeGreaterThanOrEqual(100);
+  expect(box?.height).toBeGreaterThanOrEqual(36);
+});
+
+test("homepage keeps its layout when the Bungee font fails", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.route("https://fonts.googleapis.com/**", route => route.abort());
+  await page.route("https://fonts.gstatic.com/**", route => route.abort());
+  await openPage(page, "/", viewports[1]);
+  await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice");
+  await expect(page.locator(".button-word")).toHaveText("button");
+  await expect(page.locator(".tagline")).toHaveText("Create your own feedback buttons");
+  await expectEmbedFrameReady(page, ".homepage-button iframe");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewports[1].width);
+});
 
 test("script tag insertion host page", async ({ page }) => {
   await installNiceApiMocks(page);
