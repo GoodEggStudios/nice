@@ -16,7 +16,22 @@ body:json {
     "theme": "light",
     "size": "md",
     "restriction": "url",
-    "multi_nice": false
+    "multi_nice": false,
+    "label": "Nice",
+    "pressed_label": "Nice'd",
+    "colors": {
+      "background": "#112233",
+      "foreground": "#AABBCC",
+      "border": "#334455",
+      "pressed_background": "#445566",
+      "pressed_foreground": "#DDEEFF",
+      "pressed_border": "#556677"
+    },
+    "shape": "pill",
+    "count_visibility": "always",
+    "count_position": "beside",
+    "count_format": "full",
+    "animation": "sparkle"
   }
 }
 
@@ -41,10 +56,46 @@ docs {
   | size | string | No | xs, sm, md, lg, xl |
   | restriction | string | No | url (default), domain, global |
   | multi_nice | boolean | No | Enable clap-style multi-nice (default: false) |
+  | label | string | No | Visible idle label; defaults to Nice; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters and angle brackets are rejected |
+  | pressed_label | string | No | Visible pressed label; defaults to Nice'd; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters and angle brackets are rejected |
+  | colors | object or null | No | Complete six-key `#RRGGBB` palette, or `null` for theme colours |
+  | shape | string | No | rounded (default), pill, square |
+  | count_visibility | string | No | nonzero (default), always, hidden |
+  | count_position | string | No | inside (default), beside, below |
+  | count_format | string | No | compact (default), full |
+  | animation | string | No | pop (default), bounce, sparkle, confetti, none |
   
   ## Response
-  
-  Returns `public_id` (for embeds) and `private_id` (for management).
-  
+
+  ```json
+  {
+    "public_id": "n_x7Kf9mQ2Ab3Z",
+    "private_id": "ns_4vK9mPq8wL2nRt5xYz7bC",
+    "url": "https://example.com/my-article",
+    "restriction": "url",
+    "multi_nice": false,
+    "theme": "light",
+    "size": "md",
+    "label": "Nice",
+    "pressed_label": "Nice'd",
+    "colors": {
+      "background": "#112233",
+      "foreground": "#AABBCC",
+      "border": "#334455",
+      "pressed_background": "#445566",
+      "pressed_foreground": "#DDEEFF",
+      "pressed_border": "#556677"
+    },
+    "shape": "pill",
+    "count_visibility": "always",
+    "count_position": "beside",
+    "count_format": "full",
+    "animation": "sparkle",
+    "count": 0,
+    "created_at": "2026-02-18T10:00:00Z",
+    "embed": { ... }
+  }
+  ```
+
   ⚠️ **Save your private_id!** It's only shown once.
 }

@@ -5,8 +5,14 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { SELF } from "cloudflare:test";
-import { EMBED_DIMENSIONS, EMBED_SIZES, renderEmbedScript } from "../../src/routes/embed";
+import { SELF, env } from "cloudflare:test";
+import {
+  EMBED_DIMENSIONS,
+  EMBED_SIZES,
+  renderDemoEmbedHtml,
+  renderEmbedHtml,
+  renderEmbedScript,
+} from "../../src/routes/embed";
 
 describe("Embed", () => {
   describe("GET /embed.js", () => {
@@ -71,6 +77,20 @@ describe("Embed", () => {
       expect(lightBody).not.toBe(darkBody);
     });
 
+    it("should color outside counts for built-in dark themes", async () => {
+      const darkBody = await (await SELF.fetch(
+        "https://api.nice.sbs/embed/n_abc123456789?theme=dark"
+      )).text();
+      const monoDarkBody = await (await SELF.fetch(
+        "https://api.nice.sbs/embed/n_abc123456789?theme=mono-dark"
+      )).text();
+
+      expect(darkBody).toContain(".theme-dark .nice-count-outside{color:#f3f4f6}");
+      expect(darkBody).not.toContain(".theme-dark .nice-button.niced+.nice-count-outside");
+      expect(monoDarkBody).toContain(".theme-mono-dark .nice-count-outside{color:#fff}");
+      expect(monoDarkBody).not.toContain(".theme-mono-dark .nice-button.niced+.nice-count-outside");
+    });
+
     it("should apply size parameter", async () => {
       const resMd = await SELF.fetch("https://api.nice.sbs/embed/n_abc123456789?size=md");
       const resXl = await SELF.fetch("https://api.nice.sbs/embed/n_abc123456789?size=xl");
@@ -129,6 +149,213 @@ describe("Embed", () => {
       // Should still serve successfully with defaults
       expect(res.status).toBe(200);
     });
+
+    it("should render persisted labels and ignore URL label overrides", async () => {
+      const buttonId = "n_labels123456";
+      await env.NICE_KV.put(
+        `btn:${buttonId}`,
+        JSON.stringify({ label: "Recommend", pressedLabel: "Recommended", multiNice: false })
+      );
+
+      const res = await SELF.fetch(
+        `https://api.nice.sbs/embed/${buttonId}?label=Attacker&pressed_label=Injected`
+      );
+      const body = await res.text();
+
+      expect(body).toContain('<span class="nice-text" id="niceText">Recommend</span>');
+      expect(body).toContain('const LABEL="Recommend";');
+      expect(body).toContain('const PRESSED_LABEL="Recommended";');
+      expect(body).not.toContain("Attacker");
+      expect(body).not.toContain("Injected");
+
+      const forcedSingle = await SELF.fetch(
+        "https://api.nice.sbs/embed/" + buttonId + "?multi=0"
+      );
+      const forcedSingleBody = await forcedSingle.text();
+      expect(forcedSingleBody).toContain("const IS_MULTI='0'==='1';");
+    });
+
+    it("should use the stored label contract for clap mode", async () => {
+      const buttonId = "n_claplabels12";
+      await env.NICE_KV.put(
+        `btn:${buttonId}`,
+        JSON.stringify({ label: "Recommend", pressedLabel: "Recommended", multiNice: true })
+      );
+
+      const res = await SELF.fetch(`https://api.nice.sbs/embed/${buttonId}`);
+      const body = await res.text();
+
+      expect(body).toContain("const IS_MULTI='1'==='1';");
+      expect(body).toContain("textEl.textContent=IS_MULTI?LABEL:PRESSED_LABEL;");
+    });
+
+    it("should render stored appearance and ignore appearance query overrides", async () => {
+      const buttonId = "n_appear1234";
+      await env.NICE_KV.put(
+        `btn:${buttonId}`,
+        JSON.stringify({
+          colors: {
+            background: "#112233",
+            foreground: "#AABBCC",
+            border: "#334455",
+            pressedBackground: "#445566",
+            pressedForeground: "#DDEEFF",
+            pressedBorder: "#556677",
+          },
+          shape: "pill",
+          countVisibility: "always",
+          countPosition: "beside",
+          countFormat: "full",
+          animation: "bounce",
+        })
+      );
+
+      const res = await SELF.fetch(
+        `https://api.nice.sbs/embed/${buttonId}?colors=%7B%22background%22%3A%22%23fff%22%7D&shape=square&count_visibility=hidden&count_position=below&count_format=compact&animation=none`
+      );
+      const body = await res.text();
+
+      expect(body).toContain('class="theme-light size-md shape-pill count-position-beside has-custom-colors"');
+      expect(body).toContain("--nice-background:#112233");
+      expect(body).toContain("--nice-pressed-foreground:#DDEEFF");
+      expect(body).toContain("const COUNT_VISIBILITY='always';");
+      expect(body).toContain("const COUNT_POSITION='beside';");
+      expect(body).toContain("const COUNT_FORMAT='full';");
+      expect(body).toContain("const ANIMATION='bounce';");
+      expect(body).not.toContain('class="theme-light size-md shape-square');
+      expect(body).not.toContain("COUNT_VISIBILITY='hidden'");
+      expect(body).not.toContain("COUNT_POSITION='below'");
+      expect(body).not.toContain("COUNT_FORMAT='compact'");
+      expect(body).not.toContain("ANIMATION='none'");
+    });
+
+    it("should keep malformed stored labels inert and defaulted", async () => {
+      const buttonId = "n_malformed12";
+      const payload = "<img src=x onerror=alert(1)>";
+      await env.NICE_KV.put(
+        `btn:${buttonId}`,
+        JSON.stringify({ label: payload, pressedLabel: 42, multiNice: false })
+      );
+
+      const res = await SELF.fetch(`https://api.nice.sbs/embed/${buttonId}`);
+      const body = await res.text();
+
+      // Angle brackets are rejected by the label contract, so stored HTML
+      // payloads fall back to defaults rather than being rendered escaped.
+      expect(body).toContain('<span class="nice-text" id="niceText">Nice</span>');
+      expect(body).toContain('const LABEL="Nice";');
+      expect(body).toContain('const PRESSED_LABEL="Nice\'d";');
+      expect(body).not.toContain("<img src=x onerror=alert(1)>");
+      expect(body).not.toContain("onerror");
+    });
+
+    it("should ignore malformed stored appearance values without injecting CSS", async () => {
+      const buttonId = "n_badappear12";
+      await env.NICE_KV.put(
+        `btn:${buttonId}`,
+        JSON.stringify({
+          colors: {
+            background: "red; color: red",
+            foreground: "#112233",
+            border: "#112233",
+            pressedBackground: "#112233",
+            pressedForeground: "#112233",
+            pressedBorder: "#112233",
+          },
+          shape: "url(javascript:alert(1))",
+          countVisibility: "announce-all",
+          countPosition: "beside<script>",
+          countFormat: "locale",
+          animation: "spin",
+        })
+      );
+
+      const res = await SELF.fetch(`https://api.nice.sbs/embed/${buttonId}`);
+      const body = await res.text();
+
+      expect(body).toContain('class="theme-light size-md"');
+      expect(body).toContain("const COUNT_VISIBILITY='nonzero';");
+      expect(body).toContain("const COUNT_POSITION='inside';");
+      expect(body).toContain("const COUNT_FORMAT='compact';");
+      expect(body).toContain("const ANIMATION='pop';");
+      expect(body).not.toContain("red; color: red");
+      expect(body).not.toContain("javascript:alert");
+      expect(body).not.toContain("beside<script>");
+    });
+  });
+
+  describe("renderer label serialization", () => {
+    it("should escape labels in HTML and inline JavaScript", () => {
+      const label = '</script><span title="x">& 😀';
+      const pressedLabel = `Pressed \\ " ${label}`;
+      const html = renderEmbedHtml({
+        apiBase: "https://api.nice.sbs",
+        buttonId: "n_abc123456789",
+        theme: "light",
+        size: "md",
+        label,
+        pressedLabel,
+      });
+
+      expect(html).toContain("&lt;/script&gt;&lt;span title=&quot;x&quot;&gt;&amp; 😀");
+      expect(html).toContain(
+        'const LABEL="\\u003c/script\\u003e\\u003cspan title=\\"x\\"\\u003e\\u0026 😀";'
+      );
+      expect(html).toContain('const PRESSED_LABEL="Pressed \\\\ \\\" \\u003c/script');
+      expect(html).not.toContain("</script><span title=\"x\">");
+
+      const replacementPayload = renderEmbedHtml({
+        apiBase: "https://api.nice.sbs",
+        buttonId: "n_abc123456789",
+        theme: "light",
+        size: "md",
+        label: "$&",
+        pressedLabel: String.fromCharCode(36, 96, 36, 39),
+      });
+      expect(replacementPayload).toContain('<span class="nice-text" id="niceText">$&amp;</span>');
+      expect(replacementPayload).toContain('const LABEL="$\\u0026";');
+    });
+
+    it("should default demo labels while allowing explicit renderer values", () => {
+      const defaults = renderDemoEmbedHtml({ theme: "light", size: "md" });
+      const custom = renderDemoEmbedHtml({
+        theme: "light",
+        size: "md",
+        label: "Recommend",
+        pressedLabel: "Recommended",
+      });
+
+      expect(defaults).toContain("Nice</span>");
+      expect(custom).toContain("Recommend</span>");
+      expect(custom).toContain('const LABEL="Recommend";');
+    });
+
+    it("should normalize renderer palette values before inline CSS serialization", () => {
+      const html = renderEmbedHtml({
+        apiBase: "https://api.nice.sbs",
+        buttonId: "n_abc123456789",
+        theme: "light",
+        size: "md",
+        appearance: {
+          colors: {
+            background: "#aabbcc",
+            foreground: "#ddeeff",
+            border: "#112233",
+            pressed_background: "#445566",
+            pressed_foreground: "#778899",
+            pressed_border: "#a1b2c3",
+          },
+          shape: "rounded",
+          count_visibility: "nonzero",
+          count_position: "inside",
+          count_format: "compact",
+          animation: "pop",
+        },
+      });
+
+      expect(html).toContain("--nice-background:#AABBCC");
+      expect(html).toContain("--nice-pressed-border:#A1B2C3");
+    });
   });
 
   describe("shared embed helpers", () => {
@@ -165,6 +392,48 @@ describe("Embed", () => {
       expect(res.status).toBe(200);
       const body = await res.text();
       expect(body).toContain('class="theme-mono-light size-sm"');
+    });
+
+    describe("host-page confetti (data-confetti)", () => {
+      it("should include confetti-related code in the served embed script", async () => {
+        const res = await SELF.fetch("https://api.nice.sbs/embed.js");
+        const body = await res.text();
+
+        expect(body).toContain("data-confetti");
+        expect(body).toContain("confettiAttr");
+        expect(body).toContain("enableConfetti");
+        expect(body).toContain("launchConfetti");
+        expect(body).toContain("nice-clicked");
+        expect(body).toContain("nice-recorded");
+      });
+
+      it("should opt in only when data-confetti is present and not disabled", () => {
+        const script = renderEmbedScript();
+
+        expect(script).toContain("confettiAttr=script.getAttribute('data-confetti')");
+        expect(script).toContain(
+          "enableConfetti=confettiAttr!==null&&confettiAttr!=='false'&&confettiAttr!=='0'"
+        );
+      });
+
+      it("should scope message handlers to the embed iframe source", () => {
+        const script = renderEmbedScript();
+
+        expect(script).toContain(
+          "if(event.origin!==EMBED_BASE||event.source!==iframe.contentWindow)return"
+        );
+      });
+
+      it("should gate confetti message handlers on enableConfetti", () => {
+        const script = renderEmbedScript();
+
+        expect(script).toContain("if(enableConfetti&&data.buttonId===buttonId)");
+        expect(script).toContain("data.type==='nice-clicked'");
+        expect(script).toContain("data.type==='nice-recorded'&&!isMultiNice&&!hasConfettied");
+        expect(script).toContain("isMultiNice=true;launchConfetti()");
+        expect(script).toContain("hasConfettied=true;launchConfetti()");
+        expect(script).toContain("prefers-reduced-motion: reduce");
+      });
     });
   });
 

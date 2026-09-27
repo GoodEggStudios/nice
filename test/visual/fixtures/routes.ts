@@ -1,13 +1,35 @@
 import type { Page, Route } from "@playwright/test";
 import { generateBadge, normalizeTheme } from "../../../src/lib/badge";
 import { renderEmbedHtml, renderDemoEmbedHtml, renderEmbedScript, type EmbedSize, type EmbedTheme } from "../../../src/routes/embed";
-import { mockButtonStats, mockCreateButtonResponse, VISUAL_BUTTON_ID } from "./data";
+import {
+  mockButtonStats,
+  mockCreateButtonResponse,
+  normalizeVisualAppearance,
+  VISUAL_BUTTON_ID,
+  type VisualAppearanceOverrides,
+  type VisualButtonStats,
+  type VisualButtonStatsOverrides,
+} from "./data";
 
 export interface NiceApiMockOptions {
   count?: number;
   countStatus?: number;
   hasNiced?: boolean;
   multiNice?: boolean;
+  label?: string;
+  pressedLabel?: string;
+  appearance?: VisualAppearanceOverrides;
+  createStatus?: number;
+  createErrorCode?: string;
+  createError?: string;
+  createResponse?: VisualButtonStatsOverrides;
+  buttonPatchStatus?: number;
+  buttonPatchErrorCode?: string;
+  buttonPatchError?: string;
+  theme?: VisualButtonStats["theme"];
+  buttonPatchDelay?: number;
+  buttonPatchResponse?: VisualButtonStatsOverrides;
+  buttonPatchNetworkError?: boolean;
 }
 
 async function fulfillJson(route: Route, value: unknown, status = 200) {
@@ -18,9 +40,32 @@ async function fulfillJson(route: Route, value: unknown, status = 200) {
   });
 }
 
+function appearanceOverridesFromBody(body: Record<string, unknown>): VisualAppearanceOverrides {
+  return {
+    colors: body.colors === null
+      ? null
+      : typeof body.colors === "object"
+        ? body.colors as VisualAppearanceOverrides["colors"]
+        : undefined,
+    shape: typeof body.shape === "string" ? body.shape as VisualButtonStats["shape"] : undefined,
+    count_visibility: typeof body.count_visibility === "string" ? body.count_visibility as VisualButtonStats["count_visibility"] : undefined,
+    count_position: typeof body.count_position === "string" ? body.count_position as VisualButtonStats["count_position"] : undefined,
+    count_format: typeof body.count_format === "string" ? body.count_format as VisualButtonStats["count_format"] : undefined,
+    animation: typeof body.animation === "string" ? body.animation as VisualButtonStats["animation"] : undefined,
+  };
+}
+
 export async function installNiceApiMocks(page: Page, options: NiceApiMockOptions = {}): Promise<void> {
   const count = options.count ?? 42;
   const multiNice = options.multiNice ?? false;
+  let stats = mockButtonStats({
+    count,
+    multi_nice: multiNice,
+    ...(options.theme === undefined ? {} : { theme: options.theme }),
+    ...(options.label === undefined ? {} : { label: options.label }),
+    ...(options.pressedLabel === undefined ? {} : { pressed_label: options.pressedLabel }),
+    ...normalizeVisualAppearance(options.appearance),
+  });
 
   await page.route("https://api.nice.sbs/embed.js", async (route) => {
     await route.fulfill({
@@ -36,13 +81,22 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
     const theme = (url.searchParams.get("theme") ?? "light") as EmbedTheme;
     const size = (url.searchParams.get("size") ?? "md") as EmbedSize;
     const body = buttonId === "demo"
-      ? renderDemoEmbedHtml({ theme, size })
+      ? renderDemoEmbedHtml({
+          theme,
+          size,
+          label: stats.label,
+          pressedLabel: stats.pressed_label,
+          appearance: stats,
+        })
       : renderEmbedHtml({
           apiBase: "https://api.nice.sbs",
           buttonId,
           theme,
           size,
           multiNice: url.searchParams.get("multi") === "1" || multiNice,
+          label: stats.label,
+          pressedLabel: stats.pressed_label,
+          appearance: stats,
         });
     await route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body });
   });
@@ -82,14 +136,70 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
   });
 
   await page.route("https://api.nice.sbs/api/v1/buttons", async (route) => {
-    await fulfillJson(route, mockCreateButtonResponse({ count, multi_nice: multiNice }));
+    const status = options.createStatus ?? 201;
+    if (status !== 201) {
+      await fulfillJson(route, {
+        error: options.createError ?? "Failed to create button",
+        code: options.createErrorCode ?? "INVALID_LABEL",
+      }, status);
+      return;
+    }
+    const body = route.request().postDataJSON() as Record<string, unknown>;
+    // Echo the request by default, then let createResponse win so tests can
+    // simulate a normalized server payload that differs from the submitted form.
+    stats = mockButtonStats({
+      count,
+      multi_nice: typeof body.multi_nice === "boolean" ? body.multi_nice : multiNice,
+      label: typeof body.label === "string" ? body.label : "Nice",
+      pressed_label: typeof body.pressed_label === "string" ? body.pressed_label : "Nice'd",
+      ...normalizeVisualAppearance(appearanceOverridesFromBody(body)),
+      ...options.createResponse,
+    });
+    await fulfillJson(route, mockCreateButtonResponse(stats), 201);
   });
 
   await page.route(/https:\/\/api\.nice\.sbs\/api\/v1\/buttons\/stats\/ns_.*/, async (route) => {
-    await fulfillJson(route, mockButtonStats({ count, multi_nice: multiNice }));
+    await fulfillJson(route, stats);
   });
 
   await page.route(/https:\/\/api\.nice\.sbs\/api\/v1\/buttons\/ns_.*/, async (route) => {
-    await fulfillJson(route, { success: true });
+    const method = route.request().method();
+    if (method === "DELETE") {
+      await fulfillJson(route, { success: true });
+      return;
+    }
+    if (method !== "PATCH") {
+      await route.continue();
+      return;
+    }
+    const status = options.buttonPatchStatus ?? 200;
+    if (options.buttonPatchNetworkError) {
+      await route.abort();
+      return;
+    }
+    if (options.buttonPatchDelay) {
+      await new Promise((resolve) => setTimeout(resolve, options.buttonPatchDelay));
+    }
+    if (status !== 200) {
+      await fulfillJson(route, {
+        error: options.buttonPatchError ?? "Failed to update button",
+        code: options.buttonPatchErrorCode ?? "INVALID_LABEL",
+      }, status);
+      return;
+    }
+    const body = route.request().postDataJSON() as Record<string, unknown>;
+    const appearance = normalizeVisualAppearance(appearanceOverridesFromBody(body), stats);
+    stats = mockButtonStats({
+      ...stats,
+      multi_nice: typeof body.multi_nice === "boolean" ? body.multi_nice : stats.multi_nice,
+      label: typeof body.label === "string" ? body.label : stats.label,
+      pressed_label: typeof body.pressed_label === "string" ? body.pressed_label : stats.pressed_label,
+      restriction: typeof body.restriction === "string" ? body.restriction as VisualButtonStats["restriction"] : stats.restriction,
+      theme: typeof body.theme === "string" ? body.theme as VisualButtonStats["theme"] : stats.theme,
+      size: typeof body.size === "string" ? body.size as VisualButtonStats["size"] : stats.size,
+      ...appearance,
+      ...options.buttonPatchResponse,
+    });
+    await fulfillJson(route, stats);
   });
 }

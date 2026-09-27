@@ -40,16 +40,23 @@ Or use the API:
 ```bash
 curl -X POST https://api.nice.sbs/api/v1/buttons \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://yoursite.com"}'
+  -d '{"url": "https://yoursite.com", "label": "Recommend", "pressed_label": "Recommended"}'
 ```
 
 ### Embed it
 
-**Option 1: Script tag**
+**Option 1: Script tag (Recommended)**
 
 ```html
-<script src="https://nice.sbs/embed.js" data-button="n_xxxx" async></script>
+<script
+  src="https://api.nice.sbs/embed.js"
+  data-button="n_xxxx"
+  data-confetti="true"
+  async>
+</script>
 ```
+
+The script tag creates the iframe for you and can show confetti on the host page. Remove `data-confetti="true"` to use the button without confetti.
 
 **Option 2: Iframe**
 
@@ -60,6 +67,8 @@ curl -X POST https://api.nice.sbs/api/v1/buttons \
   title="Nice button">
 </iframe>
 ```
+
+Use the iframe when a platform allows HTML but blocks `<script>` tags. A standalone iframe cannot draw confetti outside its own rectangle.
 
 That's it! 🎉
 
@@ -79,18 +88,39 @@ Customise the look with `theme` and `size` parameters:
 
 ```html
 <!-- Dark theme, medium size (default) -->
-<script src="https://nice.sbs/embed.js" data-button="n_xxxx" data-theme="dark" async></script>
+<script src="https://api.nice.sbs/embed.js" data-button="n_xxxx" data-theme="dark" async></script>
 
 <!-- Minimal (transparent background) -->
-<script src="https://nice.sbs/embed.js" data-button="n_xxxx" data-theme="minimal" async></script>
+<script src="https://api.nice.sbs/embed.js" data-button="n_xxxx" data-theme="minimal" async></script>
 
 <!-- Mono dark / Mono light -->
-<script src="https://nice.sbs/embed.js" data-button="n_xxxx" data-theme="mono-dark" async></script>
+<script src="https://api.nice.sbs/embed.js" data-button="n_xxxx" data-theme="mono-dark" async></script>
 ```
 
 **Themes:** `light` · `dark` · `minimal` · `mono-dark` · `mono-light`
 
 **Sizes:** `xs` · `sm` · `md` · `lg` · `xl`
+
+Button owners can configure the API-managed labels with optional `label` and `pressed_label` fields. They default to `Nice` and `Nice'd`, are limited to 32 Unicode code points, and are trimmed before storage. `pressed_label` is used after interaction for single-nice buttons and is retained when clap mode changes; clap mode keeps `label` active on every click.
+
+The appearance API accepts `colors`, `shape`, `count_visibility`, `count_position`, `count_format`, and `animation` on create and update requests. Appearance values are returned by create, stats, and update responses. Shapes are `rounded`, `pill`, or `square`; count visibility is `nonzero`, `always`, or `hidden`; count position is `inside`, `beside`, or `below`; count format is `compact` or `full`; and animations are `pop`, `bounce`, `sparkle`, `confetti`, or `none`. Their defaults are `rounded`, `nonzero`, `inside`, `compact`, and `pop`. `colors` is either `null` for theme colours or an object containing `background`, `foreground`, `border`, `pressed_background`, `pressed_foreground`, and `pressed_border`, each a strict `#RRGGBB` value; it can be reset with `"colors": null`. When a custom palette is present, it overrides theme colours; theme and size remain placement parameters. Stored iframe animation honors reduced motion and never grants host-page effects — `data-confetti` is a separate placement opt-in.
+
+Both embed forms load these persisted labels and appearance settings from the button record; `label`, `pressed_label`, and appearance URL parameters are ignored. Script embeds resize after the Bungee font settles, and generated iframe snippets calculate initial dimensions from custom labels, visible count position/format, and the stored appearance. Refresh generated direct-iframe snippets after material count or layout changes. SVG badges do not support custom appearance.
+
+Invalid appearance values return HTTP 400 with `INVALID_COLORS`, `INVALID_SHAPE`, `INVALID_COUNT_VISIBILITY`, `INVALID_COUNT_POSITION`, `INVALID_COUNT_FORMAT`, or `INVALID_ANIMATION`.
+
+**Host-page confetti (script embed only):** Add `data-confetti="true"` to opt in to a confetti celebration on the host page when someone nices. It is off by default. A standalone iframe cannot draw outside its own rectangle.
+
+See the [full API documentation](docs/API.md) for label limits, update requests, and response shapes.
+
+```html
+<script
+  src="https://api.nice.sbs/embed.js"
+  data-button="n_xxxx"
+  data-confetti="true"
+  async>
+</script>
+```
 
 ## Button Stats
 

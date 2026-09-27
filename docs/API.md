@@ -24,14 +24,59 @@ Response:
   "public_id": "n_x7Kf9mQ2Ab3Z",
   "private_id": "ns_4vK9mPq8wL2nRt5xYz7bC",
   "url": "https://example.com/my-article",
+  "restriction": "url",
+  "multi_nice": false,
+  "theme": "light",
+  "size": "md",
+  "label": "Nice",
+  "pressed_label": "Nice'd",
+  "colors": null,
+  "shape": "rounded",
+  "count_visibility": "nonzero",
+  "count_position": "inside",
+  "count_format": "compact",
+  "animation": "pop",
+  "count": 0,
+  "created_at": "2026-02-18T10:00:00Z",
   "embed": {
-    "iframe": "<iframe src=\"...\" ...></iframe>"
+    "iframe": "<iframe src=\"...\" ...></iframe>",
+    "script": "<script src=\"...\" ...></script>"
   }
 }
 ```
 
 ⚠️ **Save your `private_id`!** It's only shown once and is needed to manage your button.
 
+---
+
+### Button labels
+
+Button owners can set `label` and `pressed_label` when creating a button or update either field later. They default to `Nice` and `Nice'd`. Values are trimmed before storage, must contain at least one non-whitespace character, may contain at most 32 Unicode code points, and must not contain ASCII control characters (`U+0000`–`U+001F`, `U+007F`) or angle brackets (`<`, `>`). Invalid values return `INVALID_LABEL` or `INVALID_PRESSED_LABEL` with HTTP 400.
+
+`label` is the idle text and the text used for every state of a clap-style (`multi_nice`) button. `pressed_label` applies only to single-nice rendering; it is retained while clap mode is enabled and becomes active again when clap mode is disabled. Existing KV records use these defaults when the fields are missing or malformed.
+
+Labels are returned in owner responses from create, stats, and update endpoints. They are not accepted as embed URL overrides: real embed URLs always use the stored button configuration, so visitor-controlled query strings cannot change the wording.
+
+### Button appearance
+
+Create, stats, and update responses always include the normalized appearance fields:
+
+```json
+{
+  "colors": null,
+  "shape": "rounded",
+  "count_visibility": "nonzero",
+  "count_position": "inside",
+  "count_format": "compact",
+  "animation": "pop"
+}
+```
+
+Create and update requests may provide `shape` (`rounded`, `pill`, `square`), `count_visibility` (`nonzero`, `always`, `hidden`), `count_position` (`inside`, `beside`, `below`), `count_format` (`compact`, `full`), and `animation` (`pop`, `bounce`, `sparkle`, `confetti`, `none`). Omitted values use the defaults above; omitted PATCH fields preserve their stored values.
+
+`colors` is either `null`, meaning theme colours, or a complete object with exactly these six keys: `background`, `foreground`, `border`, `pressed_background`, `pressed_foreground`, and `pressed_border`. Every value must be a whitespace-free `#RRGGBB` color. Values are normalized to uppercase. When a custom palette is present, it overrides theme colours for the button; theme and size remain placement parameters on the embed URL. PATCH replaces the complete palette atomically, and `"colors": null` clears it. Invalid appearance values return HTTP 400 with `INVALID_COLORS`, `INVALID_SHAPE`, `INVALID_COUNT_VISIBILITY`, `INVALID_COUNT_POSITION`, `INVALID_COUNT_FORMAT`, or `INVALID_ANIMATION`.
+
+Count visibility/position/format control how the count is shown. Stored iframe animation runs inside the embed and honors reduced motion; it never grants host-page animation permission. Script-embed `data-confetti` is a separate placement-level host effect. Appearance URL parameters are ignored. SVG badges do not support custom appearance.
 ---
 
 ## API Endpoints
@@ -46,7 +91,16 @@ Content-Type: application/json
   "url": "https://example.com/my-article",
   "theme": "light",
   "size": "md",
-  "restriction": "url"
+  "restriction": "url",
+  "multi_nice": false,
+  "label": "Nice",
+  "pressed_label": "Nice'd",
+  "colors": null,
+  "shape": "rounded",
+  "count_visibility": "nonzero",
+  "count_position": "inside",
+  "count_format": "compact",
+  "animation": "pop"
 }
 ```
 
@@ -57,7 +111,16 @@ Content-Type: application/json
 | `url` | string | Yes | Content URL where the button will be embedded |
 | `theme` | string | No | `light` (default), `dark`, `minimal`, `mono-dark`, `mono-light` |
 | `size` | string | No | `xs`, `sm`, `md` (default), `lg`, `xl` |
+| `restriction` | string | No | `url` (default), `domain`, `global` |
 | `multi_nice` | boolean | No | Enable clap-style multi-nice (default: `false`) |
+| `label` | string | No | Visible idle label, and label for every state of a multi-nice button. Defaults to `Nice`. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) and angle brackets (`<`, `>`) are rejected. |
+| `pressed_label` | string | No | Visible label after interaction with a single-nice button. Defaults to `Nice'd`. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) and angle brackets (`<`, `>`) are rejected. |
+| `colors` | object or `null` | No | Complete six-key palette using strict `#RRGGBB` values, or `null` for theme colours. |
+| `shape` | string | No | `rounded` (default), `pill`, `square` |
+| `count_visibility` | string | No | `nonzero` (default), `always`, `hidden` |
+| `count_position` | string | No | `inside` (default), `beside`, `below` |
+| `count_format` | string | No | `compact` (default), `full` |
+| `animation` | string | No | `pop` (default), `bounce`, `sparkle`, `confetti`, `none` |
 
 **Response (201 Created):**
 ```json
@@ -65,12 +128,22 @@ Content-Type: application/json
   "public_id": "n_x7Kf9mQ2Ab3Z",
   "private_id": "ns_4vK9mPq8wL2nRt5xYz7bC",
   "url": "https://example.com/my-article",
+  "restriction": "url",
+  "multi_nice": false,
   "theme": "light",
   "size": "md",
+  "label": "Nice",
+  "pressed_label": "Nice'd",
+  "colors": null,
+  "shape": "rounded",
+  "count_visibility": "nonzero",
+  "count_position": "inside",
+  "count_format": "compact",
+  "animation": "pop",
   "count": 0,
   "created_at": "2026-02-18T10:00:00Z",
   "embed": {
-    "iframe": "<iframe src=\"https://api.nice.sbs/e/n_x7Kf9mQ2Ab3Z?theme=light&size=md\" style=\"border:none;width:100px;height:36px;\" title=\"Nice button\"></iframe>",
+    "iframe": "<iframe src=\"https://api.nice.sbs/e/n_x7Kf9mQ2Ab3Z?theme=light&size=md\" style=\"background:transparent;border:none;overflow:hidden;display:block;color-scheme:normal;width:100px;height:36px;\" scrolling=\"no\" frameborder=\"0\" allowtransparency=\"true\" title=\"Nice button\"></iframe>",
     "script": "<script src=\"https://api.nice.sbs/embed.js\" data-button=\"n_x7Kf9mQ2Ab3Z\" data-theme=\"light\" data-size=\"md\" async></script>"
   }
 }
@@ -91,9 +164,19 @@ Get button statistics. Requires the private ID.
 {
   "id": "n_x7Kf9mQ2Ab3Z",
   "url": "https://example.com/my-article",
+  "restriction": "url",
+  "multi_nice": false,
   "count": 42,
   "theme": "light",
   "size": "md",
+  "label": "Nice",
+  "pressed_label": "Nice'd",
+  "colors": null,
+  "shape": "rounded",
+  "count_visibility": "nonzero",
+  "count_position": "inside",
+  "count_format": "compact",
+  "animation": "pop",
   "created_at": "2026-02-18T10:00:00Z",
   "embed": { ... }
 }
@@ -108,7 +191,9 @@ PATCH /api/v1/buttons/:private_id
 Content-Type: application/json
 
 {
-  "restriction": "global"
+  "restriction": "global",
+  "label": "Recommend",
+  "pressed_label": "Recommended"
 }
 ```
 
@@ -122,6 +207,14 @@ Update button settings. Requires the private ID.
 | `theme` | string | No | `light`, `dark`, `minimal`, `mono-dark`, `mono-light` |
 | `size` | string | No | `xs`, `sm`, `md`, `lg`, `xl` |
 | `multi_nice` | boolean | No | Enable/disable clap-style multi-nice. **Note:** toggling this changes the deduplication model — single-nice enforces one per visitor per day, multi-nice allows unlimited. |
+| `label` | string | No | Update the visible idle label. Defaults are returned for legacy records when this field is absent. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) and angle brackets (`<`, `>`) are rejected. |
+| `pressed_label` | string | No | Update the visible single-nice pressed-state label. It is retained when `multi_nice` changes. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed. ASCII control characters (`U+0000`–`U+001F`, `U+007F`) and angle brackets (`<`, `>`) are rejected. |
+| `colors` | object or `null` | No | Replace the complete six-key palette, or clear it with `null` for theme colours. |
+| `shape` | string | No | `rounded`, `pill`, `square` |
+| `count_visibility` | string | No | `nonzero`, `always`, `hidden` |
+| `count_position` | string | No | `inside`, `beside`, `below` |
+| `count_format` | string | No | `compact`, `full` |
+| `animation` | string | No | `pop`, `bounce`, `sparkle`, `confetti`, `none` |
 
 **Response (200 OK):**
 ```json
@@ -129,9 +222,18 @@ Update button settings. Requires the private ID.
   "id": "n_x7Kf9mQ2Ab3Z",
   "url": "https://example.com/my-article",
   "restriction": "global",
+  "multi_nice": false,
   "count": 42,
   "theme": "light",
   "size": "md",
+  "label": "Nice",
+  "pressed_label": "Nice'd",
+  "colors": null,
+  "shape": "rounded",
+  "count_visibility": "nonzero",
+  "count_position": "inside",
+  "count_format": "compact",
+  "animation": "pop",
   "created_at": "2026-02-18T10:00:00Z",
   "embed": { ... }
 }
@@ -168,9 +270,8 @@ Record a "nice" using the private ID. **Owner only** — no restrictions.
 Unlike the public nice endpoint:
 - No referrer check
 - No IP deduplication
-- No rate limiting
 
-Use this for programmatic nice recording.
+This endpoint is still rate-limited by IP to prevent abuse. Use it for programmatic nice recording when you control the private ID.
 
 **Response (200 OK):**
 ```json
@@ -194,6 +295,14 @@ POST /api/v1/nice/:public_id
 ```
 
 Record a "nice" on a button.
+
+**Request Body (optional):**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `fingerprint` | string | No | Device fingerprint used with IP and daily salt for deduplication |
+| `referrer` | string | No | Parent page URL checked against the button restriction |
+| `pow_solution` | object | No | Proof-of-work response when rate limiting requires one |
 
 **Response (200 OK) - Success:**
 ```json
@@ -272,7 +381,8 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
   "count": 43,
   "button_id": "n_x7Kf9mQ2",
   "has_niced": true,
-  "multi_nice": false
+  "multi_nice": false,
+  "url": "https://example.com/my-article"
 }
 ```
 
@@ -280,14 +390,44 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 |-------|-------------|
 | `count` | Total nice count |
 | `button_id` | The button ID |
-| `has_niced` | Whether the current visitor has already niced (always `false` for multi-nice buttons) |
+| `has_niced` | Whether the current visitor has already niced. Multi-nice buttons still use this for clicked-state styling. |
 | `multi_nice` | Whether this button allows multiple nices per visitor |
+| `url` | Button content URL when the button exists |
 
 ---
 
 ## Embed
 
-### iframe (Recommended)
+### Script tag (Recommended)
+
+The script tag creates the iframe and can show effects on the host page, such as confetti:
+
+Embeds use the button owner's persisted label, pressed label, and appearance settings (`colors`, `shape`, count visibility/position/format, and animation). URL parameters with those names are ignored. Script embeds auto-resize after the Bungee font settles; generated direct-iframe snippets include a label-aware initial width because a standalone iframe cannot receive host-side resize updates. Stored button animation runs inside the iframe; `data-confetti` is a separate host-page effect.
+
+```html
+<script
+  src="https://api.nice.sbs/embed.js"
+  data-button=":public_id"
+  data-theme="light"
+  data-size="md"
+  data-confetti="true"
+  async></script>
+```
+
+**Data attributes:**
+
+| Attribute | Default | Description |
+|-----------|---------|-------------|
+| `data-button` | — | Public button ID (required) |
+| `data-theme` | `light` | Button theme |
+| `data-size` | `md` | Button size |
+| `data-confetti` | `false` | Set to `true` to show confetti on the host page after a nice |
+
+Remove `data-confetti="true"` to keep the button without confetti. This setting belongs to the embed placement and is not stored on the button.
+
+### iframe
+
+Use the iframe when a platform allows HTML but blocks external scripts. A standalone iframe cannot draw outside its own rectangle, so it cannot provide host-page confetti. The generated snippet sizes the iframe from the button's stored labels and appearance settings (visible count position/format). Script embeds expand for particle animations via resize messages; direct iframes keep baseline dimensions — refresh generated snippets after material count or layout changes. Appearance query parameters are ignored.
 
 ```html
 <iframe 
@@ -296,6 +436,8 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
   title="Nice button">
 </iframe>
 ```
+
+`100px × 36px` is the default-label baseline. For custom labels or outside counts, use the generated iframe snippet, whose dimensions are calculated from the stored labels and appearance.
 
 **Query Parameters:**
 
@@ -337,9 +479,23 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 | `INVALID_THEME` | 400 | Invalid theme value |
 | `INVALID_SIZE` | 400 | Invalid size value |
 | `INVALID_RESTRICTION` | 400 | Invalid restriction mode |
+| `INVALID_LABEL` | 400 | Invalid or empty `label` |
+| `INVALID_PRESSED_LABEL` | 400 | Invalid or empty `pressed_label` |
+| `INVALID_COLORS` | 400 | Invalid or incomplete custom palette |
+| `INVALID_SHAPE` | 400 | Invalid shape value |
+| `INVALID_COUNT_VISIBILITY` | 400 | Invalid count visibility value |
+| `INVALID_COUNT_POSITION` | 400 | Invalid count position value |
+| `INVALID_COUNT_FORMAT` | 400 | Invalid count format value |
+| `INVALID_ANIMATION` | 400 | Invalid animation value |
 | `NOT_FOUND` | 404 | Button not found |
+| `INVALID_BUTTON_ID` | 400 | Public button ID format invalid |
+| `BUTTON_NOT_FOUND` | 404 | Public button not found |
 | `REFERRER_DENIED` | 403 | Nice not allowed from this referrer |
 | `MULTI_NICE_DISABLED` | 403 | Multi-nice endpoint called on a single-nice button |
+| `POW_REQUIRED` | 429 | Proof-of-work challenge required before retrying |
+| `INVALID_POW` | 400 | Proof-of-work solution invalid |
+| `HOURLY_LIMIT` | 429 | Hourly button creation limit exceeded |
+| `DAILY_LIMIT` | 429 | Daily button creation limit exceeded |
 | `IP_LIMIT` | 429 | Rate limit exceeded |
 | `BUTTON_LIMIT` | 429 | Button rate limit exceeded |
 
@@ -349,6 +505,8 @@ GET /api/v1/nice/:public_id/count?fp=<fingerprint>
 
 | Scope | Limit | Window |
 |-------|-------|--------|
+| Per IP (button creation) | 10 buttons | 1 hour |
+| Per IP (button creation) | 50 buttons | 1 day |
 | Per IP (nice) | 20 requests | 1 minute |
 | Per Button (nice) | 100 requests | 1 minute |
 
@@ -404,4 +562,3 @@ https://api.nice.sbs/badge/:public_id.svg
 Badges are cached for 60 seconds (browser) / 5 minutes (CDN). Counts are snapshots, not real-time.
 
 ---
-

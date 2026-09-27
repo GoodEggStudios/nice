@@ -12,7 +12,20 @@ patch {
 
 body:json {
   {
-    "restriction": "global"
+    "label": "Recommend",
+    "shape": "pill",
+    "count_visibility": "always",
+    "count_position": "below",
+    "count_format": "full",
+    "animation": "bounce",
+    "colors": {
+      "background": "#112233",
+      "foreground": "#AABBCC",
+      "border": "#334455",
+      "pressed_background": "#445566",
+      "pressed_foreground": "#DDEEFF",
+      "pressed_border": "#556677"
+    }
   }
 }
 
@@ -29,7 +42,7 @@ docs {
   
   ## Request Body
   
-  All fields are optional. Only provided fields will be updated.
+  All fields are optional. Only provided fields will be updated. Appearance fields are applied atomically when present. Clear a custom palette with `"colors": null`.
   
   | Field | Type | Values |
   |-------|------|--------|
@@ -37,6 +50,14 @@ docs {
   | theme | string | `light`, `dark`, `minimal`, `mono-dark`, `mono-light` |
   | size | string | `xs`, `sm`, `md`, `lg`, `xl` |
   | multi_nice | boolean | Enable/disable clap-style multi-nice |
+  | label | string | Visible idle label; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters and angle brackets are rejected |
+  | pressed_label | string | Visible pressed label; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters and angle brackets are rejected |
+  | colors | object or null | Replace the complete six-key `#RRGGBB` palette, or clear it with `null` |
+  | shape | string | `rounded`, `pill`, `square` |
+  | count_visibility | string | `nonzero`, `always`, `hidden` |
+  | count_position | string | `inside`, `beside`, `below` |
+  | count_format | string | `compact`, `full` |
+  | animation | string | `pop`, `bounce`, `sparkle`, `confetti`, `none` |
   
   ## Response
   
@@ -45,11 +66,35 @@ docs {
     "id": "n_xxx",
     "url": "https://example.com",
     "restriction": "global",
+    "multi_nice": false,
     "count": 42,
     "theme": "light",
     "size": "md",
+    "label": "Recommend",
+    "pressed_label": "Nice'd",
+    "colors": {
+      "background": "#112233",
+      "foreground": "#AABBCC",
+      "border": "#334455",
+      "pressed_background": "#445566",
+      "pressed_foreground": "#DDEEFF",
+      "pressed_border": "#556677"
+    },
+    "shape": "pill",
+    "count_visibility": "always",
+    "count_position": "below",
+    "count_format": "full",
+    "animation": "bounce",
     "created_at": "...",
     "embed": { ... }
+  }
+  ```
+
+  ## Reset colours example
+
+  ```json
+  {
+    "colors": null
   }
   ```
 }

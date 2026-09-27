@@ -185,9 +185,12 @@
       <a href="#quickstart">Quick Start</a>
       <a href="#create">Create Button</a>
       <a href="#stats">Get Stats</a>
+      <a href="#update">Update Button</a>
       <a href="#delete">Delete Button</a>
       <a href="#nice">Record Nice</a>
       <a href="#count">Get Count</a>
+      <a href="#labels">Button labels</a>
+      <a href="#appearance">Button appearance</a>
       <a href="#embed">Embed Options</a>
     </div>
     
@@ -195,21 +198,55 @@
     <p>Create a button with a single API call — no signup required:</p>
     <pre><code>curl -X POST https://api.nice.sbs/api/v1/buttons \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com/my-article"}'</code></pre>
+  -d '{"url": "https://example.com/my-article", "label": "Recommend", "pressed_label": "Recommended"}'</code></pre>
     
     <p>Response:</p>
     <pre><code>{
   "public_id": "n_x7Kf9mQ2",
   "private_id": "ns_4vK9mPq8wL2nRt5xYz7bC",
   "url": "https://example.com/my-article",
+  "restriction": "url",
+  "multi_nice": false,
+  "theme": "light",
+  "size": "md",
+  "label": "Recommend",
+  "pressed_label": "Recommended",
+  "colors": null,
+  "shape": "rounded",
+  "count_visibility": "nonzero",
+  "count_position": "inside",
+  "count_format": "compact",
+  "animation": "pop",
+  "count": 0,
+  "created_at": "2026-02-18T10:00:00Z",
   "embed": {
-    "iframe": "&lt;iframe src=\"...\" ...&gt;&lt;/iframe&gt;"
+    "iframe": "&lt;iframe src=\"...\" ...&gt;&lt;/iframe&gt;",
+    "script": "&lt;script src=\"...\" ...&gt;&lt;/script&gt;"
   }
 }</code></pre>
     
     <div class="note">
       <p>⚠️ <strong>Save your private_id!</strong> It's only shown once and is needed to manage your button.</p>
     </div>
+
+    <h2 id="labels">Button labels</h2>
+    <p>Owners can set <code>label</code> and <code>pressed_label</code> when creating a button or update either field later. They default to <code>Nice</code> and <code>Nice'd</code>. Values are trimmed, must contain at least one non-whitespace character, may contain at most 32 Unicode code points, and must not contain ASCII control characters (<code>U+0000</code>–<code>U+001F</code>, <code>U+007F</code>) or angle brackets (<code>&lt;</code>, <code>&gt;</code>). Invalid values return <code>INVALID_LABEL</code> or <code>INVALID_PRESSED_LABEL</code> with HTTP 400.</p>
+    <p><code>pressed_label</code> applies only to single-nice rendering. It is retained in clap mode and becomes active again when clap mode is disabled; clap mode keeps <code>label</code> active on every click. Missing or malformed labels in legacy KV records resolve to the defaults at read time.</p>
+    <p>Real embed URLs do not accept label overrides. Wording comes from stored button configuration, and both script embeds and generated iframe snippets use that configuration.</p>
+
+    <h2 id="appearance">Button appearance</h2>
+    <p>Create, stats, and update responses always include the normalized appearance fields:</p>
+    <pre><code>{
+  "colors": null,
+  "shape": "rounded",
+  "count_visibility": "nonzero",
+  "count_position": "inside",
+  "count_format": "compact",
+  "animation": "pop"
+}</code></pre>
+    <p>Allowed values: <code>shape</code> (<code>rounded</code>, <code>pill</code>, <code>square</code>); <code>count_visibility</code> (<code>nonzero</code>, <code>always</code>, <code>hidden</code>); <code>count_position</code> (<code>inside</code>, <code>beside</code>, <code>below</code>); <code>count_format</code> (<code>compact</code>, <code>full</code>); <code>animation</code> (<code>pop</code>, <code>bounce</code>, <code>sparkle</code>, <code>confetti</code>, <code>none</code>). Omitted create values use the defaults above; omitted PATCH fields preserve their stored values.</p>
+    <p><code>colors</code> is either <code>null</code> (theme colours) or a complete object with exactly these six keys: <code>background</code>, <code>foreground</code>, <code>border</code>, <code>pressed_background</code>, <code>pressed_foreground</code>, and <code>pressed_border</code>. Every value must be a whitespace-free <code>#RRGGBB</code> color, normalized to uppercase. When a custom palette is present, it overrides theme colours; theme and size remain placement parameters on the embed URL. PATCH replaces the complete palette atomically, and <code>"colors": null</code> clears it.</p>
+    <p>Count visibility, position, and format control how the count is shown. Stored iframe animation runs inside the embed and honors reduced motion; it never grants host-page animation permission. Script-embed <code>data-confetti</code> is a separate placement-level host effect. Appearance URL parameters are ignored. Invalid values return HTTP 400 with <code>INVALID_COLORS</code>, <code>INVALID_SHAPE</code>, <code>INVALID_COUNT_VISIBILITY</code>, <code>INVALID_COUNT_POSITION</code>, <code>INVALID_COUNT_FORMAT</code>, or <code>INVALID_ANIMATION</code>. SVG badges do not support custom appearance.</p>
     
     <h2 id="create">Create Button</h2>
     
@@ -226,6 +263,16 @@
       <tr><td><code>url</code></td><td>string</td><td>Yes</td><td>Content URL where the button will be embedded</td></tr>
       <tr><td><code>theme</code></td><td>string</td><td>No</td><td>Button theme: <code>light</code> (default), <code>dark</code>, <code>minimal</code>, <code>mono-dark</code>, <code>mono-light</code></td></tr>
       <tr><td><code>size</code></td><td>string</td><td>No</td><td>Button size: <code>xs</code>, <code>sm</code>, <code>md</code> (default), <code>lg</code>, <code>xl</code></td></tr>
+      <tr><td><code>restriction</code></td><td>string</td><td>No</td><td>Where nices are allowed from: <code>url</code> (default), <code>domain</code>, <code>global</code></td></tr>
+      <tr><td><code>multi_nice</code></td><td>boolean</td><td>No</td><td>Enable clap-style multi-nice. Default: <code>false</code></td></tr>
+      <tr><td><code>label</code></td><td>string</td><td>No</td><td>Visible idle label and label for every state of a multi-nice button. Defaults to <code>Nice</code>; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters (<code>U+0000</code>–<code>U+001F</code>, <code>U+007F</code>) and angle brackets (<code>&lt;</code>, <code>&gt;</code>) are rejected.</td></tr>
+      <tr><td><code>pressed_label</code></td><td>string</td><td>No</td><td>Visible label after interaction with a single-nice button. Defaults to <code>Nice'd</code>; maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters (<code>U+0000</code>–<code>U+001F</code>, <code>U+007F</code>) and angle brackets (<code>&lt;</code>, <code>&gt;</code>) are rejected.</td></tr>
+      <tr><td><code>colors</code></td><td>object or <code>null</code></td><td>No</td><td>Complete six-key <code>#RRGGBB</code> palette, or <code>null</code> for theme colours</td></tr>
+      <tr><td><code>shape</code></td><td>string</td><td>No</td><td><code>rounded</code> (default), <code>pill</code>, <code>square</code></td></tr>
+      <tr><td><code>count_visibility</code></td><td>string</td><td>No</td><td><code>nonzero</code> (default), <code>always</code>, <code>hidden</code></td></tr>
+      <tr><td><code>count_position</code></td><td>string</td><td>No</td><td><code>inside</code> (default), <code>beside</code>, <code>below</code></td></tr>
+      <tr><td><code>count_format</code></td><td>string</td><td>No</td><td><code>compact</code> (default), <code>full</code></td></tr>
+      <tr><td><code>animation</code></td><td>string</td><td>No</td><td><code>pop</code> (default), <code>bounce</code>, <code>sparkle</code>, <code>confetti</code>, <code>none</code></td></tr>
     </table>
     
     <h3>Response</h3>
@@ -233,12 +280,22 @@
   "public_id": "n_x7Kf9mQ2Ab3Z",
   "private_id": "ns_4vK9mPq8wL2nRt5xYz7bC",
   "url": "https://example.com/my-article",
+  "restriction": "url",
+  "multi_nice": false,
   "theme": "light",
   "size": "md",
+  "label": "Nice",
+  "pressed_label": "Nice'd",
+  "colors": null,
+  "shape": "rounded",
+  "count_visibility": "nonzero",
+  "count_position": "inside",
+  "count_format": "compact",
+  "animation": "pop",
   "count": 0,
   "created_at": "2026-02-18T10:00:00Z",
   "embed": {
-    "iframe": "&lt;iframe src=\"https://api.nice.sbs/e/n_x7Kf9mQ2Ab3Z?theme=light&size=md\" style=\"border:none;width:100px;height:36px;\" title=\"Nice button\"&gt;&lt;/iframe&gt;",
+    "iframe": "&lt;iframe src=\"https://api.nice.sbs/e/n_x7Kf9mQ2Ab3Z?theme=light&size=md\" style=\"background:transparent;border:none;overflow:hidden;display:block;color-scheme:normal;width:100px;height:36px;\" scrolling=\"no\" frameborder=\"0\" allowtransparency=\"true\" title=\"Nice button\"&gt;&lt;/iframe&gt;",
     "script": "&lt;script src=\"https://api.nice.sbs/embed.js\" data-button=\"n_x7Kf9mQ2Ab3Z\" data-theme=\"light\" data-size=\"md\" async&gt;&lt;/script&gt;"
   }
 }</code></pre>
@@ -256,13 +313,70 @@
     <pre><code>{
   "id": "n_x7Kf9mQ2Ab3Z",
   "url": "https://example.com/my-article",
+  "restriction": "url",
+  "multi_nice": false,
   "count": 42,
   "theme": "light",
   "size": "md",
+  "label": "Nice",
+  "pressed_label": "Nice'd",
+  "colors": null,
+  "shape": "rounded",
+  "count_visibility": "nonzero",
+  "count_position": "inside",
+  "count_format": "compact",
+  "animation": "pop",
   "created_at": "2026-02-18T10:00:00Z",
   "embed": { ... }
 }</code></pre>
     
+    <h2 id="update">Update Button</h2>
+
+    <div class="endpoint">
+      <span class="method post">PATCH</span>
+      <span class="path">/api/v1/buttons/<span class="param">:private_id</span></span>
+    </div>
+
+    <p>Update button settings. Requires the private ID.</p>
+
+    <h3>Request Body</h3>
+    <table>
+      <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+      <tr><td><code>restriction</code></td><td>string</td><td>No</td><td><code>url</code>, <code>domain</code>, <code>global</code></td></tr>
+      <tr><td><code>theme</code></td><td>string</td><td>No</td><td><code>light</code>, <code>dark</code>, <code>minimal</code>, <code>mono-dark</code>, <code>mono-light</code></td></tr>
+      <tr><td><code>size</code></td><td>string</td><td>No</td><td><code>xs</code>, <code>sm</code>, <code>md</code>, <code>lg</code>, <code>xl</code></td></tr>
+      <tr><td><code>multi_nice</code></td><td>boolean</td><td>No</td><td>Enable or disable clap-style multi-nice</td></tr>
+      <tr><td><code>label</code></td><td>string</td><td>No</td><td>Update the visible idle label. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters (<code>U+0000</code>–<code>U+001F</code>, <code>U+007F</code>) and angle brackets (<code>&lt;</code>, <code>&gt;</code>) are rejected.</td></tr>
+      <tr><td><code>pressed_label</code></td><td>string</td><td>No</td><td>Update the visible single-nice pressed-state label; retained when clap mode changes. Maximum 32 Unicode code points; leading/trailing whitespace is trimmed; ASCII control characters (<code>U+0000</code>–<code>U+001F</code>, <code>U+007F</code>) and angle brackets (<code>&lt;</code>, <code>&gt;</code>) are rejected.</td></tr>
+      <tr><td><code>colors</code></td><td>object or <code>null</code></td><td>No</td><td>Replace the complete six-key palette, or clear it with <code>null</code> for theme colours</td></tr>
+      <tr><td><code>shape</code></td><td>string</td><td>No</td><td><code>rounded</code>, <code>pill</code>, <code>square</code></td></tr>
+      <tr><td><code>count_visibility</code></td><td>string</td><td>No</td><td><code>nonzero</code>, <code>always</code>, <code>hidden</code></td></tr>
+      <tr><td><code>count_position</code></td><td>string</td><td>No</td><td><code>inside</code>, <code>beside</code>, <code>below</code></td></tr>
+      <tr><td><code>count_format</code></td><td>string</td><td>No</td><td><code>compact</code>, <code>full</code></td></tr>
+      <tr><td><code>animation</code></td><td>string</td><td>No</td><td><code>pop</code>, <code>bounce</code>, <code>sparkle</code>, <code>confetti</code>, <code>none</code></td></tr>
+    </table>
+
+    <h3>Response</h3>
+    <pre><code>{
+  "id": "n_x7Kf9mQ2Ab3Z",
+  "url": "https://example.com/my-article",
+  "restriction": "global",
+  "multi_nice": true,
+  "count": 42,
+  "theme": "dark",
+  "size": "lg",
+  "label": "Nice",
+  "pressed_label": "Nice'd",
+  "colors": null,
+  "shape": "rounded",
+  "count_visibility": "nonzero",
+  "count_position": "inside",
+  "count_format": "compact",
+  "animation": "pop",
+  "created_at": "2026-02-18T10:00:00Z",
+  "embed": { ... }
+}</code></pre>
+
     <h2 id="delete">Delete Button</h2>
     
     <div class="endpoint">
@@ -287,7 +401,7 @@
     
     <p>Record a "nice" using the private ID. <strong>Owner only</strong> — no restrictions.</p>
     
-    <p>Unlike the public endpoint: no referrer check, no IP deduplication, no rate limiting.</p>
+    <p>Unlike the public endpoint: no referrer check and no IP deduplication. This endpoint is still rate-limited by IP to prevent abuse.</p>
     
     <h3>Response</h3>
     <pre><code>{
@@ -304,6 +418,14 @@
     </div>
     
     <p>Record a "nice" on a button. Public endpoint, no auth required.</p>
+
+    <h3>Request Body (Optional)</h3>
+    <table>
+      <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+      <tr><td><code>fingerprint</code></td><td>string</td><td>No</td><td>Device fingerprint used with IP and daily salt for deduplication</td></tr>
+      <tr><td><code>referrer</code></td><td>string</td><td>No</td><td>Parent page URL checked against the button restriction</td></tr>
+      <tr><td><code>pow_solution</code></td><td>object</td><td>No</td><td>Proof-of-work response when rate limiting requires one</td></tr>
+    </table>
     
     <h3>Response</h3>
     <pre><code>{
@@ -330,18 +452,44 @@
     <h3>Response</h3>
     <pre><code>{
   "count": 43,
-  "button_id": "n_x7Kf9mQ2"
+  "button_id": "n_x7Kf9mQ2",
+  "has_niced": true,
+  "multi_nice": false,
+  "url": "https://example.com/my-article"
 }</code></pre>
     
     <h2 id="embed">Embed Options</h2>
     
-    <h3>iframe (Recommended)</h3>
+    <h3>Script tag (Recommended)</h3>
+    <p>The script tag creates the iframe and can show effects on the host page, such as confetti. It auto-resizes after the Bungee font settles:</p>
+    <pre><code>&lt;script
+  src="https://api.nice.sbs/embed.js"
+  data-button="<span class="param">:public_id</span>"
+  data-theme="light"
+  data-size="md"
+  data-confetti="true"
+  async&gt;&lt;/script&gt;</code></pre>
+
+    <p><strong>Data attributes:</strong></p>
+    <table>
+      <tr><th>Attribute</th><th>Default</th><th>Description</th></tr>
+      <tr><td><code>data-button</code></td><td>—</td><td>Public button ID (required)</td></tr>
+      <tr><td><code>data-theme</code></td><td><code>light</code></td><td>Button theme</td></tr>
+      <tr><td><code>data-size</code></td><td><code>md</code></td><td>Button size</td></tr>
+      <tr><td><code>data-multi</code></td><td>—</td><td>Generated as <code>1</code> when the button's stored <code>multi_nice</code> setting is enabled; do not add it independently</td></tr>
+      <tr><td><code>data-confetti</code></td><td><code>false</code></td><td>Set to <code>true</code> to show confetti on the host page after a nice</td></tr>
+    </table>
+    <p>Remove <code>data-confetti="true"</code> to keep the button without confetti. This setting belongs to the embed placement and is not stored on the button. Stored button animation (including <code>animation: "confetti"</code>) runs only inside the iframe and is independent of host-page confetti.</p>
+
+    <h3>iframe</h3>
+    <p>Use the iframe when a platform allows HTML but blocks external scripts. A standalone iframe cannot draw outside its own rectangle, so it cannot provide host-page confetti. Generated snippets size the iframe from stored labels and appearance (visible count position/format). Standalone iframes cannot auto-resize after material count or layout changes — refresh the generated snippet after those updates. Appearance query parameters are ignored.</p>
     <pre><code>&lt;iframe 
   src="https://api.nice.sbs/e/<span class="param">:public_id</span>?theme=light&size=md"
   style="border:none;width:100px;height:36px;"
   title="Nice button"&gt;
 &lt;/iframe&gt;</code></pre>
-    
+    <p><code>100px × 36px</code> is the default-label baseline. For custom labels, use the generated iframe snippet, whose width is calculated from the stored labels.</p>
+
     <h3>Themes</h3>
     <table>
       <tr><th>Theme</th><th>Description</th></tr>
@@ -392,9 +540,35 @@
       <tr><td><code>INVALID_URL</code></td><td>400</td><td>URL format is invalid</td></tr>
       <tr><td><code>INVALID_THEME</code></td><td>400</td><td>Invalid theme value</td></tr>
       <tr><td><code>INVALID_SIZE</code></td><td>400</td><td>Invalid size value</td></tr>
+      <tr><td><code>INVALID_RESTRICTION</code></td><td>400</td><td>Invalid restriction mode</td></tr>
+      <tr><td><code>INVALID_LABEL</code></td><td>400</td><td>Invalid or empty <code>label</code></td></tr>
+      <tr><td><code>INVALID_PRESSED_LABEL</code></td><td>400</td><td>Invalid or empty <code>pressed_label</code></td></tr>
+      <tr><td><code>INVALID_COLORS</code></td><td>400</td><td>Invalid or incomplete custom palette</td></tr>
+      <tr><td><code>INVALID_SHAPE</code></td><td>400</td><td>Invalid shape value</td></tr>
+      <tr><td><code>INVALID_COUNT_VISIBILITY</code></td><td>400</td><td>Invalid count visibility value</td></tr>
+      <tr><td><code>INVALID_COUNT_POSITION</code></td><td>400</td><td>Invalid count position value</td></tr>
+      <tr><td><code>INVALID_COUNT_FORMAT</code></td><td>400</td><td>Invalid count format value</td></tr>
+      <tr><td><code>INVALID_ANIMATION</code></td><td>400</td><td>Invalid animation value</td></tr>
+      <tr><td><code>INVALID_BUTTON_ID</code></td><td>400</td><td>Public button ID format invalid</td></tr>
       <tr><td><code>NOT_FOUND</code></td><td>404</td><td>Button not found</td></tr>
+      <tr><td><code>BUTTON_NOT_FOUND</code></td><td>404</td><td>Public button not found</td></tr>
       <tr><td><code>REFERRER_DENIED</code></td><td>403</td><td>Nice not allowed from this referrer</td></tr>
+      <tr><td><code>MULTI_NICE_DISABLED</code></td><td>403</td><td>Multi-nice endpoint called on a single-nice button</td></tr>
+      <tr><td><code>POW_REQUIRED</code></td><td>429</td><td>Proof-of-work challenge required before retrying</td></tr>
+      <tr><td><code>INVALID_POW</code></td><td>400</td><td>Proof-of-work solution invalid</td></tr>
+      <tr><td><code>HOURLY_LIMIT</code></td><td>429</td><td>Hourly button creation limit exceeded</td></tr>
+      <tr><td><code>DAILY_LIMIT</code></td><td>429</td><td>Daily button creation limit exceeded</td></tr>
       <tr><td><code>IP_LIMIT</code></td><td>429</td><td>Rate limit exceeded</td></tr>
+      <tr><td><code>BUTTON_LIMIT</code></td><td>429</td><td>Button rate limit exceeded</td></tr>
+    </table>
+
+    <h3>Rate Limits</h3>
+    <table>
+      <tr><th>Scope</th><th>Limit</th><th>Window</th></tr>
+      <tr><td>Per IP (button creation)</td><td>10 buttons</td><td>1 hour</td></tr>
+      <tr><td>Per IP (button creation)</td><td>50 buttons</td><td>1 day</td></tr>
+      <tr><td>Per IP (nice)</td><td>20 requests</td><td>1 minute</td></tr>
+      <tr><td>Per Button (nice)</td><td>100 requests</td><td>1 minute</td></tr>
     </table>
     
   </div>

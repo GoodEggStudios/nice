@@ -1,5 +1,14 @@
 export * from "./env";
 
+import type {
+  ButtonAnimation,
+  ButtonColors,
+  ButtonShape,
+  CountFormat,
+  CountPosition,
+  CountVisibility,
+} from "../lib/button-appearance";
+
 /**
  * Restriction mode for buttons
  * - url: Only allow nices from exact URL match
@@ -21,6 +30,14 @@ export interface Button {
   multiNice?: boolean; // Allow multiple nices per visitor (clap-style)
   theme?: string; // Default theme
   size?: string; // Default size
+  label?: string; // Visible idle button label
+  pressedLabel?: string; // Visible single-nice pressed label
+  colors?: ButtonColors; // Custom palette; absent means theme colours
+  shape?: ButtonShape;
+  countVisibility?: CountVisibility;
+  countPosition?: CountPosition;
+  countFormat?: CountFormat;
+  animation?: ButtonAnimation;
   createdAt: string;
 }
 

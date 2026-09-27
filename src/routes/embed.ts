@@ -5,11 +5,26 @@
  * - GET /embed/:button_id - Embed iframe content
  */
 
-import type { Env } from "../types";
+import type { Button, Env } from "../types";
 import {
+  DEFAULT_BUTTON_LABEL,
+  DEFAULT_PRESSED_BUTTON_LABEL,
+  getButtonAppearance,
+  hasStoredButtonAppearance,
+  normalizeStoredButtonLabel,
+  normalizeStoredButtonAnimation,
+  normalizeStoredButtonShape,
+  normalizeStoredCountFormat,
+  normalizeStoredCountPosition,
+  normalizeStoredCountVisibility,
+  validateButtonColors,
+} from "../lib";
+import {
+  DEFAULT_EMBED_APPEARANCE,
   EMBED_SIZES,
   EMBED_THEMES,
   renderEmbedSizeMapLiteral,
+  type EmbedAppearance,
   type EmbedSize,
   type EmbedTheme,
 } from "./embed-constants";
@@ -18,6 +33,8 @@ export {
   EMBED_DIMENSIONS,
   EMBED_SIZES,
   EMBED_THEMES,
+  EMBED_FONT_SIZE,
+  getEmbedInitialDimensions,
   type EmbedSize,
   type EmbedTheme,
 } from "./embed-constants";
@@ -28,14 +45,43 @@ export interface RenderEmbedHtmlOptions {
   theme: EmbedTheme;
   size: EmbedSize;
   multiNice?: boolean;
+  label?: string;
+  pressedLabel?: string;
+  appearance?: EmbedAppearance;
 }
 
 export interface RenderDemoEmbedHtmlOptions {
   theme: EmbedTheme;
   size: EmbedSize;
+  label?: string;
+  pressedLabel?: string;
+  appearance?: EmbedAppearance;
 }
 
 const DEFAULT_EMBED_BASE = "https://api.nice.sbs";
+
+function escapeHtmlText(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => {
+    switch (character) {
+      case "&":
+        return "&amp;";
+      case "<":
+        return "&lt;";
+      case ">":
+        return "&gt;";
+      case '"':
+        return "&quot;";
+      default:
+        return "&#39;";
+    }
+  });
+}
+
+function serializeInlineScriptString(value: string): string {
+  return JSON.stringify(value).replace(/[<>&\u2028\u2029]/g, (character) => {
+    return `\\u${character.charCodeAt(0).toString(16).padStart(4, "0")}`;
+  });
+}
 
 function escapeSingleQuotedJsString(value: string): string {
   return value
@@ -48,11 +94,23 @@ function escapeSingleQuotedJsString(value: string): string {
 }
 
 export function renderEmbedScript(embedBase = DEFAULT_EMBED_BASE): string {
+  return renderLegacyEmbedScript(embedBase)
+    .replace(
+      "const enableConfetti=confettiAttr!==null&&confettiAttr!=='false'&&confettiAttr!=='0';",
+      "const enableConfetti=confettiAttr!==null&&confettiAttr!=='false'&&confettiAttr!=='0';const reducedMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;"
+    )
+    .replace(
+      "function launchConfetti(){const canvas=",
+      "function launchConfetti(){if(reducedMotion)return;const canvas="
+    );
+}
+
+function renderLegacyEmbedScript(embedBase = DEFAULT_EMBED_BASE): string {
   const renderedEmbedBase =
     embedBase === DEFAULT_EMBED_BASE ? embedBase : escapeSingleQuotedJsString(embedBase);
   const sizes = renderEmbedSizeMapLiteral();
 
-  return `(function(){'use strict';const EMBED_BASE='${renderedEmbedBase}';const SIZES=${sizes};function init(){document.querySelectorAll('script[data-button]').forEach(createEmbed)}function createEmbed(script){const buttonId=script.getAttribute('data-button');if(!buttonId)return;const theme=script.getAttribute('data-theme')||'light';const size=script.getAttribute('data-size')||'md';const dims=SIZES[size]||SIZES.md;const container=document.createElement('div');container.className='nice-embed';container.style.cssText='display:inline-block;vertical-align:middle;';const iframe=document.createElement('iframe');iframe.src=EMBED_BASE+'/embed/'+buttonId+'?theme='+encodeURIComponent(theme)+'&size='+encodeURIComponent(size);iframe.style.cssText='background:transparent;border:none;overflow:hidden;width:'+dims.w+'px;height:'+dims.h+'px;display:block;color-scheme:normal;';iframe.setAttribute('scrolling','no');iframe.setAttribute('frameborder','0');iframe.setAttribute('allowtransparency','true');iframe.setAttribute('sandbox','allow-scripts allow-same-origin');iframe.setAttribute('title','Nice button');container.appendChild(iframe);script.parentNode.insertBefore(container,script.nextSibling);window.addEventListener('message',function(event){if(event.origin!==EMBED_BASE)return;try{const data=event.data;if(data.type==='nice-resize'&&data.buttonId===buttonId){iframe.style.width=data.width+'px';iframe.style.height=data.height+'px'}}catch(e){}})}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}})();`;
+  return `(function(){'use strict';const EMBED_BASE='${renderedEmbedBase}';const SIZES=${sizes};function init(){document.querySelectorAll('script[data-button]').forEach(createEmbed)}function createEmbed(script){const buttonId=script.getAttribute('data-button');if(!buttonId)return;const theme=script.getAttribute('data-theme')||'light';const size=script.getAttribute('data-size')||'md';const multiAttr=script.getAttribute('data-multi');const isMultiAttr=multiAttr!==null&&multiAttr!=='false'&&multiAttr!=='0';const confettiAttr=script.getAttribute('data-confetti');const enableConfetti=confettiAttr!==null&&confettiAttr!=='false'&&confettiAttr!=='0';const dims=SIZES[size]||SIZES.md;const container=document.createElement('div');container.className='nice-embed';container.style.cssText='display:inline-block;vertical-align:middle;';const iframe=document.createElement('iframe');iframe.src=EMBED_BASE+'/embed/'+buttonId+'?theme='+encodeURIComponent(theme)+'&size='+encodeURIComponent(size)+(isMultiAttr?'&multi=1':'');iframe.style.cssText='background:transparent;border:none;overflow:hidden;width:'+dims.w+'px;height:'+dims.h+'px;display:block;color-scheme:normal;';iframe.setAttribute('scrolling','no');iframe.setAttribute('frameborder','0');iframe.setAttribute('allowtransparency','true');iframe.setAttribute('sandbox','allow-scripts allow-same-origin');iframe.setAttribute('title','Nice button');container.appendChild(iframe);script.parentNode.insertBefore(container,script.nextSibling);let isMultiNice=isMultiAttr,hasConfettied=false;function launchConfetti(){const canvas=document.createElement('canvas');canvas.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1000';canvas.width=window.innerWidth;canvas.height=window.innerHeight;document.body.appendChild(canvas);const ctx=canvas.getContext('2d');const rect=container.getBoundingClientRect();const originX=rect.left+rect.width/2;const originY=rect.top;const colors=['#fbbf24','#f59e0b','#fcd34d','#fde68a','#fff'];const particles=[];for(let i=0;i<35;i++){const angle=-Math.PI/2+(Math.random()-0.5)*1.2;const speed=6+Math.random()*8;particles.push({x:originX+(Math.random()-0.5)*rect.width*0.6,y:originY,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,w:4+Math.random()*5,h:3+Math.random()*6,color:colors[Math.floor(Math.random()*colors.length)],rotation:Math.random()*360,rotSpeed:(Math.random()-0.5)*12,opacity:1})}let frame=0;function tick(){ctx.clearRect(0,0,canvas.width,canvas.height);let alive=false;for(const p of particles){p.vy+=0.12;p.vx*=0.98;p.vy*=0.98;p.x+=p.vx;p.y+=p.vy;p.rotation+=p.rotSpeed;if(p.vy>0&&frame>20)p.opacity-=0.008;if(p.opacity<=0||p.y>canvas.height)continue;alive=true;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rotation*Math.PI/180);ctx.globalAlpha=p.opacity;ctx.fillStyle=p.color;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore()}frame++;if(alive&&frame<300)requestAnimationFrame(tick);else canvas.remove()}requestAnimationFrame(tick)}window.addEventListener('message',function(event){if(event.origin!==EMBED_BASE||event.source!==iframe.contentWindow)return;try{const data=event.data;if(data.type==='nice-resize'&&data.buttonId===buttonId){iframe.style.width=data.width+'px';iframe.style.height=data.height+'px'}if(enableConfetti&&data.buttonId===buttonId){if(data.type==='nice-clicked'){isMultiNice=true;launchConfetti()}else if(data.type==='nice-recorded'&&!isMultiNice&&!hasConfettied){hasConfettied=true;launchConfetti()}}}catch(e){}})}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}})();`;
 }
 
 // Embed HTML template - Bungee font design with size variants
@@ -70,7 +128,10 @@ const EMBED_HTML = `<!DOCTYPE html>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{background:transparent}
 body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-content:center;padding:2px}
-.nice-button{display:inline-flex;align-items:center;border:none;font-family:'Bungee',cursive;cursor:pointer;transition:all .15s ease;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;text-transform:uppercase;letter-spacing:0.5px}
+.nice-widget{display:inline-flex;align-items:center}
+.count-position-beside .nice-widget{gap:4px}
+.count-position-below .nice-widget{flex-direction:column;gap:4px}
+.nice-button{display:inline-flex;align-items:center;border:none;font-family:'Bungee',cursive;cursor:pointer;transition:all .15s ease;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap}
 .nice-button:hover{transform:scale(1.05)}
 .nice-button:active{transform:scale(0.95)}
 .nice-button:focus-visible{outline:2px solid #fbbf24;outline-offset:2px}
@@ -105,6 +166,7 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 .theme-dark .nice-button{background:#374151;color:#f3f4f6}
 .theme-dark .nice-button:hover{background:#4b5563}
 .theme-dark .nice-button.niced{background:#fbbf24;color:#000}
+.theme-dark .nice-count-outside{color:#f3f4f6}
 
 /* Theme: Minimal */
 .theme-minimal .nice-button{background:transparent;color:inherit;border:2px solid currentColor;opacity:.7}
@@ -115,39 +177,71 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 .theme-mono-dark .nice-button{background:#000;color:#fff;border:1px solid #333}
 .theme-mono-dark .nice-button:hover{background:#111}
 .theme-mono-dark .nice-button.niced{background:#fff;color:#000;border-color:#fff}
+.theme-mono-dark .nice-count-outside{color:#fff}
 
 /* Theme: Mono Light (black on white, inverts when niced) */
 .theme-mono-light .nice-button{background:#fff;color:#000;border:1px solid #ddd}
 .theme-mono-light .nice-button:hover{background:#f5f5f5}
 .theme-mono-light .nice-button.niced{background:#000;color:#fff;border-color:#000}
+.theme-mono-light .nice-count-outside{color:#000}
 
-.nice-text{transition:all .15s ease}
+.shape-pill .nice-button{border-radius:9999px}
+.shape-square .nice-button{border-radius:0}
+.has-custom-colors .nice-button{background:var(--nice-background);color:var(--nice-foreground);border:1px solid var(--nice-border)}
+.has-custom-colors .nice-button:hover{background:var(--nice-background);filter:brightness(.96)}
+.has-custom-colors .nice-button.niced{background:var(--nice-pressed-background);color:var(--nice-pressed-foreground);border-color:var(--nice-pressed-border)}
+.has-custom-colors .nice-button.niced:hover{background:var(--nice-pressed-background);filter:brightness(.96)}
+.has-custom-colors .nice-button.disabled:hover{filter:none}
+.has-custom-colors .nice-count-outside{color:var(--nice-foreground)}
+.has-custom-colors .nice-button.niced+.nice-count-outside{color:var(--nice-pressed-foreground)}
+
+.nice-text{transition:all .15s ease;white-space:nowrap}
 .nice-count{opacity:0.8}
 
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+@keyframes bounce{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(-4px) scale(1.05)}70%{transform:translateY(0) scale(.98)}}
+@keyframes sparkle{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(calc((var(--particle-index) - 4) * 7px),-14px) scale(0)}}
+@keyframes confetti{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(calc((var(--particle-index) - 8) * 7px),calc(24px + (var(--particle-index) % 4) * 8px)) rotate(180deg)}}
 .nice-button.animating{animation:pulse .3s ease}
+.nice-button.bouncing{animation:bounce .4s ease}
 .nice-button.shake{animation:shake .3s ease}
+.nice-button{position:relative}
+.nice-particle{position:absolute;left:50%;top:50%;width:5px;height:5px;pointer-events:none;background:var(--particle-color);animation-fill-mode:forwards}
+.sparkle-particle{border-radius:50%;animation:sparkle .5s ease-out}
+.confetti-particle{width:5px;height:8px;animation:confetti .7s ease-out}
 .nice-button.disabled{opacity:.5;cursor:not-allowed}
 .nice-button.disabled:hover{transform:none}
 </style>
 </head>
-<body class="theme-{{THEME}} size-{{SIZE}}">
-<button class="nice-button" id="niceBtn" aria-label="Nice this" aria-pressed="false">
-<span class="nice-text" id="niceText">Nice</span>
-<span class="nice-count" id="niceCount" aria-live="polite"></span>
+<body class="theme-{{THEME}} size-{{SIZE}}{{APPEARANCE_CLASSES}}"{{APPEARANCE_STYLE}}>
+<div class="nice-widget">
+<button class="nice-button" id="niceBtn" aria-label="{{LABEL_HTML}}" aria-pressed="false">
+<span class="nice-text" id="niceText">{{LABEL_HTML}}</span>
+<span class="nice-count nice-count-inside" id="niceCountInside" aria-live="polite"></span>
 </button>
+<span class="nice-count nice-count-outside" id="niceCountOutside" aria-live="polite"></span>
+</div>
 <script>
 (function(){'use strict';
 const API_BASE='{{API_BASE}}';
 const BUTTON_ID='{{BUTTON_ID}}';
 const IS_MULTI='{{MULTI_NICE}}'==='1';
+const COUNT_VISIBILITY='{{COUNT_VISIBILITY}}';
+const COUNT_POSITION='{{COUNT_POSITION}}';
+const COUNT_FORMAT='{{COUNT_FORMAT}}';
+const ANIMATION='{{ANIMATION}}';
+const LABEL={{LABEL_JS}};
+const PRESSED_LABEL={{PRESSED_LABEL_JS}};
 const STORAGE_KEY='nice:'+BUTTON_ID;
 const btn=document.getElementById('niceBtn');
 const textEl=document.getElementById('niceText');
-const countEl=document.getElementById('niceCount');
+const countInsideEl=document.getElementById('niceCountInside');
+const countOutsideEl=document.getElementById('niceCountOutside');
 let count=0,hasNiced=false,isLoading=false;
-// Get parent origin for secure postMessage (no referrer = no message)
+let animationCleanup=null;
+// Get parent origin for secure postMessage; wildcard is used only when the
+// browser suppresses the referrer, and the loader still validates event.origin.
 let parentOrigin=null;
 try{if(document.referrer){parentOrigin=new URL(document.referrer).origin;}}catch(e){}
 try{hasNiced=localStorage.getItem(STORAGE_KEY)==='1';}catch(e){}
@@ -157,23 +251,68 @@ if(n>=1e6)return(n/1e6).toFixed(1).replace(/\\.0$/,'')+'M';
 if(n>=1e3)return(n/1e3).toFixed(1).replace(/\\.0$/,'')+'K';
 return n.toString();
 }
+function reducedMotion(){return window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;}
+function clearInteractionAnimation(){if(animationCleanup){animationCleanup();animationCleanup=null;}}
+function playInteractionAnimation(popDuration=300){
+clearInteractionAnimation();
+if(reducedMotion())return;
+if(ANIMATION==='none')return;
+if(ANIMATION==='pop'||ANIMATION==='bounce'){
+const className=ANIMATION==='pop'?'animating':'bouncing';
+btn.classList.add(className);
+const timer=window.setTimeout(()=>{btn.classList.remove(className);animationCleanup=null;notifyResize();},ANIMATION==='pop'?popDuration:400);
+animationCleanup=()=>{window.clearTimeout(timer);btn.classList.remove(className);notifyResize();};
+return;
+}
+const particleCount=ANIMATION==='sparkle'?8:16;
+const particleClass=ANIMATION==='sparkle'?'sparkle-particle':'confetti-particle';
+const colors=['#fbbf24','#f59e0b','#fcd34d','#fde68a','#fff'];
+const particles=[];
+for(let i=0;i<particleCount;i++){
+const particle=document.createElement('span');
+particle.className='nice-particle '+particleClass;
+particle.style.setProperty('--particle-index',String(i));
+particle.style.setProperty('--particle-color',colors[i%colors.length]);
+btn.appendChild(particle);particles.push(particle);
+}
+notifyResize();
+const timer=window.setTimeout(()=>{particles.forEach((particle)=>particle.remove());animationCleanup=null;notifyResize();},ANIMATION==='sparkle'?500:700);
+animationCleanup=()=>{window.clearTimeout(timer);particles.forEach((particle)=>particle.remove());notifyResize();};
+}
+function playDeniedAnimation(){
+if(reducedMotion())return;
+btn.classList.add('shake');
+window.setTimeout(()=>btn.classList.remove('shake'),300);
+}
+function updateCountDisplay(){
+const visible=COUNT_VISIBILITY==='always'||(COUNT_VISIBILITY==='nonzero'&&count>0);
+const text=COUNT_FORMAT==='full'?count.toString():formatCount(count);
+const insideActive=visible&&COUNT_POSITION==='inside';
+const outsideActive=visible&&COUNT_POSITION!=='inside';
+countInsideEl.textContent=insideActive?text:'';
+countInsideEl.style.display=insideActive?'':'none';
+countInsideEl.setAttribute('aria-live',insideActive?'polite':'off');
+countOutsideEl.textContent=outsideActive?text:'';
+countOutsideEl.style.display=outsideActive?'':'none';
+countOutsideEl.setAttribute('aria-live',outsideActive?'polite':'off');
+}
 function updateDisplay(){
-if(count>0){countEl.textContent=formatCount(count);countEl.style.display='';}else{countEl.textContent='';countEl.style.display='none';}
+updateCountDisplay();
 if(hasNiced){
 btn.classList.add('niced');
 btn.setAttribute('aria-pressed','true');
-textEl.textContent=IS_MULTI?"Nice":"Nice'd";
+textEl.textContent=IS_MULTI?LABEL:PRESSED_LABEL;
 }else{
 btn.classList.remove('niced');
 btn.setAttribute('aria-pressed','false');
-textEl.textContent='Nice';
+textEl.textContent=LABEL;
 }
+btn.setAttribute('aria-label',LABEL==='Nice'&&PRESSED_LABEL==="Nice'd"?'Nice this':textEl.textContent);
 notifyResize();
 }
 function notifyResize(){
-if(!parentOrigin)return;
 const root=document.documentElement;
-parent.postMessage({type:'nice-resize',buttonId:BUTTON_ID,width:Math.ceil(root.scrollWidth),height:Math.ceil(root.scrollHeight)},parentOrigin);
+parent.postMessage({type:'nice-resize',buttonId:BUTTON_ID,width:Math.ceil(root.scrollWidth),height:Math.ceil(root.scrollHeight)},parentOrigin||'*');
 }
 function getFingerprint(){
 const data=[screen.width+'x'+screen.height,new Date().getTimezoneOffset(),navigator.language,navigator.userAgent.slice(0,50)].join('|');
@@ -193,37 +332,39 @@ updateDisplay();
 }
 }catch(e){console.error('Nice: Failed to fetch count',e);}
 }
-// Multi-nice: debounce clicks, batch into one API call
+// Multi-nice: debounce clicks, batch into one API call.
+// Keep local count if a burst continues while a batch is in flight, then flush again.
 let pendingMultiCount=0;
 let multiTimer=null;
+let multiInFlight=false;
 function flushMultiNice(){
-if(pendingMultiCount<=0)return;
+if(pendingMultiCount<=0||multiInFlight)return;
 const batch=pendingMultiCount;
 pendingMultiCount=0;
+multiInFlight=true;
 fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID+'/multi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({count:batch,fingerprint:getFingerprint(),referrer:document.referrer||''})})
 .then(r=>r.json()).then(data=>{
-if(data.success){count=data.count;if(parentOrigin){parent.postMessage({type:'nice-recorded',buttonId:BUTTON_ID,count:count},parentOrigin);}}
+if(data.success){count=Math.max(count,data.count||0);if(parentOrigin){parent.postMessage({type:'nice-recorded',buttonId:BUTTON_ID,count:count},parentOrigin);}}
 updateDisplay();
-}).catch(e=>{count-=batch;updateDisplay();console.error('Nice: batch failed',e);});
+}).catch(e=>{count=Math.max(0,count-batch);updateDisplay();console.error('Nice: batch failed',e);})
+.finally(()=>{multiInFlight=false;if(pendingMultiCount>0){clearTimeout(multiTimer);multiTimer=setTimeout(flushMultiNice,0);}});
 }
 async function recordNice(){
 if(IS_MULTI){
 // Optimistic local update + debounced API call
 if(parentOrigin){parent.postMessage({type:'nice-clicked',buttonId:BUTTON_ID,count:count+1},parentOrigin);}
 count++;hasNiced=true;pendingMultiCount++;
-btn.classList.add('animating');updateDisplay();
-setTimeout(()=>btn.classList.remove('animating'),150);
+updateDisplay();playInteractionAnimation(IS_MULTI?150:300);
 clearTimeout(multiTimer);
 multiTimer=setTimeout(flushMultiNice,2000);
 return;
 }
 // Single-nice: immediate API call
 if(isLoading)return;
-if(hasNiced){btn.classList.add('shake');setTimeout(()=>btn.classList.remove('shake'),300);return;}
+if(hasNiced){playDeniedAnimation();return;}
 isLoading=true;
 // Single-nice: confetti via nice-recorded on success (not here)
-count++;hasNiced=true;btn.classList.add('animating');updateDisplay();
-setTimeout(()=>btn.classList.remove('animating'),300);
+count++;hasNiced=true;updateDisplay();playInteractionAnimation();
 try{
 const res=await fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fingerprint:getFingerprint(),referrer:document.referrer||''})});
 const data=await res.json();
@@ -239,7 +380,8 @@ catch(e){btn.classList.add('disabled');}
 }
 btn.addEventListener('click',recordNice);
 if(IS_MULTI){window.addEventListener('beforeunload',flushMultiNice);}
-if(BUTTON_ID){checkButton();fetchCount();}else{btn.classList.add('disabled');}
+if(BUTTON_ID){updateDisplay();checkButton();fetchCount();}else{btn.classList.add('disabled');updateDisplay();}
+if(document.fonts&&document.fonts.ready){document.fonts.ready.then(notifyResize).catch(()=>{});}
 setTimeout(notifyResize,100);
 })();
 </script>
@@ -254,20 +396,94 @@ function normalizeSize(size: string | null): EmbedSize {
   return EMBED_SIZES.includes(size as EmbedSize) ? (size as EmbedSize) : "md";
 }
 
+function normalizeEmbedAppearance(value: EmbedAppearance | undefined): EmbedAppearance {
+  const source = value ?? DEFAULT_EMBED_APPEARANCE;
+  const validatedColors = validateButtonColors(source.colors);
+  const safeColors = validatedColors.ok && validatedColors.value
+    ? {
+        background: validatedColors.value.background,
+        foreground: validatedColors.value.foreground,
+        border: validatedColors.value.border,
+        pressed_background: validatedColors.value.pressedBackground,
+        pressed_foreground: validatedColors.value.pressedForeground,
+        pressed_border: validatedColors.value.pressedBorder,
+      }
+    : null;
+  const safeShape = normalizeStoredButtonShape(source.shape);
+  const safeVisibility = normalizeStoredCountVisibility(source.count_visibility);
+  const safePosition = normalizeStoredCountPosition(source.count_position);
+  const safeFormat = normalizeStoredCountFormat(source.count_format);
+  const safeAnimation = normalizeStoredButtonAnimation(source.animation);
+
+  return {
+    colors: safeColors,
+    shape: safeShape as EmbedAppearance["shape"],
+    count_visibility: safeVisibility as EmbedAppearance["count_visibility"],
+    count_position: safePosition as EmbedAppearance["count_position"],
+    count_format: safeFormat as EmbedAppearance["count_format"],
+    animation: safeAnimation as EmbedAppearance["animation"],
+  };
+}
+
+function renderAppearanceValues(value: EmbedAppearance | undefined): {
+  classes: string;
+  style: string;
+  appearance: EmbedAppearance;
+} {
+  const appearance = normalizeEmbedAppearance(value);
+  const classes = value === undefined
+    ? ""
+    : ` ${[
+        `shape-${appearance.shape}`,
+        `count-position-${appearance.count_position}`,
+        appearance.colors ? "has-custom-colors" : "",
+      ].filter(Boolean).join(" ")}`;
+  const style = appearance.colors
+    ? ` style="--nice-background:${appearance.colors.background};--nice-foreground:${appearance.colors.foreground};--nice-border:${appearance.colors.border};--nice-pressed-background:${appearance.colors.pressed_background};--nice-pressed-foreground:${appearance.colors.pressed_foreground};--nice-pressed-border:${appearance.colors.pressed_border}"`
+    : "";
+  return { classes, style, appearance };
+}
+
 export function renderDemoEmbedHtml(options: RenderDemoEmbedHtmlOptions): string {
+  const label = options.label ?? DEFAULT_BUTTON_LABEL;
+  const pressedLabel = options.pressedLabel ?? DEFAULT_PRESSED_BUTTON_LABEL;
+  const appearance = renderAppearanceValues(options.appearance);
+
   return DEMO_HTML
     .replace(/\{\{THEME\}\}/g, options.theme)
-    .replace(/\{\{SIZE\}\}/g, options.size);
+    .replace(/\{\{SIZE\}\}/g, options.size)
+    .replace(/\{\{APPEARANCE_CLASSES\}\}/g, appearance.classes)
+    .replace(/\{\{APPEARANCE_STYLE\}\}/g, appearance.style)
+    .replace(/\{\{COUNT_VISIBILITY\}\}/g, appearance.appearance.count_visibility)
+    .replace(/\{\{COUNT_POSITION\}\}/g, appearance.appearance.count_position)
+    .replace(/\{\{COUNT_FORMAT\}\}/g, appearance.appearance.count_format)
+    .replace(/\{\{ANIMATION\}\}/g, appearance.appearance.animation)
+    .replace(/\{\{LABEL_HTML\}\}/g, () => escapeHtmlText(label))
+    .replace(/\{\{LABEL_JS\}\}/g, () => serializeInlineScriptString(label))
+    .replace(/\{\{PRESSED_LABEL_JS\}\}/g, () => serializeInlineScriptString(pressedLabel));
 }
 
 export function renderEmbedHtml(options: RenderEmbedHtmlOptions): string {
   const safeButtonId = options.buttonId.replace(/[<>"'&]/g, "");
+  const label = options.label ?? DEFAULT_BUTTON_LABEL;
+  const pressedLabel = options.pressedLabel ?? DEFAULT_PRESSED_BUTTON_LABEL;
+  const appearance = renderAppearanceValues(options.appearance);
+
   return EMBED_HTML
     .replace(/\{\{API_BASE\}\}/g, options.apiBase)
     .replace(/\{\{BUTTON_ID\}\}/g, safeButtonId)
     .replace(/\{\{THEME\}\}/g, options.theme)
-    .replace(/\{\{SIZE\}\}/g, options.size)
-    .replace(/\{\{MULTI_NICE\}\}/g, options.multiNice ? "1" : "0");
+  .replace(/\{\{SIZE\}\}/g, options.size)
+  .replace(/\{\{MULTI_NICE\}\}/g, options.multiNice ? "1" : "0")
+    .replace(/\{\{APPEARANCE_CLASSES\}\}/g, appearance.classes)
+    .replace(/\{\{APPEARANCE_STYLE\}\}/g, appearance.style)
+    .replace(/\{\{COUNT_VISIBILITY\}\}/g, appearance.appearance.count_visibility)
+    .replace(/\{\{COUNT_POSITION\}\}/g, appearance.appearance.count_position)
+    .replace(/\{\{COUNT_FORMAT\}\}/g, appearance.appearance.count_format)
+    .replace(/\{\{ANIMATION\}\}/g, appearance.appearance.animation)
+    .replace(/\{\{LABEL_HTML\}\}/g, () => escapeHtmlText(label))
+    .replace(/\{\{LABEL_JS\}\}/g, () => serializeInlineScriptString(label))
+    .replace(/\{\{PRESSED_LABEL_JS\}\}/g, () => serializeInlineScriptString(pressedLabel));
 }
 
 /**
@@ -298,7 +514,10 @@ const DEMO_HTML = `<!DOCTYPE html>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Bungee',cursive;background:transparent;display:flex;align-items:center;justify-content:center;padding:2px}
-.nice-button{display:inline-flex;align-items:center;border:none;font-family:'Bungee',cursive;cursor:pointer;transition:all .15s ease;-webkit-user-select:none;user-select:none;text-transform:uppercase;letter-spacing:0.5px}
+.nice-widget{display:inline-flex;align-items:center}
+.count-position-beside .nice-widget{gap:4px}
+.count-position-below .nice-widget{flex-direction:column;gap:4px}
+.nice-button{display:inline-flex;align-items:center;border:none;font-family:'Bungee',cursive;cursor:pointer;transition:all .15s ease;-webkit-user-select:none;user-select:none;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap}
 .nice-button:hover{transform:scale(1.05)}
 .nice-button:active{transform:scale(0.95)}
 .nice-button:focus-visible{outline:2px solid #fbbf24;outline-offset:2px}
@@ -315,36 +534,74 @@ body{font-family:'Bungee',cursive;background:transparent;display:flex;align-item
 .theme-dark .nice-button{background:#374151;color:#f3f4f6}
 .theme-dark .nice-button:hover{background:#4b5563}
 .theme-dark .nice-button.niced{background:#fbbf24;color:#000}
+.theme-dark .nice-count-outside{color:#f3f4f6}
 .theme-light .nice-button{background:#f3f4f6;color:#374151}
 .theme-light .nice-button:hover{background:#e5e7eb}
 .theme-light .nice-button.niced{background:#fef3c7;color:#92400e}
 .theme-mono-dark .nice-button{background:#000;color:#fff;border:1px solid #333}
 .theme-mono-dark .nice-button:hover{background:#111}
 .theme-mono-dark .nice-button.niced{background:#fff;color:#000;border-color:#fff}
+.theme-mono-dark .nice-count-outside{color:#fff}
 .theme-mono-light .nice-button{background:#fff;color:#000;border:1px solid #ddd}
 .theme-mono-light .nice-button:hover{background:#f5f5f5}
 .theme-mono-light .nice-button.niced{background:#000;color:#fff;border-color:#000}
+.theme-mono-light .nice-count-outside{color:#000}
+.shape-pill .nice-button{border-radius:9999px}
+.shape-square .nice-button{border-radius:0}
+.has-custom-colors .nice-button{background:var(--nice-background);color:var(--nice-foreground);border:1px solid var(--nice-border)}
+.has-custom-colors .nice-button:hover{background:var(--nice-background);filter:brightness(.96)}
+.has-custom-colors .nice-button.niced{background:var(--nice-pressed-background);color:var(--nice-pressed-foreground);border-color:var(--nice-pressed-border)}
+.has-custom-colors .nice-button.niced:hover{background:var(--nice-pressed-background);filter:brightness(.96)}
+.has-custom-colors .nice-count-outside{color:var(--nice-foreground)}
+.has-custom-colors .nice-button.niced+.nice-count-outside{color:var(--nice-pressed-foreground)}
 .nice-count{opacity:0.8}
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
 .nice-button.animating{animation:pulse .3s ease}
+@keyframes bounce{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(-4px) scale(1.05)}70%{transform:translateY(0) scale(.98)}}
+.nice-button.bouncing{animation:bounce .4s ease}
+@keyframes sparkle{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(-14px,-14px) scale(0)}}
+@keyframes confetti{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(14px,24px) rotate(180deg)}}
+.nice-button{position:relative}
+.nice-particle{position:absolute;left:50%;top:50%;width:5px;height:5px;pointer-events:none;background:var(--particle-color)}
+.sparkle-particle{border-radius:50%;animation:sparkle .5s ease-out forwards}
+.confetti-particle{width:5px;height:8px;animation:confetti .7s ease-out forwards}
 </style>
 </head>
-<body class="theme-{{THEME}} size-{{SIZE}}">
-<button class="nice-button" id="niceBtn" aria-label="Nice this" aria-pressed="false">
-<span class="nice-text" id="niceText">Nice</span>
-<span class="nice-count" id="niceCount" aria-live="polite">42</span>
+<body class="theme-{{THEME}} size-{{SIZE}}{{APPEARANCE_CLASSES}}"{{APPEARANCE_STYLE}}>
+<div class="nice-widget">
+<button class="nice-button" id="niceBtn" aria-label="{{LABEL_HTML}}" aria-pressed="false">
+<span class="nice-text" id="niceText">{{LABEL_HTML}}</span>
+<span class="nice-count nice-count-inside" id="niceCountInside" aria-live="polite"></span>
 </button>
+<span class="nice-count nice-count-outside" id="niceCountOutside" aria-live="polite"></span>
+</div>
 <script>
+const LABEL={{LABEL_JS}};
+const PRESSED_LABEL={{PRESSED_LABEL_JS}};
+const COUNT_VISIBILITY='{{COUNT_VISIBILITY}}';
+const COUNT_POSITION='{{COUNT_POSITION}}';
+const COUNT_FORMAT='{{COUNT_FORMAT}}';
+const ANIMATION='{{ANIMATION}}';
 const btn=document.getElementById('niceBtn');
 const textEl=document.getElementById('niceText');
-const countEl=document.getElementById('niceCount');
+const countInsideEl=document.getElementById('niceCountInside');
+const countOutsideEl=document.getElementById('niceCountOutside');
 let count=42,niced=false;
+function formatCount(n){if(n>=1e9)return(n/1e9).toFixed(1).replace(/\.0$/,'')+'B';if(n>=1e6)return(n/1e6).toFixed(1).replace(/\.0$/,'')+'M';if(n>=1e3)return(n/1e3).toFixed(1).replace(/\.0$/,'')+'K';return n.toString();}
+function updateCountDisplay(){const visible=COUNT_VISIBILITY==='always'||(COUNT_VISIBILITY==='nonzero'&&count>0);const value=COUNT_FORMAT==='full'?count.toString():formatCount(count);const inside=visible&&COUNT_POSITION==='inside';const outside=visible&&!inside;countInsideEl.textContent=inside?value:'';countInsideEl.style.display=inside?'':'none';countInsideEl.setAttribute('aria-live',inside?'polite':'off');countOutsideEl.textContent=outside?value:'';countOutsideEl.style.display=outside?'':'none';countOutsideEl.setAttribute('aria-live',outside?'polite':'off');}
+function playInteractionAnimation(){if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches||ANIMATION==='none')return;if(ANIMATION==='pop'){btn.classList.add('animating');setTimeout(()=>btn.classList.remove('animating'),300);}else if(ANIMATION==='bounce'){btn.classList.add('bouncing');setTimeout(()=>btn.classList.remove('bouncing'),400);}else{const particles=[];const amount=ANIMATION==='sparkle'?8:16;for(let i=0;i<amount;i++){const particle=document.createElement('span');particle.className='nice-particle '+(ANIMATION==='sparkle'?'sparkle-particle':'confetti-particle');particle.style.setProperty('--particle-color',['#fbbf24','#f59e0b','#fcd34d','#fde68a','#fff'][i%5]);btn.appendChild(particle);particles.push(particle);}setTimeout(()=>particles.forEach((particle)=>particle.remove()),ANIMATION==='sparkle'?500:700);}}
+function updateDisplay(){
+textEl.textContent=niced?PRESSED_LABEL:LABEL;
+updateCountDisplay();
+btn.setAttribute('aria-label',textEl.textContent);
+btn.setAttribute('aria-pressed',String(niced));
+}
 btn.addEventListener('click',()=>{
-btn.classList.add('animating');
-setTimeout(()=>btn.classList.remove('animating'),300);
-if(niced){count--;niced=false;btn.classList.remove('niced');textEl.textContent='Nice';countEl.textContent=count;}
-else{count++;niced=true;btn.classList.add('niced');textEl.textContent="Nice'd";countEl.textContent=count;}
+if(niced){count--;niced=false;btn.classList.remove('niced');}
+else{count++;niced=true;btn.classList.add('niced');}
+updateDisplay();playInteractionAnimation();
 });
+updateDisplay();
 </script>
 </body>
 </html>`;
@@ -394,15 +651,31 @@ export async function serveEmbedPage(
     });
   }
 
-  // Check for multi-nice mode: query param takes priority, then look up button config from KV
-  let isMulti = url.searchParams.get("multi") === "1" ? "1" : "0";
-  if (isMulti === "0" && env?.NICE_KV) {
+  const multiParam = url.searchParams.get("multi");
+  let isMulti = multiParam === "1";
+  let label = DEFAULT_BUTTON_LABEL;
+  let pressedLabel = DEFAULT_PRESSED_BUTTON_LABEL;
+  let appearance: EmbedAppearance | undefined;
+
+  // Stored multi-nice configuration is used only when the query omits multi;
+  // labels always come from stored button configuration.
+  if (env?.NICE_KV) {
     try {
       const buttonData = await env.NICE_KV.get(`btn:${buttonId}`);
       if (buttonData) {
-        const button = JSON.parse(buttonData);
-        if (button.multiNice) {
-          isMulti = "1";
+        const button = JSON.parse(buttonData) as Button;
+        if (button && typeof button === "object") {
+          label = normalizeStoredButtonLabel(button.label, DEFAULT_BUTTON_LABEL);
+          pressedLabel = normalizeStoredButtonLabel(
+            button.pressedLabel,
+            DEFAULT_PRESSED_BUTTON_LABEL
+          );
+          const normalizedAppearance = getButtonAppearance(button);
+          const hasValidAppearance = hasStoredButtonAppearance(button);
+          if (hasValidAppearance) appearance = normalizedAppearance;
+          if (multiParam === null && button.multiNice === true) {
+            isMulti = true;
+          }
         }
       }
     } catch (e) {
@@ -417,7 +690,10 @@ export async function serveEmbedPage(
     buttonId,
     theme,
     size,
-    multiNice: isMulti === "1",
+    multiNice: isMulti,
+    label,
+    pressedLabel,
+    appearance,
   });
 
   return new Response(html, {

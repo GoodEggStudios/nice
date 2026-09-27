@@ -71,6 +71,17 @@ Embed parameters are validated against allowlists:
 - **Sizes**: `xs`, `sm`, `md`, `lg`, `xl`
 - Invalid values fall back to defaults (no errors exposed)
 
+### Button Label Validation
+
+Button labels are validated on the server before they are stored: surrounding whitespace is trimmed, labels must be non-empty, must be no longer than 32 Unicode code points, and must not contain ASCII control characters or angle brackets. Create and update requests return separate `INVALID_LABEL` and `INVALID_PRESSED_LABEL` errors. Legacy KV records are normalized at read time, so missing or malformed values resolve to `Nice` and `Nice'd` without requiring a migration.
+
+The renderer escapes labels separately for HTML text and inline JavaScript strings. Visitor-controlled query strings cannot override the stored labels used by real embeds.
+
+### Button Appearance Validation
+
+Appearance settings (`colors`, `shape`, `count_visibility`, `count_position`, `count_format`, and `animation`) are owner-managed and stored in KV. Requests never accept arbitrary CSS, HTML, JavaScript, or remote asset URLs. Custom palettes must be a complete six-key object of strict whitespace-free `#RRGGBB` values (normalized to uppercase), or `null` to use theme colours. Enum fields are allowlisted; invalid values return `INVALID_COLORS`, `INVALID_SHAPE`, `INVALID_COUNT_VISIBILITY`, `INVALID_COUNT_POSITION`, `INVALID_COUNT_FORMAT`, or `INVALID_ANIMATION`.
+
+Stored appearance is treated as untrusted input and is normalized again before HTML/CSS interpolation in embeds. Custom colours override theme colours when present; theme and size remain placement parameters on the embed URL. Owner animation (`animation: "confetti"` and other iframe effects) runs only inside the embed iframe. Host-page confetti still requires the placement-level `data-confetti` opt-in on script embeds and is independent of the stored animation. Reduced-motion preferences suppress success animations, particle effects, and denied-state shake inside the iframe. SVG badges do not use custom appearance settings.
 ## CORS Policy
 
 All endpoints use permissive CORS:
@@ -80,6 +91,18 @@ Access-Control-Allow-Origin: *
 ```
 
 This is intentional — Nice buttons must be embeddable on any website. Security is enforced via rate limiting, deduplication, and referrer restrictions rather than CORS.
+
+### Embed Resize Messages
+
+Script embeds resize their iframe by listening for `nice-resize` messages from the
+embed origin. When a host suppresses the iframe referrer, the iframe cannot know
+the parent origin, so resize notifications use `targetOrigin: "*"` only for this
+non-sensitive sizing message. The loader still accepts messages only when both
+the event origin and iframe source match the expected embed. Other messages,
+including confetti and recorded events, remain origin-gated. Script embeds are
+recommended when automatic resizing is needed; generated direct iframe snippets
+use label-aware dimensions because standalone iframes cannot auto-grow after a
+label change.
 
 ## Information Disclosure Prevention
 

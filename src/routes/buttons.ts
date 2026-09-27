@@ -10,9 +10,10 @@
 
 import type { Env, Button, RestrictionMode } from "../types";
 import {
-  EMBED_DIMENSIONS,
   EMBED_SIZES,
   EMBED_THEMES,
+  getEmbedInitialDimensions,
+  type EmbedAppearance,
   type EmbedSize,
   type EmbedTheme,
 } from "./embed-constants";
@@ -26,6 +27,19 @@ import {
   createRateLimitResponse,
   checkRateLimit,
   rateLimitResponse,
+  DEFAULT_BUTTON_LABEL,
+  DEFAULT_PRESSED_BUTTON_LABEL,
+  normalizeStoredButtonLabel,
+  validateButtonLabel,
+  DEFAULT_BUTTON_SHAPE,
+  DEFAULT_COUNT_VISIBILITY,
+  DEFAULT_COUNT_POSITION,
+  DEFAULT_COUNT_FORMAT,
+  DEFAULT_BUTTON_ANIMATION,
+  validateAppearance,
+  applyAppearanceValues,
+  getButtonAppearance,
+  type AppearanceBody,
 } from "../lib";
 
 const VALID_RESTRICTIONS: RestrictionMode[] = ["url", "domain", "global"];
@@ -45,14 +59,26 @@ function generateEmbedSnippets(
   baseUrl: string,
   theme: string,
   size: string,
-  multiNice?: boolean
+  label: string,
+  pressedLabel: string,
+  multiNice: boolean | undefined,
+  count: number,
+  appearance: EmbedAppearance
 ): { iframe: string; script: string } {
   const embedUrl = `${baseUrl}/e/${publicId}?theme=${theme}&size=${size}${multiNice ? '&multi=1' : ''}`;
 
-  const dim = EMBED_DIMENSIONS[size as EmbedSize] || EMBED_DIMENSIONS.md;
+  const embedSize = EMBED_SIZES.includes(size as EmbedSize) ? (size as EmbedSize) : "md";
+  const dim = getEmbedInitialDimensions(
+    embedSize,
+    label,
+    pressedLabel,
+    multiNice === true,
+    count,
+    appearance
+  );
 
   const iframe = `<iframe src="${embedUrl}" style="background:transparent;border:none;overflow:hidden;display:block;color-scheme:normal;width:${dim.w}px;height:${dim.h}px;" scrolling="no" frameborder="0" allowtransparency="true" title="Nice button"></iframe>`;
-  const script = `<script src="${baseUrl}/embed.js" data-button="${publicId}" data-theme="${theme}" data-size="${size}" async></script>`;
+  const script = `<script src="${baseUrl}/embed.js" data-button="${publicId}" data-theme="${theme}" data-size="${size}"${multiNice ? ' data-multi="1"' : ''} async></script>`;
 
   return { iframe, script };
 }
@@ -71,7 +97,9 @@ export async function createButton(
     size?: string;
     restriction?: string;
     multi_nice?: boolean;
-  };
+    label?: unknown;
+    pressed_label?: unknown;
+  } & AppearanceBody;
 
   try {
     body = await request.json();
@@ -122,6 +150,29 @@ export async function createButton(
     );
   }
 
+  const labelResult = validateButtonLabel(
+    body.label === undefined ? DEFAULT_BUTTON_LABEL : body.label,
+    "label"
+  );
+  if (!labelResult.ok) {
+    return labelResult.response;
+  }
+
+  const pressedLabelResult = validateButtonLabel(
+    body.pressed_label === undefined
+      ? DEFAULT_PRESSED_BUTTON_LABEL
+      : body.pressed_label,
+    "pressed_label"
+  );
+  if (!pressedLabelResult.ok) {
+    return pressedLabelResult.response;
+  }
+
+  const appearanceResult = validateAppearance(body);
+  if (!appearanceResult.ok) {
+    return appearanceResult.response;
+  }
+
   // Rate limit check
   const clientIp = getClientIp(request);
   const rateLimit = await checkCreateRateLimit(env.NICE_KV, clientIp);
@@ -149,6 +200,18 @@ export async function createButton(
     multiNice: body.multi_nice || false,
     theme,
     size,
+    label: labelResult.value,
+    pressedLabel: pressedLabelResult.value,
+    ...(appearanceResult.value.colors
+      ? { colors: appearanceResult.value.colors }
+      : {}),
+    shape: appearanceResult.value.shape ?? DEFAULT_BUTTON_SHAPE,
+    countVisibility:
+      appearanceResult.value.countVisibility ?? DEFAULT_COUNT_VISIBILITY,
+    countPosition:
+      appearanceResult.value.countPosition ?? DEFAULT_COUNT_POSITION,
+    countFormat: appearanceResult.value.countFormat ?? DEFAULT_COUNT_FORMAT,
+    animation: appearanceResult.value.animation ?? DEFAULT_BUTTON_ANIMATION,
     createdAt: new Date().toISOString(),
   };
 
@@ -161,7 +224,17 @@ export async function createButton(
   // Generate embed snippets
   const url = new URL(request.url);
   const baseUrl = `${url.protocol}//${url.host}`;
-  const embed = generateEmbedSnippets(publicId, baseUrl, theme, size, button.multiNice);
+  const embed = generateEmbedSnippets(
+    publicId,
+    baseUrl,
+    theme,
+    size,
+    labelResult.value,
+    pressedLabelResult.value,
+    button.multiNice,
+    0,
+    getButtonAppearance(button)
+  );
 
   // Return response with both IDs (private shown only once!)
   return Response.json(
@@ -173,6 +246,9 @@ export async function createButton(
       multi_nice: button.multiNice || false,
       theme,
       size,
+      label: button.label,
+      pressed_label: button.pressedLabel,
+      ...getButtonAppearance(button),
       count: 0,
       created_at: button.createdAt,
       embed,
@@ -219,6 +295,15 @@ export async function getButtonStats(
 
   const button: Button = JSON.parse(buttonData);
 
+  const label = normalizeStoredButtonLabel(
+    button.label,
+    DEFAULT_BUTTON_LABEL
+  );
+  const pressedLabel = normalizeStoredButtonLabel(
+    button.pressedLabel,
+    DEFAULT_PRESSED_BUTTON_LABEL
+  );
+
   // Generate embed snippet for convenience
   const url = new URL(request.url);
   const baseUrl = `${url.protocol}//${url.host}`;
@@ -226,7 +311,12 @@ export async function getButtonStats(
     publicId,
     baseUrl,
     button.theme || "light",
-    button.size || "md"
+    button.size || "md",
+    label,
+    pressedLabel,
+    button.multiNice,
+    button.count,
+    getButtonAppearance(button)
   );
 
   return Response.json({
@@ -237,6 +327,9 @@ export async function getButtonStats(
     count: button.count,
     theme: button.theme,
     size: button.size,
+    label,
+    pressed_label: pressedLabel,
+    ...getButtonAppearance(button),
     created_at: button.createdAt,
     embed,
   });
@@ -264,7 +357,9 @@ export async function updateButton(
     theme?: string;
     size?: string;
     multi_nice?: boolean;
-  };
+    label?: unknown;
+    pressed_label?: unknown;
+  } & AppearanceBody;
 
   try {
     body = await request.json();
@@ -297,7 +392,28 @@ export async function updateButton(
 
   const button: Button = JSON.parse(buttonData);
 
-  // Update allowed fields
+  const labelResult =
+    body.label === undefined
+      ? undefined
+      : validateButtonLabel(body.label, "label");
+  if (labelResult && !labelResult.ok) {
+    return labelResult.response;
+  }
+
+  const pressedLabelResult =
+    body.pressed_label === undefined
+      ? undefined
+      : validateButtonLabel(body.pressed_label, "pressed_label");
+  if (pressedLabelResult && !pressedLabelResult.ok) {
+    return pressedLabelResult.response;
+  }
+
+  const appearanceResult = validateAppearance(body);
+  if (!appearanceResult.ok) {
+    return appearanceResult.response;
+  }
+
+  let restriction: RestrictionMode | undefined;
   if (body.restriction !== undefined) {
     if (!VALID_RESTRICTIONS.includes(body.restriction as RestrictionMode)) {
       return Response.json(
@@ -305,9 +421,10 @@ export async function updateButton(
         { status: 400 }
       );
     }
-    button.restriction = body.restriction as RestrictionMode;
+    restriction = body.restriction as RestrictionMode;
   }
 
+  let theme: string | undefined;
   if (body.theme !== undefined) {
     if (!EMBED_THEMES.includes(body.theme as EmbedTheme)) {
       return Response.json(
@@ -315,9 +432,10 @@ export async function updateButton(
         { status: 400 }
       );
     }
-    button.theme = body.theme;
+    theme = body.theme;
   }
 
+  let size: string | undefined;
   if (body.size !== undefined) {
     if (!EMBED_SIZES.includes(body.size as EmbedSize)) {
       return Response.json(
@@ -325,15 +443,47 @@ export async function updateButton(
         { status: 400 }
       );
     }
-    button.size = body.size;
+    size = body.size;
+  }
+
+  // Update allowed fields
+  if (restriction !== undefined) {
+    button.restriction = restriction;
+  }
+
+  if (theme !== undefined) {
+    button.theme = theme;
+  }
+
+  if (size !== undefined) {
+    button.size = size;
   }
 
   if (body.multi_nice !== undefined) {
     button.multiNice = body.multi_nice;
   }
 
+  if (labelResult) {
+    button.label = labelResult.value;
+  }
+
+  if (pressedLabelResult) {
+    button.pressedLabel = pressedLabelResult.value;
+  }
+
+  applyAppearanceValues(button, appearanceResult.value);
+
   // Save updated button
   await env.NICE_KV.put(`btn:${publicId}`, JSON.stringify(button));
+
+  const label = normalizeStoredButtonLabel(
+    button.label,
+    DEFAULT_BUTTON_LABEL
+  );
+  const pressedLabel = normalizeStoredButtonLabel(
+    button.pressedLabel,
+    DEFAULT_PRESSED_BUTTON_LABEL
+  );
 
   // Generate updated embed snippet
   const url = new URL(request.url);
@@ -342,7 +492,12 @@ export async function updateButton(
     publicId,
     baseUrl,
     button.theme || "light",
-    button.size || "md"
+    button.size || "md",
+    label,
+    pressedLabel,
+    button.multiNice,
+    button.count,
+    getButtonAppearance(button)
   );
 
   return Response.json({
@@ -353,6 +508,9 @@ export async function updateButton(
     count: button.count,
     theme: button.theme,
     size: button.size,
+    label,
+    pressed_label: pressedLabel,
+    ...getButtonAppearance(button),
     created_at: button.createdAt,
     embed,
   });
