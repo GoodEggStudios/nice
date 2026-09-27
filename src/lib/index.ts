@@ -12,6 +12,12 @@ export {
   checkCreateRateLimit,
   createRateLimitResponse,
 } from "./ratelimit";
+export {
+  mergeMultiNiceCount,
+  canStartMultiNiceFlush,
+  shouldFollowUpMultiNiceFlush,
+  rollbackMultiNiceBatch,
+} from "./multi-nice-batch";
 
 // Button ID utilities
 export {
