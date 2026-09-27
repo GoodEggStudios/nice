@@ -379,6 +379,14 @@ try{const res=await fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID+'/count');if(!res.o
 catch(e){btn.classList.add('disabled');}
 }
 btn.addEventListener('click',recordNice);
+window.addEventListener('message',function(event){
+if(event.source!==parent)return;
+if(parentOrigin&&event.origin!==parentOrigin)return;
+try{
+const data=event.data;
+if(data&&data.type==='nice-invoke'&&data.buttonId===BUTTON_ID){btn.click();}
+}catch(e){}
+});
 if(IS_MULTI){window.addEventListener('beforeunload',flushMultiNice);}
 if(BUTTON_ID){updateDisplay();checkButton();fetchCount();}else{btn.classList.add('disabled');updateDisplay();}
 if(document.fonts&&document.fonts.ready){document.fonts.ready.then(notifyResize).catch(()=>{});}

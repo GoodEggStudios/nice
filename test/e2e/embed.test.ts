@@ -424,6 +424,19 @@ describe("Embed", () => {
         );
       });
 
+      it("should accept nice-invoke messages from the parent page", () => {
+        const html = renderEmbedHtml({
+          apiBase: "https://api.nice.sbs",
+          buttonId: "n_abc123456789",
+          theme: "dark",
+          size: "md",
+        });
+
+        expect(html).toContain("nice-invoke");
+        expect(html).toContain("event.source!==parent");
+        expect(html).toContain("btn.click()");
+      });
+
       it("should gate confetti message handlers on enableConfetti", () => {
         const script = renderEmbedScript();
 

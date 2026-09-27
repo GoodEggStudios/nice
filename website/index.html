@@ -116,11 +116,9 @@
         .hero-title {
             font-family: 'Bungee', cursive;
             font-size: clamp(24px, 7vw, 72px);
-            color: #fbbf24;
             margin-bottom: 8px;
-            text-transform: uppercase;
             display: flex;
-            align-items: baseline;
+            align-items: center;
             justify-content: center;
             white-space: nowrap;
             perspective: 600px;
@@ -131,16 +129,48 @@
             display: grid;
         }
 
-        .rotating-word-slot > span {
+        .rotating-word-slot > * {
             grid-area: 1 / 1;
         }
 
         .rotating-word-sizer {
             visibility: hidden;
+            pointer-events: none;
+        }
+
+        .rotating-word-sizer,
+        .rotating-word {
+            font: inherit;
+            font-family: 'Bungee', cursive;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: center;
+            background: #fbbf24;
+            color: #000;
+            border: none;
+            border-radius: 0.12em;
+            padding: 0.08em 0.28em;
+            line-height: 1.1;
         }
 
         .rotating-word {
-            text-align: center;
+            cursor: pointer;
+            transition: transform 0.15s ease;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .rotating-word:hover {
+            transform: scale(1.05);
+        }
+
+        .rotating-word:active {
+            transform: scale(0.95);
+        }
+
+        .rotating-word:focus-visible {
+            outline: 2px solid #fbbf24;
+            outline-offset: 4px;
         }
 
         .button-word {
@@ -193,6 +223,11 @@
         @media (prefers-reduced-motion: reduce) {
             .rotating-word.is-flipping {
                 animation: none;
+            }
+
+            .rotating-word:hover,
+            .rotating-word:active {
+                transform: none;
             }
         }
 
@@ -247,7 +282,7 @@
         <h1 class="hero-title">
             <span class="rotating-word-slot">
                 <span class="rotating-word-sizer" aria-hidden="true">Awesome</span>
-                <span id="rotatingWord" class="rotating-word">Nice</span>
+                <button type="button" id="rotatingWord" class="rotating-word">Nice</button>
             </span>
         </h1>
         <p class="button-word">button</p>
@@ -263,6 +298,8 @@
 
     <script>
         (() => {
+            const HOMEPAGE_BUTTON_ID = "n_iSoPXADYGp0Q";
+            const EMBED_ORIGIN = "https://api.nice.sbs";
             const ROTATING_WORDS = ["Nice", "Awesome", "Cool", "Spicey", "Sucks"];
             const HOLD_MS = 2500;
             const FLIP_MS = 300;
@@ -272,7 +309,20 @@
             let finishTimeoutId = null;
 
             const rotatingWord = document.getElementById("rotatingWord");
-            if (!rotatingWord || ROTATING_WORDS.length < 2 || typeof window.matchMedia !== "function") return;
+            if (!rotatingWord) return;
+
+            function invokeHomepageNice() {
+                const iframe = document.querySelector(".homepage-button iframe");
+                if (!iframe || !iframe.contentWindow) return;
+                iframe.contentWindow.postMessage(
+                    { type: "nice-invoke", buttonId: HOMEPAGE_BUTTON_ID },
+                    EMBED_ORIGIN
+                );
+            }
+
+            rotatingWord.addEventListener("click", invokeHomepageNice);
+
+            if (ROTATING_WORDS.length < 2 || typeof window.matchMedia !== "function") return;
 
             const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
             if (
