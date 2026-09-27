@@ -46,7 +46,9 @@ async function restoreHomepageBrandFont(page: Page): Promise<void> {
   await page.addStyleTag({
     content: `
       .hero-title,
-      .hero-title * {
+      .hero-title *,
+      .rotating-word,
+      .rotating-word-sizer {
         font-family: 'Bungee', cursive !important;
       }
     `,
@@ -159,6 +161,9 @@ for (const viewport of viewports) {
     });
     expect(layout.textAlign).toBe("center");
     expect(Math.abs(layout.textCenter - layout.viewportCenter)).toBeLessThan(8);
+    await expect(page.locator("#rotatingWord")).toHaveCSS("background-color", "rgb(251, 191, 36)");
+    await expect(page.locator("#rotatingWord")).toHaveCSS("color", "rgb(0, 0, 0)");
+    await expect(page.locator("#rotatingWord")).toHaveCSS("cursor", "pointer");
     await expect(page.locator(".tagline")).toHaveText("Create your own feedback buttons");
     await expectEmbedFrameReady(page, ".homepage-button iframe");
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
@@ -252,6 +257,17 @@ for (const viewport of viewports) {
     await screenshotWebsiteFullPage(page, `website/stats-missing-${viewport.name}.png`);
   });
 }
+
+test("homepage hero word invokes the embedded nice button", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await openPage(page, "/", viewports[0]);
+  await expectEmbedFrameReady(page, ".homepage-button iframe");
+  const embedButton = page.frameLocator(".homepage-button iframe").locator("#niceBtn");
+  await expect(embedButton).toHaveAttribute("aria-pressed", "false");
+  await page.locator("#rotatingWord").click();
+  await expect(embedButton).toHaveAttribute("aria-pressed", "true");
+  await expect(embedButton).toHaveClass(/niced/);
+});
 
 test("homepage cycles random words without repeats at mobile width", async ({ page }) => {
   await openHomepageWithFrozenClock(page, viewports[1], { randomSamples: [0, 0] });
