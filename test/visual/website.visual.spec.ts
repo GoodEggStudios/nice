@@ -71,9 +71,8 @@ async function openHomepageWithFrozenClock(
   const now = new Date("2026-01-01T00:00:00Z");
   await page.clock.install({ time: now });
   await page.clock.pauseAt(now);
-  if (options.reducedMotion) {
-    await page.emulateMedia({ reducedMotion: options.reducedMotion });
-  }
+  // Pin motion preference explicitly so CI / Playwright defaults cannot skip cycling.
+  await page.emulateMedia({ reducedMotion: options.reducedMotion ?? "no-preference" });
   await installNiceApiMocks(page);
   if (options.randomSamples) {
     await page.addInitScript((samples: number[]) => {
@@ -86,6 +85,7 @@ async function openHomepageWithFrozenClock(
   }
   await page.setViewportSize(viewport);
   await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#rotatingWord")).toBeVisible();
 }
 
 async function expectEmbedFrameReady(page: Page, frameSelector: string) {
@@ -272,17 +272,19 @@ test("homepage hero word invokes the embedded nice button", async ({ page }) => 
 test("homepage cycles random words without repeats at mobile width", async ({ page }) => {
   await openHomepageWithFrozenClock(page, viewports[1], { randomSamples: [0, 0] });
 
-  await page.clock.fastForward(HOLD_MS);
-  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 0 });
-  await page.clock.fastForward(SWAP_MS);
+  // runFor advances time continuously so nested flip timers fire reliably
+  // (fastForward only fires due timers once and is flaky with nested setTimeouts on CI).
+  await page.clock.runFor(HOLD_MS);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
+  await page.clock.runFor(SWAP_MS);
   await expect(page.locator("#rotatingWord")).toHaveText("Awesome");
   expect(await page.locator(".button-word").textContent()).toBe("button");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewports[1].width);
-  await page.clock.fastForward(SWAP_MS);
-  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/, { timeout: 0 });
-  await page.clock.fastForward(HOLD_MS);
-  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 0 });
-  await page.clock.fastForward(SWAP_MS);
+  await page.clock.runFor(SWAP_MS);
+  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/);
+  await page.clock.runFor(HOLD_MS);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
+  await page.clock.runFor(SWAP_MS);
   await expect(page.locator("#rotatingWord")).toHaveText("Nice");
 });
 
@@ -292,29 +294,29 @@ test("homepage stops and resumes for reduced motion", async ({ page }) => {
     randomSamples: [0],
   });
 
-  await page.clock.fastForward(6000);
+  await page.clock.runFor(6000);
   expect(await page.locator("#rotatingWord").textContent()).toBe("Nice");
   expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
 
   await setReducedMotion(page, "no-preference");
-  await page.clock.fastForward(HOLD_MS);
-  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 0 });
+  await page.clock.runFor(HOLD_MS);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
 
   await setReducedMotion(page, "reduce");
-  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/, { timeout: 0 });
+  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/);
   await expect(page.locator("#rotatingWord")).toHaveText("Nice");
 
-  await page.clock.fastForward(6000);
+  await page.clock.runFor(6000);
   expect(await page.locator("#rotatingWord").textContent()).toBe("Nice");
   expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
 
   await setReducedMotion(page, "no-preference");
-  await page.clock.fastForward(HOLD_MS);
-  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/, { timeout: 0 });
-  await page.clock.fastForward(SWAP_MS);
+  await page.clock.runFor(HOLD_MS);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
+  await page.clock.runFor(SWAP_MS);
   await expect(page.locator("#rotatingWord")).toHaveText("Awesome");
-  await page.clock.fastForward(SWAP_MS);
-  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/, { timeout: 0 });
+  await page.clock.runFor(SWAP_MS);
+  await expect(page.locator("#rotatingWord")).not.toHaveClass(/is-flipping/);
 });
 
 test("homepage keeps its message without JavaScript", async ({ browser }) => {
@@ -339,7 +341,7 @@ test("homepage falls back when motion APIs are unavailable", async ({ page }) =>
     },
   });
   await stabilizeWebsitePage(page);
-  await page.clock.fastForward(6000);
+  await page.clock.runFor(6000);
   await expect(page.locator(".hero-title")).toHaveAccessibleName("Nice");
   await expect(page.locator(".button-word")).toHaveText("button");
   expect(await page.locator("#rotatingWord").getAttribute("class")).not.toContain("is-flipping");
