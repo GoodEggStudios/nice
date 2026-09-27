@@ -332,18 +332,22 @@ updateDisplay();
 }
 }catch(e){console.error('Nice: Failed to fetch count',e);}
 }
-// Multi-nice: debounce clicks, batch into one API call
+// Multi-nice: debounce clicks, batch into one API call.
+// Keep local count if a burst continues while a batch is in flight, then flush again.
 let pendingMultiCount=0;
 let multiTimer=null;
+let multiInFlight=false;
 function flushMultiNice(){
-if(pendingMultiCount<=0)return;
+if(pendingMultiCount<=0||multiInFlight)return;
 const batch=pendingMultiCount;
 pendingMultiCount=0;
+multiInFlight=true;
 fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID+'/multi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({count:batch,fingerprint:getFingerprint(),referrer:document.referrer||''})})
 .then(r=>r.json()).then(data=>{
-if(data.success){count=data.count;if(parentOrigin){parent.postMessage({type:'nice-recorded',buttonId:BUTTON_ID,count:count},parentOrigin);}}
+if(data.success){count=Math.max(count,data.count||0);if(parentOrigin){parent.postMessage({type:'nice-recorded',buttonId:BUTTON_ID,count:count},parentOrigin);}}
 updateDisplay();
-}).catch(e=>{count-=batch;updateDisplay();console.error('Nice: batch failed',e);});
+}).catch(e=>{count=Math.max(0,count-batch);updateDisplay();console.error('Nice: batch failed',e);})
+.finally(()=>{multiInFlight=false;if(pendingMultiCount>0){clearTimeout(multiTimer);multiTimer=setTimeout(flushMultiNice,0);}});
 }
 async function recordNice(){
 if(IS_MULTI){
