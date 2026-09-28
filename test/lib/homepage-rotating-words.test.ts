@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 // Static homepage cannot import shared modules; raw import keeps the
-// published rotating-word list pinned to the ticket's expanded set.
+// published rotating-word list pinned to the intended expanded set.
 // @ts-expect-error Vite raw HTML import
 import indexHtml from "../../website/index.html?raw";
 
-/** Ticket THE-545: keep originals, add ~10 playful positive + negative words. */
+/** Keep the original reactions and the intended expanded playful set aligned. */
 const EXPECTED_ROTATING_WORDS = [
   "Nice",
   "Awesome",
