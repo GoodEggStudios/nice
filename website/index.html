@@ -331,8 +331,8 @@
             if (!rotatingWord) return;
 
             function invokeHomepageNice() {
-                const iframe = document.querySelector(".homepage-button iframe");
-                if (!iframe || !iframe.contentWindow || iframe !== homepageIframe || !homepageIframeReady) {
+                const iframe = homepageIframe;
+                if (!iframe || !iframe.contentWindow || !homepageIframeReady) {
                     pendingHomepageNice = true;
                     return;
                 }
@@ -352,10 +352,14 @@
                     if (!iframe || iframe === homepageIframe) return;
                     homepageIframe = iframe;
                     homepageIframeReady = false;
-                    iframe.addEventListener("load", () => {
+                    const markHomepageIframeReady = () => {
                         homepageIframeReady = true;
                         if (pendingHomepageNice) invokeHomepageNice();
-                    }, { once: true });
+                    };
+                    iframe.addEventListener("load", markHomepageIframeReady, { once: true });
+                    if (iframe.contentDocument?.readyState === "complete") {
+                        markHomepageIframeReady();
+                    }
                 };
                 watchHomepageIframe();
                 new MutationObserver(watchHomepageIframe).observe(homepageButton, { childList: true });
