@@ -323,20 +323,38 @@
             let holdTimeoutId = null;
             let swapTimeoutId = null;
             let finishTimeoutId = null;
+            let pendingHomepageNice = false;
 
             const rotatingWord = document.getElementById("rotatingWord");
             if (!rotatingWord) return;
 
             function invokeHomepageNice() {
                 const iframe = document.querySelector(".homepage-button iframe");
-                if (!iframe || !iframe.contentWindow) return;
+                if (!iframe || !iframe.contentWindow) {
+                    pendingHomepageNice = true;
+                    return;
+                }
                 iframe.contentWindow.postMessage(
                     { type: "nice-invoke", buttonId: HOMEPAGE_BUTTON_ID },
                     EMBED_ORIGIN
                 );
+                pendingHomepageNice = false;
             }
 
             rotatingWord.addEventListener("click", invokeHomepageNice);
+
+            const homepageButton = document.querySelector(".homepage-button");
+            if (homepageButton) {
+                const deliverPendingNice = () => {
+                    if (!pendingHomepageNice) return;
+                    const iframe = homepageButton.querySelector("iframe");
+                    if (iframe) {
+                        iframe.addEventListener("load", invokeHomepageNice, { once: true });
+                        return;
+                    }
+                };
+                new MutationObserver(deliverPendingNice).observe(homepageButton, { childList: true });
+            }
 
             if (ROTATING_WORDS.length < 2 || typeof window.matchMedia !== "function") return;
 

@@ -269,6 +269,19 @@ test("homepage hero word invokes the embedded nice button", async ({ page }) => 
   await expect(embedButton).toHaveClass(/niced/);
 });
 
+test("homepage hero word keeps an early click for the embedded nice button", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await installNiceApiMocks(page);
+  await page.setViewportSize(viewports[0]);
+  await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
+
+  await page.locator("#rotatingWord").click();
+  await expect(page.frameLocator(".homepage-button iframe").locator("#niceBtn")).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+});
+
 test("homepage cycles random words without repeats at mobile width", async ({ page }) => {
   await openHomepageWithFrozenClock(page, viewports[1], { randomSamples: [0, 0] });
 
