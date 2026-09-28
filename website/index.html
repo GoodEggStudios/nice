@@ -416,10 +416,7 @@
             }
             document.addEventListener("visibilitychange", syncCycling);
             window.addEventListener("pagehide", stopCycling);
-            // Initial load is handled by syncCycling() below; only bfcache restores need a restart.
-            window.addEventListener("pageshow", (event) => {
-                if (event.persisted) syncCycling();
-            });
+            window.addEventListener("pageshow", syncCycling);
             syncCycling();
         })();
     </script>

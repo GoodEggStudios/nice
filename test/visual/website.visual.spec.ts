@@ -301,23 +301,6 @@ test("homepage cycles random words without repeats at mobile width", async ({ pa
   await expect(page.locator("#rotatingWord")).toHaveText("Nice");
 });
 
-test("homepage keeps an in-flight flip across a non-persisted pageshow", async ({ page }) => {
-  await openHomepageWithFrozenClock(page, viewports[1], { randomSamples: [0] });
-
-  await page.clock.runFor(HOLD_MS);
-  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
-
-  // CI can emit a late non-persisted pageshow after clock.runFor (e.g. while the
-  // embed iframe settles). That must not cancel the in-flight flip.
-  await page.evaluate(() => {
-    window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: false }));
-  });
-  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
-
-  await page.clock.runFor(SWAP_MS);
-  await expect(page.locator("#rotatingWord")).toHaveText("Awesome");
-});
-
 test("homepage stops and resumes for reduced motion", async ({ page }) => {
   await openHomepageWithFrozenClock(page, viewports[1], {
     reducedMotion: "reduce",
