@@ -55,9 +55,13 @@ function appearanceOverridesFromBody(body: Record<string, unknown>): VisualAppea
   };
 }
 
-export async function installNiceApiMocks(page: Page, options: NiceApiMockOptions = {}): Promise<void> {
-  const count = options.count ?? 42;
+export async function installNiceApiMocks(
+  page: Page,
+  options: NiceApiMockOptions = {},
+): Promise<void> {
+  let count = options.count ?? 42;
   const multiNice = options.multiNice ?? false;
+  let hasNiced = options.hasNiced ?? false;
   let stats = mockButtonStats({
     count,
     multi_nice: multiNice,
@@ -117,7 +121,7 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
     }
     await fulfillJson(route, {
       count,
-      has_niced: options.hasNiced ?? false,
+      has_niced: hasNiced,
       multi_nice: multiNice,
       url: "https://example.com/articles/visual-button",
     });
@@ -128,11 +132,19 @@ export async function installNiceApiMocks(page: Page, options: NiceApiMockOption
       await route.continue();
       return;
     }
-    await fulfillJson(route, { success: true, count: count + 1 });
+    if (hasNiced) {
+      await fulfillJson(route, { success: false, reason: "already_niced", count });
+      return;
+    }
+    hasNiced = true;
+    count += 1;
+    await fulfillJson(route, { success: true, count });
   });
 
   await page.route(/https:\/\/api\.nice\.sbs\/api\/v1\/nice\/[^/]+\/multi$/, async (route) => {
-    await fulfillJson(route, { success: true, count: count + 1 });
+    hasNiced = true;
+    count += 1;
+    await fulfillJson(route, { success: true, count, added: 1 });
   });
 
   await page.route("https://api.nice.sbs/api/v1/buttons", async (route) => {

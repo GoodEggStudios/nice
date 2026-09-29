@@ -164,6 +164,7 @@ for (const viewport of viewports) {
     await expect(page.locator("#rotatingWord")).toHaveCSS("background-color", "rgb(251, 191, 36)");
     await expect(page.locator("#rotatingWord")).toHaveCSS("color", "rgb(0, 0, 0)");
     await expect(page.locator("#rotatingWord")).toHaveCSS("cursor", "pointer");
+    await expect(page.locator("#rotatingWord")).toHaveCSS("user-select", "none");
     await expect(page.locator(".tagline")).toHaveText("Create your own feedback buttons");
     await expectEmbedFrameReady(page, ".homepage-button iframe");
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
@@ -258,15 +259,51 @@ for (const viewport of viewports) {
   });
 }
 
-test("homepage hero word invokes the embedded nice button", async ({ page }) => {
+test("homepage hero word is interactive without proxy-clicking the embed", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await openPage(page, "/", viewports[0]);
+  await openPage(page, "/", viewports[0], { multiNice: true });
   await expectEmbedFrameReady(page, ".homepage-button iframe");
   const embedButton = page.frameLocator(".homepage-button iframe").locator("#niceBtn");
   await expect(embedButton).toHaveAttribute("aria-pressed", "false");
+
+  // Interactive chip for press feedback — does not drive the embed.
+  await expect(page.locator("#rotatingWord")).toHaveJSProperty("tagName", "BUTTON");
+  await expect(page.locator("#rotatingWord")).toHaveCSS("cursor", "pointer");
+  await expect(page.locator("#rotatingWord")).toHaveCSS("user-select", "none");
+
   await page.locator("#rotatingWord").click();
-  await expect(embedButton).toHaveAttribute("aria-pressed", "true");
-  await expect(embedButton).toHaveClass(/niced/);
+  await expect(embedButton).toHaveAttribute("aria-pressed", "false");
+  await expect(embedButton).not.toHaveClass(/niced/);
+});
+
+test("homepage hero word chip scales like a large nice button, not a 0.5em-padded block", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await openPage(page, "/", viewports[0]);
+  const metrics = await page.locator("#rotatingWord").evaluate((el) => {
+    const style = getComputedStyle(el);
+    const fontSizePx = parseFloat(style.fontSize);
+    const height = el.getBoundingClientRect().height;
+    const radiusPx = parseFloat(style.borderRadius);
+    return {
+      radiusEm: radiusPx / fontSizePx,
+      // Hero font is ~6× size-md; keep chrome tighter than literal 0.5em padding.
+      padBlockEm: (parseFloat(style.paddingTop) + parseFloat(style.paddingBottom)) / 2 / fontSizePx,
+      padInlineEm: (parseFloat(style.paddingLeft) + parseFloat(style.paddingRight)) / 2 / fontSizePx,
+      // size-md: radius 6 / height ~24 → ~0.25
+      radiusOverHeight: radiusPx / height,
+      heightOverFont: height / fontSizePx,
+    };
+  });
+  expect(metrics.padBlockEm).toBeGreaterThan(0.1);
+  expect(metrics.padBlockEm).toBeLessThan(0.25);
+  expect(metrics.padInlineEm).toBeGreaterThan(0.25);
+  expect(metrics.padInlineEm).toBeLessThan(0.5);
+  expect(metrics.radiusEm).toBeGreaterThan(0.25);
+  expect(metrics.radiusEm).toBeLessThan(0.45);
+  expect(metrics.radiusOverHeight).toBeGreaterThan(0.2);
+  expect(metrics.radiusOverHeight).toBeLessThan(0.3);
+  // At hero size, total height should stay near one line of text — not ~2em from 0.5em pads.
+  expect(metrics.heightOverFont).toBeLessThan(1.6);
 });
 
 test("homepage cycles random words without repeats at mobile width", async ({ page }) => {
@@ -286,6 +323,23 @@ test("homepage cycles random words without repeats at mobile width", async ({ pa
   await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
   await page.clock.runFor(SWAP_MS);
   await expect(page.locator("#rotatingWord")).toHaveText("Nice");
+});
+
+test("homepage keeps an in-flight flip across a non-persisted pageshow", async ({ page }) => {
+  await openHomepageWithFrozenClock(page, viewports[1], { randomSamples: [0] });
+
+  await page.clock.runFor(HOLD_MS);
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
+
+  // CI can emit a late non-persisted pageshow after clock.runFor (e.g. while the
+  // embed iframe settles). That must not cancel the in-flight flip.
+  await page.evaluate(() => {
+    window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: false }));
+  });
+  await expect(page.locator("#rotatingWord")).toHaveClass(/is-flipping/);
+
+  await page.clock.runFor(SWAP_MS);
+  await expect(page.locator("#rotatingWord")).toHaveText("Awesome");
 });
 
 test("homepage stops and resumes for reduced motion", async ({ page }) => {

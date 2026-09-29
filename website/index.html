@@ -148,8 +148,10 @@
             background: #fbbf24;
             color: #000;
             border: none;
-            border-radius: 0.12em;
-            padding: 0.08em 0.28em;
+            /* Hero font is much larger than size-md; keep the same radius/height
+               language (~0.25) with tighter em padding so the chip stays word-sized. */
+            border-radius: 0.35em;
+            padding: 0.15em 0.4em;
             line-height: 1.1;
         }
 
@@ -157,6 +159,7 @@
             cursor: pointer;
             transition: transform 0.15s ease;
             user-select: none;
+            -webkit-user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -171,6 +174,12 @@
         .rotating-word:focus-visible {
             outline: 2px solid #fbbf24;
             outline-offset: 4px;
+        }
+
+        /* Flip runs on an inner face so the chip layout stays stable. */
+        .rotating-word-face {
+            display: block;
+            transform-origin: center;
         }
 
         .button-word {
@@ -201,11 +210,11 @@
                 opacity: 1;
                 transform: rotateX(0deg);
             }
-            49% {
+            45% {
                 opacity: 0;
                 transform: rotateX(90deg);
             }
-            50% {
+            55% {
                 opacity: 0;
                 transform: rotateX(-90deg);
             }
@@ -215,13 +224,12 @@
             }
         }
 
-        .rotating-word.is-flipping {
+        .rotating-word.is-flipping .rotating-word-face {
             animation: flip-word 300ms ease-in-out;
-            transform-origin: center;
         }
 
         @media (prefers-reduced-motion: reduce) {
-            .rotating-word.is-flipping {
+            .rotating-word.is-flipping .rotating-word-face {
                 animation: none;
             }
 
@@ -282,7 +290,7 @@
         <h1 class="hero-title">
             <span class="rotating-word-slot">
                 <span class="rotating-word-sizer" aria-hidden="true">Awesome</span>
-                <button type="button" id="rotatingWord" class="rotating-word">Nice</button>
+                <button type="button" id="rotatingWord" class="rotating-word"><span class="rotating-word-face">Nice</span></button>
             </span>
         </h1>
         <p class="button-word">button</p>
@@ -298,8 +306,6 @@
 
     <script>
         (() => {
-            const HOMEPAGE_BUTTON_ID = "n_iSoPXADYGp0Q";
-            const EMBED_ORIGIN = "https://api.nice.sbs";
             const ROTATING_WORDS = [
                 "Nice",
                 "Awesome",
@@ -326,17 +332,8 @@
 
             const rotatingWord = document.getElementById("rotatingWord");
             if (!rotatingWord) return;
-
-            function invokeHomepageNice() {
-                const iframe = document.querySelector(".homepage-button iframe");
-                if (!iframe || !iframe.contentWindow) return;
-                iframe.contentWindow.postMessage(
-                    { type: "nice-invoke", buttonId: HOMEPAGE_BUTTON_ID },
-                    EMBED_ORIGIN
-                );
-            }
-
-            rotatingWord.addEventListener("click", invokeHomepageNice);
+            const rotatingWordFace =
+                rotatingWord.querySelector(".rotating-word-face") || rotatingWord;
 
             if (ROTATING_WORDS.length < 2 || typeof window.matchMedia !== "function") return;
 
@@ -368,7 +365,7 @@
                 rotatingWord.classList.add("is-flipping");
                 swapTimeoutId = window.setTimeout(() => {
                     swapTimeoutId = null;
-                    rotatingWord.textContent = ROTATING_WORDS[nextIndex];
+                    rotatingWordFace.textContent = ROTATING_WORDS[nextIndex];
                     currentIndex = nextIndex;
                 }, FLIP_MS / 2);
                 finishTimeoutId = window.setTimeout(() => {
@@ -398,7 +395,10 @@
             }
             document.addEventListener("visibilitychange", syncCycling);
             window.addEventListener("pagehide", stopCycling);
-            window.addEventListener("pageshow", syncCycling);
+            // Initial load is handled by syncCycling() below; only bfcache restores need a restart.
+            window.addEventListener("pageshow", (event) => {
+                if (event.persisted) syncCycling();
+            });
             syncCycling();
         })();
     </script>
