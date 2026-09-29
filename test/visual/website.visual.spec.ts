@@ -45,12 +45,8 @@ async function openPage(
 async function restoreHomepageBrandFont(page: Page): Promise<void> {
   await page.addStyleTag({
     content: `
-      .hero-title,
-      .hero-title *,
-      .rotating-word,
-      .rotating-word-sizer,
-      .button-word,
-      .tagline {
+      body,
+      body * {
         font-family: 'Bungee', cursive !important;
       }
     `,
