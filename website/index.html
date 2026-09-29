@@ -148,8 +148,10 @@
             background: #fbbf24;
             color: #000;
             border: none;
+            /* Match size-md nice button radius (0.5em) and vertical padding scale;
+               keep horizontal padding tighter so the hero chip stays word-sized. */
             border-radius: 0.5em;
-            padding: 0.08em 0.28em;
+            padding: 0.5em 0.55em;
             line-height: 1.1;
         }
 
@@ -171,6 +173,12 @@
         .rotating-word:focus-visible {
             outline: 2px solid #fbbf24;
             outline-offset: 4px;
+        }
+
+        /* Flip runs on an inner face so hover scale never fights the animation. */
+        .rotating-word-face {
+            display: block;
+            transform-origin: center;
         }
 
         .button-word {
@@ -201,11 +209,11 @@
                 opacity: 1;
                 transform: rotateX(0deg);
             }
-            49% {
+            45% {
                 opacity: 0;
                 transform: rotateX(90deg);
             }
-            50% {
+            55% {
                 opacity: 0;
                 transform: rotateX(-90deg);
             }
@@ -215,13 +223,12 @@
             }
         }
 
-        .rotating-word.is-flipping {
+        .rotating-word.is-flipping .rotating-word-face {
             animation: flip-word 300ms ease-in-out;
-            transform-origin: center;
         }
 
         @media (prefers-reduced-motion: reduce) {
-            .rotating-word.is-flipping {
+            .rotating-word.is-flipping .rotating-word-face {
                 animation: none;
             }
 
@@ -282,7 +289,7 @@
         <h1 class="hero-title">
             <span class="rotating-word-slot">
                 <span class="rotating-word-sizer" aria-hidden="true">Awesome</span>
-                <button type="button" id="rotatingWord" class="rotating-word">Nice</button>
+                <button type="button" id="rotatingWord" class="rotating-word"><span class="rotating-word-face">Nice</span></button>
             </span>
         </h1>
         <p class="button-word">button</p>
@@ -330,6 +337,8 @@
 
             const rotatingWord = document.getElementById("rotatingWord");
             if (!rotatingWord) return;
+            const rotatingWordFace =
+                rotatingWord.querySelector(".rotating-word-face") || rotatingWord;
 
             function getHomepageFingerprint() {
                 const data = [
@@ -346,9 +355,51 @@
                 return hash.toString(36);
             }
 
-            function refreshHomepageEmbed() {
-                const iframe = document.querySelector(".homepage-button iframe");
+            function homepageIframe() {
+                return document.querySelector(".homepage-button iframe");
+            }
+
+            // Prefer in-embed invoke on hosts the button allows — that updates
+            // the count with the normal pop animation instead of reloading.
+            function canUseNiceInvoke() {
+                const host = location.hostname;
+                return host === "nice.sbs" || host === "www.nice.sbs"
+                    || host === "localhost" || host === "127.0.0.1";
+            }
+
+            function waitForEmbedAck(timeoutMs) {
+                return new Promise((resolve) => {
+                    let settled = false;
+                    const finish = (value) => {
+                        if (settled) return;
+                        settled = true;
+                        window.clearTimeout(timer);
+                        window.removeEventListener("message", onMessage);
+                        resolve(value);
+                    };
+                    const onMessage = (event) => {
+                        if (event.origin !== EMBED_ORIGIN) return;
+                        const data = event.data;
+                        if (!data || data.buttonId !== HOMEPAGE_BUTTON_ID) return;
+                        if (data.type === "nice-clicked" || data.type === "nice-recorded") {
+                            finish(true);
+                        }
+                    };
+                    const timer = window.setTimeout(() => finish(false), timeoutMs);
+                    window.addEventListener("message", onMessage);
+                });
+            }
+
+            function softRefreshHomepageEmbed() {
+                const iframe = homepageIframe();
                 if (!iframe || !iframe.src) return;
+                const reveal = () => {
+                    iframe.style.opacity = "1";
+                };
+                iframe.style.transition = "opacity 120ms ease";
+                iframe.style.opacity = "0";
+                iframe.addEventListener("load", reveal, { once: true });
+                window.setTimeout(reveal, 800);
                 try {
                     const url = new URL(iframe.src);
                     url.searchParams.set("_nice", String(Date.now()));
@@ -362,9 +413,19 @@
                 if (homepageNiceInFlight) return;
                 homepageNiceInFlight = true;
                 try {
-                    // This button is domain-restricted to nice.sbs and clap-enabled.
-                    // Pages preview hosts are not nice.sbs, so send the canonical
-                    // homepage referrer the button was registered for.
+                    const iframe = homepageIframe();
+                    if (canUseNiceInvoke() && iframe && iframe.contentWindow) {
+                        const ack = waitForEmbedAck(450);
+                        iframe.contentWindow.postMessage(
+                            { type: "nice-invoke", buttonId: HOMEPAGE_BUTTON_ID },
+                            EMBED_ORIGIN
+                        );
+                        if (await ack) return;
+                    }
+
+                    // Preview hosts are not nice.sbs (domain-restricted), and
+                    // older production embeds may lack nice-invoke. Call multi
+                    // with the canonical homepage referrer, then sync the UI.
                     const res = await fetch(
                         EMBED_ORIGIN + "/api/v1/nice/" + HOMEPAGE_BUTTON_ID + "/multi",
                         {
@@ -379,7 +440,7 @@
                     );
                     const data = await res.json().catch(() => ({}));
                     if (res.ok && data.success) {
-                        refreshHomepageEmbed();
+                        softRefreshHomepageEmbed();
                     }
                 } catch (e) {
                     // Network failure — leave the hero click retryable.
@@ -422,7 +483,7 @@
                 rotatingWord.classList.add("is-flipping");
                 swapTimeoutId = window.setTimeout(() => {
                     swapTimeoutId = null;
-                    rotatingWord.textContent = ROTATING_WORDS[nextIndex];
+                    rotatingWordFace.textContent = ROTATING_WORDS[nextIndex];
                     currentIndex = nextIndex;
                 }, FLIP_MS / 2);
                 finishTimeoutId = window.setTimeout(() => {

@@ -265,9 +265,12 @@ test("homepage hero word invokes the embedded nice button", async ({ page }) => 
   await expectEmbedFrameReady(page, ".homepage-button iframe");
   const embedButton = page.frameLocator(".homepage-button iframe").locator("#niceBtn");
   await expect(embedButton).toHaveAttribute("aria-pressed", "false");
+  const srcBefore = await page.locator(".homepage-button iframe").getAttribute("src");
   await page.locator("#rotatingWord").click();
   await expect(embedButton).toHaveAttribute("aria-pressed", "true");
   await expect(embedButton).toHaveClass(/niced/);
+  // In-embed invoke should update the count without a janky iframe reload.
+  await expect(page.locator(".homepage-button iframe")).toHaveAttribute("src", srcBefore!);
 });
 
 test("homepage hero word nices when the embed lacks nice-invoke", async ({ page }) => {
@@ -314,13 +317,27 @@ test("homepage hero word keeps an early click for the embedded nice button", asy
 test("homepage hero word corner radius matches the normal nice button proportion", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await openPage(page, "/", viewports[0]);
-  const radiusEm = await page.locator("#rotatingWord").evaluate((el) => {
-    const radiusPx = parseFloat(getComputedStyle(el).borderRadius);
-    const fontSizePx = parseFloat(getComputedStyle(el).fontSize);
-    return radiusPx / fontSizePx;
+  const metrics = await page.locator("#rotatingWord").evaluate((el) => {
+    const style = getComputedStyle(el);
+    const fontSizePx = parseFloat(style.fontSize);
+    return {
+      radiusEm: parseFloat(style.borderRadius) / fontSizePx,
+      // size-md nice button: padding 6px 12px at 12px font → 0.5em / 1em
+      padBlockEm: (parseFloat(style.paddingTop) + parseFloat(style.paddingBottom)) / 2 / fontSizePx,
+      padInlineEm: (parseFloat(style.paddingLeft) + parseFloat(style.paddingRight)) / 2 / fontSizePx,
+    };
   });
-  // size-md nice button uses 6px radius at 12px font (0.5em).
-  expect(radiusEm).toBeCloseTo(0.5, 2);
+  expect(metrics.radiusEm).toBeCloseTo(0.5, 2);
+  // size-md vertical padding is 0.5em; horizontal stays tighter for the hero chip.
+  expect(metrics.padBlockEm).toBeCloseTo(0.5, 2);
+  expect(metrics.padInlineEm).toBeGreaterThan(0.4);
+  expect(metrics.padInlineEm).toBeLessThan(0.7);
+  // Radius should not dominate height (old 0.08em pad made this ~0.4 → pill).
+  const radiusOverHeight = await page.locator("#rotatingWord").evaluate((el) => {
+    const radiusPx = parseFloat(getComputedStyle(el).borderRadius);
+    return radiusPx / el.getBoundingClientRect().height;
+  });
+  expect(radiusOverHeight).toBeLessThan(0.3);
 });
 
 test("homepage cycles random words without repeats at mobile width", async ({ page }) => {
