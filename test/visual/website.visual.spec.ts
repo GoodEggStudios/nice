@@ -163,7 +163,8 @@ for (const viewport of viewports) {
     expect(Math.abs(layout.textCenter - layout.viewportCenter)).toBeLessThan(8);
     await expect(page.locator("#rotatingWord")).toHaveCSS("background-color", "rgb(251, 191, 36)");
     await expect(page.locator("#rotatingWord")).toHaveCSS("color", "rgb(0, 0, 0)");
-    await expect(page.locator("#rotatingWord")).not.toHaveCSS("cursor", "pointer");
+    await expect(page.locator("#rotatingWord")).toHaveCSS("cursor", "pointer");
+    await expect(page.locator("#rotatingWord")).toHaveCSS("user-select", "none");
     await expect(page.locator(".tagline")).toHaveText("Create your own feedback buttons");
     await expectEmbedFrameReady(page, ".homepage-button iframe");
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
@@ -258,46 +259,51 @@ for (const viewport of viewports) {
   });
 }
 
-test("homepage hero word does not proxy-click the embedded nice button", async ({ page }) => {
+test("homepage hero word is interactive without proxy-clicking the embed", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await openPage(page, "/", viewports[0], { multiNice: true });
   await expectEmbedFrameReady(page, ".homepage-button iframe");
   const embedButton = page.frameLocator(".homepage-button iframe").locator("#niceBtn");
   await expect(embedButton).toHaveAttribute("aria-pressed", "false");
 
-  // Decorative chip only — not a control that drives the embed.
-  await expect(page.locator("#rotatingWord")).toHaveJSProperty("tagName", "SPAN");
-  await expect(page.locator("#rotatingWord")).not.toHaveCSS("cursor", "pointer");
+  // Interactive chip for press feedback — does not drive the embed.
+  await expect(page.locator("#rotatingWord")).toHaveJSProperty("tagName", "BUTTON");
+  await expect(page.locator("#rotatingWord")).toHaveCSS("cursor", "pointer");
+  await expect(page.locator("#rotatingWord")).toHaveCSS("user-select", "none");
 
-  await page.locator("#rotatingWord").click({ force: true });
+  await page.locator("#rotatingWord").click();
   await expect(embedButton).toHaveAttribute("aria-pressed", "false");
   await expect(embedButton).not.toHaveClass(/niced/);
 });
 
-test("homepage hero word corner radius matches the normal nice button proportion", async ({ page }) => {
+test("homepage hero word chip scales like a large nice button, not a 0.5em-padded block", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await openPage(page, "/", viewports[0]);
   const metrics = await page.locator("#rotatingWord").evaluate((el) => {
     const style = getComputedStyle(el);
     const fontSizePx = parseFloat(style.fontSize);
+    const height = el.getBoundingClientRect().height;
+    const radiusPx = parseFloat(style.borderRadius);
     return {
-      radiusEm: parseFloat(style.borderRadius) / fontSizePx,
-      // size-md nice button: padding 6px 12px at 12px font → 0.5em / 1em
+      radiusEm: radiusPx / fontSizePx,
+      // Hero font is ~6× size-md; keep chrome tighter than literal 0.5em padding.
       padBlockEm: (parseFloat(style.paddingTop) + parseFloat(style.paddingBottom)) / 2 / fontSizePx,
       padInlineEm: (parseFloat(style.paddingLeft) + parseFloat(style.paddingRight)) / 2 / fontSizePx,
+      // size-md: radius 6 / height ~24 → ~0.25
+      radiusOverHeight: radiusPx / height,
+      heightOverFont: height / fontSizePx,
     };
   });
-  expect(metrics.radiusEm).toBeCloseTo(0.5, 2);
-  // size-md vertical padding is 0.5em; horizontal stays tighter for the hero chip.
-  expect(metrics.padBlockEm).toBeCloseTo(0.5, 2);
-  expect(metrics.padInlineEm).toBeGreaterThan(0.4);
-  expect(metrics.padInlineEm).toBeLessThan(0.7);
-  // Radius should not dominate height (old 0.08em pad made this ~0.4 → pill).
-  const radiusOverHeight = await page.locator("#rotatingWord").evaluate((el) => {
-    const radiusPx = parseFloat(getComputedStyle(el).borderRadius);
-    return radiusPx / el.getBoundingClientRect().height;
-  });
-  expect(radiusOverHeight).toBeLessThan(0.3);
+  expect(metrics.padBlockEm).toBeGreaterThan(0.1);
+  expect(metrics.padBlockEm).toBeLessThan(0.25);
+  expect(metrics.padInlineEm).toBeGreaterThan(0.25);
+  expect(metrics.padInlineEm).toBeLessThan(0.5);
+  expect(metrics.radiusEm).toBeGreaterThan(0.25);
+  expect(metrics.radiusEm).toBeLessThan(0.45);
+  expect(metrics.radiusOverHeight).toBeGreaterThan(0.2);
+  expect(metrics.radiusOverHeight).toBeLessThan(0.3);
+  // At hero size, total height should stay near one line of text — not ~2em from 0.5em pads.
+  expect(metrics.heightOverFont).toBeLessThan(1.6);
 });
 
 test("homepage cycles random words without repeats at mobile width", async ({ page }) => {

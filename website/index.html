@@ -148,11 +148,32 @@
             background: #fbbf24;
             color: #000;
             border: none;
-            /* Match size-md nice button radius (0.5em) and vertical padding scale;
-               keep horizontal padding tighter so the hero chip stays word-sized. */
-            border-radius: 0.5em;
-            padding: 0.5em 0.55em;
+            /* Hero font is much larger than size-md; keep the same radius/height
+               language (~0.25) with tighter em padding so the chip stays word-sized. */
+            border-radius: 0.35em;
+            padding: 0.15em 0.4em;
             line-height: 1.1;
+        }
+
+        .rotating-word {
+            cursor: pointer;
+            transition: transform 0.15s ease;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .rotating-word:hover {
+            transform: scale(1.05);
+        }
+
+        .rotating-word:active {
+            transform: scale(0.95);
+        }
+
+        .rotating-word:focus-visible {
+            outline: 2px solid #fbbf24;
+            outline-offset: 4px;
         }
 
         /* Flip runs on an inner face so the chip layout stays stable. */
@@ -211,6 +232,11 @@
             .rotating-word.is-flipping .rotating-word-face {
                 animation: none;
             }
+
+            .rotating-word:hover,
+            .rotating-word:active {
+                transform: none;
+            }
         }
 
         @media (max-width: 600px) {
@@ -264,7 +290,7 @@
         <h1 class="hero-title">
             <span class="rotating-word-slot">
                 <span class="rotating-word-sizer" aria-hidden="true">Awesome</span>
-                <span id="rotatingWord" class="rotating-word"><span class="rotating-word-face">Nice</span></span>
+                <button type="button" id="rotatingWord" class="rotating-word"><span class="rotating-word-face">Nice</span></button>
             </span>
         </h1>
         <p class="button-word">button</p>
