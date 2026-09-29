@@ -53,7 +53,7 @@ async function restoreHomepageBrandFont(page: Page): Promise<void> {
   });
   await page.evaluate(async () => {
     await document.fonts.load("72px 'Bungee'");
-    await document.fonts.load("18px 'Bungee'");
+    await document.fonts.load("14px 'Bungee'");
     await document.fonts.ready;
   });
 }
@@ -159,9 +159,9 @@ for (const viewport of viewports) {
     expect(declaredFonts.body?.fontFamily).toMatch(/Bungee/i);
     expect(declaredFonts[".hero-title"]?.fontFamily).toMatch(/Bungee/i);
     expect(declaredFonts[".button-word"]?.fontFamily).toMatch(/Bungee/i);
-    expect(declaredFonts[".button-word"]?.fontSize).toBe("18px");
+    expect(declaredFonts[".button-word"]?.fontSize).toBe("14px");
     expect(declaredFonts[".tagline"]?.fontFamily).toMatch(/Bungee/i);
-    expect(declaredFonts[".tagline"]?.fontSize).toBe("18px");
+    expect(declaredFonts[".tagline"]?.fontSize).toBe("14px");
     const layout = await page.evaluate(() => {
       const word = document.getElementById("rotatingWord")!;
       const range = document.createRange();
