@@ -45,16 +45,15 @@ async function openPage(
 async function restoreHomepageBrandFont(page: Page): Promise<void> {
   await page.addStyleTag({
     content: `
-      .hero-title,
-      .hero-title *,
-      .rotating-word,
-      .rotating-word-sizer {
+      body,
+      body * {
         font-family: 'Bungee', cursive !important;
       }
     `,
   });
   await page.evaluate(async () => {
     await document.fonts.load("72px 'Bungee'");
+    await document.fonts.load("14px 'Bungee'");
     await document.fonts.ready;
   });
 }
@@ -131,7 +130,8 @@ for (const viewport of viewports) {
     const buttonFont = await page.locator(".button-word").evaluate(el => getComputedStyle(el).fontFamily);
     const taglineFont = await page.locator(".tagline").evaluate(el => getComputedStyle(el).fontFamily);
     expect(buttonFont).toBe(taglineFont);
-    const heroTitleRuleFont = await page.evaluate(() => {
+    const declaredFonts = await page.evaluate(() => {
+      const out: Record<string, { fontFamily: string; fontSize: string }> = {};
       for (const sheet of Array.from(document.styleSheets)) {
         let rules: CSSRuleList;
         try {
@@ -140,14 +140,28 @@ for (const viewport of viewports) {
           continue;
         }
         for (const rule of Array.from(rules)) {
-          if (rule instanceof CSSStyleRule && rule.selectorText === ".hero-title") {
-            return rule.style.fontFamily;
+          if (!(rule instanceof CSSStyleRule)) continue;
+          if (
+            rule.selectorText === "body" ||
+            rule.selectorText === ".hero-title" ||
+            rule.selectorText === ".button-word" ||
+            rule.selectorText === ".tagline"
+          ) {
+            out[rule.selectorText] = {
+              fontFamily: rule.style.fontFamily,
+              fontSize: rule.style.fontSize,
+            };
           }
         }
       }
-      return "";
+      return out;
     });
-    expect(heroTitleRuleFont).toMatch(/Bungee/i);
+    expect(declaredFonts.body?.fontFamily).toMatch(/Bungee/i);
+    expect(declaredFonts[".hero-title"]?.fontFamily).toMatch(/Bungee/i);
+    expect(declaredFonts[".button-word"]?.fontFamily).toMatch(/Bungee/i);
+    expect(declaredFonts[".button-word"]?.fontSize).toBe("14px");
+    expect(declaredFonts[".tagline"]?.fontFamily).toMatch(/Bungee/i);
+    expect(declaredFonts[".tagline"]?.fontSize).toBe("14px");
     const layout = await page.evaluate(() => {
       const word = document.getElementById("rotatingWord")!;
       const range = document.createRange();
