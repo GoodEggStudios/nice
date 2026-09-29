@@ -282,6 +282,33 @@ test("homepage hero word keeps an early click for the embedded nice button", asy
   );
 });
 
+test("homepage hero word invokes after a missed iframe load race", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  // Delay MutationObserver callbacks so the embed iframe can finish loading before
+  // the homepage attaches its load listener — the cross-origin contentDocument
+  // shortcut never applies in production, so readiness must come from the embed.
+  await page.addInitScript(() => {
+    const OriginalObserver = window.MutationObserver;
+    window.MutationObserver = class extends OriginalObserver {
+      constructor(callback: MutationCallback) {
+        super((mutations, observer) => {
+          window.setTimeout(() => callback(mutations, observer), 300);
+        });
+      }
+    };
+  });
+  await installNiceApiMocks(page);
+  await page.setViewportSize(viewports[0]);
+  await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
+
+  await expectEmbedFrameReady(page, ".homepage-button iframe");
+  await page.locator("#rotatingWord").click();
+  await expect(page.frameLocator(".homepage-button iframe").locator("#niceBtn")).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+});
+
 test("homepage cycles random words without repeats at mobile width", async ({ page }) => {
   await openHomepageWithFrozenClock(page, viewports[1], { randomSamples: [0, 0] });
 
