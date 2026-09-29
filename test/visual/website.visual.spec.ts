@@ -146,6 +146,7 @@ for (const viewport of viewports) {
         for (const rule of Array.from(rules)) {
           if (!(rule instanceof CSSStyleRule)) continue;
           if (
+            rule.selectorText === "body" ||
             rule.selectorText === ".hero-title" ||
             rule.selectorText === ".button-word" ||
             rule.selectorText === ".tagline"
@@ -159,6 +160,7 @@ for (const viewport of viewports) {
       }
       return out;
     });
+    expect(declaredFonts.body?.fontFamily).toMatch(/Bungee/i);
     expect(declaredFonts[".hero-title"]?.fontFamily).toMatch(/Bungee/i);
     expect(declaredFonts[".button-word"]?.fontFamily).toMatch(/Bungee/i);
     expect(declaredFonts[".button-word"]?.fontSize).toBe("18px");
