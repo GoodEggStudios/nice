@@ -163,7 +163,7 @@ for (const viewport of viewports) {
     expect(Math.abs(layout.textCenter - layout.viewportCenter)).toBeLessThan(8);
     await expect(page.locator("#rotatingWord")).toHaveCSS("background-color", "rgb(251, 191, 36)");
     await expect(page.locator("#rotatingWord")).toHaveCSS("color", "rgb(0, 0, 0)");
-    await expect(page.locator("#rotatingWord")).toHaveCSS("cursor", "pointer");
+    await expect(page.locator("#rotatingWord")).not.toHaveCSS("cursor", "pointer");
     await expect(page.locator(".tagline")).toHaveText("Create your own feedback buttons");
     await expectEmbedFrameReady(page, ".homepage-button iframe");
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
@@ -258,60 +258,20 @@ for (const viewport of viewports) {
   });
 }
 
-test("homepage hero word invokes the embedded nice button", async ({ page }) => {
+test("homepage hero word does not proxy-click the embedded nice button", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  // Match production homepage button: clap mode + domain-restricted to nice.sbs.
   await openPage(page, "/", viewports[0], { multiNice: true });
   await expectEmbedFrameReady(page, ".homepage-button iframe");
   const embedButton = page.frameLocator(".homepage-button iframe").locator("#niceBtn");
   await expect(embedButton).toHaveAttribute("aria-pressed", "false");
-  const srcBefore = await page.locator(".homepage-button iframe").getAttribute("src");
-  await page.locator("#rotatingWord").click();
-  await expect(embedButton).toHaveAttribute("aria-pressed", "true");
-  await expect(embedButton).toHaveClass(/niced/);
-  // In-embed invoke should update the count without a janky iframe reload.
-  await expect(page.locator(".homepage-button iframe")).toHaveAttribute("src", srcBefore!);
-});
 
-test("homepage hero word nices when the embed lacks nice-invoke", async ({ page }) => {
-  // Production api.nice.sbs (v0.3.0) still serves embeds without a nice-invoke
-  // listener. Pages preview hosts only the website, so hero clicks must work
-  // without relying on that postMessage handler — including off nice.sbs.
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await installNiceApiMocks(page, { multiNice: true }, { omitNiceInvoke: true });
-  await page.setViewportSize(viewports[0]);
-  await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
-  await expectEmbedFrameReady(page, ".homepage-button iframe");
+  // Decorative chip only — not a control that drives the embed.
+  await expect(page.locator("#rotatingWord")).toHaveJSProperty("tagName", "SPAN");
+  await expect(page.locator("#rotatingWord")).not.toHaveCSS("cursor", "pointer");
 
-  const embedButton = page.frameLocator(".homepage-button iframe").locator("#niceBtn");
+  await page.locator("#rotatingWord").click({ force: true });
   await expect(embedButton).toHaveAttribute("aria-pressed", "false");
-
-  const multiRequest = page.waitForRequest(
-    (req) =>
-      req.method() === "POST" &&
-      /\/api\/v1\/nice\/[^/]+\/multi$/.test(req.url()),
-  );
-  await page.locator("#rotatingWord").click();
-  const request = await multiRequest;
-  expect(request.postDataJSON()).toMatchObject({
-    count: 1,
-    referrer: "https://nice.sbs/",
-  });
-  await expect(embedButton).toHaveAttribute("aria-pressed", "true");
-  await expect(embedButton).toHaveClass(/niced/);
-});
-
-test("homepage hero word keeps an early click for the embedded nice button", async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await installNiceApiMocks(page, { multiNice: true }, { omitNiceInvoke: true });
-  await page.setViewportSize(viewports[0]);
-  await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
-
-  await page.locator("#rotatingWord").click();
-  await expect(page.frameLocator(".homepage-button iframe").locator("#niceBtn")).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  await expect(embedButton).not.toHaveClass(/niced/);
 });
 
 test("homepage hero word corner radius matches the normal nice button proportion", async ({ page }) => {

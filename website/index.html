@@ -155,27 +155,7 @@
             line-height: 1.1;
         }
 
-        .rotating-word {
-            cursor: pointer;
-            transition: transform 0.15s ease;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .rotating-word:hover {
-            transform: scale(1.05);
-        }
-
-        .rotating-word:active {
-            transform: scale(0.95);
-        }
-
-        .rotating-word:focus-visible {
-            outline: 2px solid #fbbf24;
-            outline-offset: 4px;
-        }
-
-        /* Flip runs on an inner face so hover scale never fights the animation. */
+        /* Flip runs on an inner face so the chip layout stays stable. */
         .rotating-word-face {
             display: block;
             transform-origin: center;
@@ -231,11 +211,6 @@
             .rotating-word.is-flipping .rotating-word-face {
                 animation: none;
             }
-
-            .rotating-word:hover,
-            .rotating-word:active {
-                transform: none;
-            }
         }
 
         @media (max-width: 600px) {
@@ -289,7 +264,7 @@
         <h1 class="hero-title">
             <span class="rotating-word-slot">
                 <span class="rotating-word-sizer" aria-hidden="true">Awesome</span>
-                <button type="button" id="rotatingWord" class="rotating-word"><span class="rotating-word-face">Nice</span></button>
+                <span id="rotatingWord" class="rotating-word"><span class="rotating-word-face">Nice</span></span>
             </span>
         </h1>
         <p class="button-word">button</p>
@@ -305,8 +280,6 @@
 
     <script>
         (() => {
-            const HOMEPAGE_BUTTON_ID = "n_iSoPXADYGp0Q";
-            const EMBED_ORIGIN = "https://api.nice.sbs";
             const ROTATING_WORDS = [
                 "Nice",
                 "Awesome",
@@ -330,128 +303,11 @@
             let holdTimeoutId = null;
             let swapTimeoutId = null;
             let finishTimeoutId = null;
-            // Parent-page API invoke: production embeds may lack nice-invoke, and
-            // Cloudflare Pages previews are not on nice.sbs (domain-restricted).
-            // Call the public multi endpoint as the official homepage button.
-            let homepageNiceInFlight = false;
 
             const rotatingWord = document.getElementById("rotatingWord");
             if (!rotatingWord) return;
             const rotatingWordFace =
                 rotatingWord.querySelector(".rotating-word-face") || rotatingWord;
-
-            function getHomepageFingerprint() {
-                const data = [
-                    screen.width + "x" + screen.height,
-                    new Date().getTimezoneOffset(),
-                    navigator.language,
-                    navigator.userAgent.slice(0, 50),
-                ].join("|");
-                let hash = 0;
-                for (let i = 0; i < data.length; i++) {
-                    hash = ((hash << 5) - hash) + data.charCodeAt(i);
-                    hash = hash & hash;
-                }
-                return hash.toString(36);
-            }
-
-            function homepageIframe() {
-                return document.querySelector(".homepage-button iframe");
-            }
-
-            // Prefer in-embed invoke on hosts the button allows — that updates
-            // the count with the normal pop animation instead of reloading.
-            function canUseNiceInvoke() {
-                const host = location.hostname;
-                return host === "nice.sbs" || host === "www.nice.sbs"
-                    || host === "localhost" || host === "127.0.0.1";
-            }
-
-            function waitForEmbedAck(timeoutMs) {
-                return new Promise((resolve) => {
-                    let settled = false;
-                    const finish = (value) => {
-                        if (settled) return;
-                        settled = true;
-                        window.clearTimeout(timer);
-                        window.removeEventListener("message", onMessage);
-                        resolve(value);
-                    };
-                    const onMessage = (event) => {
-                        if (event.origin !== EMBED_ORIGIN) return;
-                        const data = event.data;
-                        if (!data || data.buttonId !== HOMEPAGE_BUTTON_ID) return;
-                        if (data.type === "nice-clicked" || data.type === "nice-recorded") {
-                            finish(true);
-                        }
-                    };
-                    const timer = window.setTimeout(() => finish(false), timeoutMs);
-                    window.addEventListener("message", onMessage);
-                });
-            }
-
-            function softRefreshHomepageEmbed() {
-                const iframe = homepageIframe();
-                if (!iframe || !iframe.src) return;
-                const reveal = () => {
-                    iframe.style.opacity = "1";
-                };
-                iframe.style.transition = "opacity 120ms ease";
-                iframe.style.opacity = "0";
-                iframe.addEventListener("load", reveal, { once: true });
-                window.setTimeout(reveal, 800);
-                try {
-                    const url = new URL(iframe.src);
-                    url.searchParams.set("_nice", String(Date.now()));
-                    iframe.src = url.toString();
-                } catch (e) {
-                    iframe.src = iframe.src;
-                }
-            }
-
-            async function invokeHomepageNice() {
-                if (homepageNiceInFlight) return;
-                homepageNiceInFlight = true;
-                try {
-                    const iframe = homepageIframe();
-                    if (canUseNiceInvoke() && iframe && iframe.contentWindow) {
-                        const ack = waitForEmbedAck(450);
-                        iframe.contentWindow.postMessage(
-                            { type: "nice-invoke", buttonId: HOMEPAGE_BUTTON_ID },
-                            EMBED_ORIGIN
-                        );
-                        if (await ack) return;
-                    }
-
-                    // Preview hosts are not nice.sbs (domain-restricted), and
-                    // older production embeds may lack nice-invoke. Call multi
-                    // with the canonical homepage referrer, then sync the UI.
-                    const res = await fetch(
-                        EMBED_ORIGIN + "/api/v1/nice/" + HOMEPAGE_BUTTON_ID + "/multi",
-                        {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                count: 1,
-                                fingerprint: getHomepageFingerprint(),
-                                referrer: "https://nice.sbs/",
-                            }),
-                        }
-                    );
-                    const data = await res.json().catch(() => ({}));
-                    if (res.ok && data.success) {
-                        softRefreshHomepageEmbed();
-                    }
-                } catch (e) {
-                    // Network failure — leave the hero click retryable.
-                } finally {
-                    homepageNiceInFlight = false;
-                }
-            }
-
-            rotatingWord.addEventListener("click", () => {
-                void invokeHomepageNice();
-            });
 
             if (ROTATING_WORDS.length < 2 || typeof window.matchMedia !== "function") return;
 

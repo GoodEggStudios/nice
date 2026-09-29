@@ -55,15 +55,9 @@ function appearanceOverridesFromBody(body: Record<string, unknown>): VisualAppea
   };
 }
 
-export interface NiceApiMockHandle {
-  /** When true, served embed HTML omits the nice-invoke message listener (production pre-release). */
-  omitNiceInvoke?: boolean;
-}
-
 export async function installNiceApiMocks(
   page: Page,
   options: NiceApiMockOptions = {},
-  handle: NiceApiMockHandle = {},
 ): Promise<void> {
   let count = options.count ?? 42;
   const multiNice = options.multiNice ?? false;
@@ -90,7 +84,7 @@ export async function installNiceApiMocks(
     const buttonId = url.pathname.split("/").pop() || VISUAL_BUTTON_ID;
     const theme = (url.searchParams.get("theme") ?? "light") as EmbedTheme;
     const size = (url.searchParams.get("size") ?? "md") as EmbedSize;
-    let body = buttonId === "demo"
+    const body = buttonId === "demo"
       ? renderDemoEmbedHtml({
           theme,
           size,
@@ -108,12 +102,6 @@ export async function installNiceApiMocks(
           pressedLabel: stats.pressed_label,
           appearance: stats,
         });
-    if (handle.omitNiceInvoke) {
-      body = body.replace(
-        /window\.addEventListener\('message',function\(event\)\{[\s\S]*?\}\);/,
-        "",
-      );
-    }
     await route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body });
   });
 
