@@ -148,7 +148,7 @@
             background: #fbbf24;
             color: #000;
             border: none;
-            border-radius: 0.12em;
+            border-radius: 0.5em;
             padding: 0.08em 0.28em;
             line-height: 1.1;
         }
@@ -323,41 +323,73 @@
             let holdTimeoutId = null;
             let swapTimeoutId = null;
             let finishTimeoutId = null;
-            let pendingHomepageNice = false;
-            let homepageIframe = null;
-            let homepageIframeReady = false;
+            // Parent-page API invoke: production embeds may lack nice-invoke, and
+            // Cloudflare Pages previews are not on nice.sbs (domain-restricted).
+            // Call the public multi endpoint as the official homepage button.
+            let homepageNiceInFlight = false;
 
             const rotatingWord = document.getElementById("rotatingWord");
             if (!rotatingWord) return;
 
-            function invokeHomepageNice() {
-                const iframe = homepageIframe || document.querySelector(".homepage-button iframe");
-                if (!iframe || !iframe.contentWindow || !homepageIframeReady) {
-                    pendingHomepageNice = true;
-                    return;
+            function getHomepageFingerprint() {
+                const data = [
+                    screen.width + "x" + screen.height,
+                    new Date().getTimezoneOffset(),
+                    navigator.language,
+                    navigator.userAgent.slice(0, 50),
+                ].join("|");
+                let hash = 0;
+                for (let i = 0; i < data.length; i++) {
+                    hash = ((hash << 5) - hash) + data.charCodeAt(i);
+                    hash = hash & hash;
                 }
-                homepageIframe = iframe;
-                iframe.contentWindow.postMessage(
-                    { type: "nice-invoke", buttonId: HOMEPAGE_BUTTON_ID },
-                    EMBED_ORIGIN
-                );
-                pendingHomepageNice = false;
+                return hash.toString(36);
             }
 
-            rotatingWord.addEventListener("click", invokeHomepageNice);
-
-            // Cross-origin embeds cannot use contentDocument, and waiting on iframe
-            // load via MutationObserver can miss the event. nice-resize from the
-            // embed proves its message listener is installed and ready to invoke.
-            window.addEventListener("message", (event) => {
-                if (event.origin !== EMBED_ORIGIN) return;
-                const data = event.data;
-                if (!data || data.type !== "nice-resize" || data.buttonId !== HOMEPAGE_BUTTON_ID) return;
+            function refreshHomepageEmbed() {
                 const iframe = document.querySelector(".homepage-button iframe");
-                if (!iframe || event.source !== iframe.contentWindow) return;
-                homepageIframe = iframe;
-                homepageIframeReady = true;
-                if (pendingHomepageNice) invokeHomepageNice();
+                if (!iframe || !iframe.src) return;
+                try {
+                    const url = new URL(iframe.src);
+                    url.searchParams.set("_nice", String(Date.now()));
+                    iframe.src = url.toString();
+                } catch (e) {
+                    iframe.src = iframe.src;
+                }
+            }
+
+            async function invokeHomepageNice() {
+                if (homepageNiceInFlight) return;
+                homepageNiceInFlight = true;
+                try {
+                    // This button is domain-restricted to nice.sbs and clap-enabled.
+                    // Pages preview hosts are not nice.sbs, so send the canonical
+                    // homepage referrer the button was registered for.
+                    const res = await fetch(
+                        EMBED_ORIGIN + "/api/v1/nice/" + HOMEPAGE_BUTTON_ID + "/multi",
+                        {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                count: 1,
+                                fingerprint: getHomepageFingerprint(),
+                                referrer: "https://nice.sbs/",
+                            }),
+                        }
+                    );
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok && data.success) {
+                        refreshHomepageEmbed();
+                    }
+                } catch (e) {
+                    // Network failure — leave the hero click retryable.
+                } finally {
+                    homepageNiceInFlight = false;
+                }
+            }
+
+            rotatingWord.addEventListener("click", () => {
+                void invokeHomepageNice();
             });
 
             if (ROTATING_WORDS.length < 2 || typeof window.matchMedia !== "function") return;

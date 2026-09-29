@@ -260,7 +260,8 @@ for (const viewport of viewports) {
 
 test("homepage hero word invokes the embedded nice button", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await openPage(page, "/", viewports[0]);
+  // Match production homepage button: clap mode + domain-restricted to nice.sbs.
+  await openPage(page, "/", viewports[0], { multiNice: true });
   await expectEmbedFrameReady(page, ".homepage-button iframe");
   const embedButton = page.frameLocator(".homepage-button iframe").locator("#niceBtn");
   await expect(embedButton).toHaveAttribute("aria-pressed", "false");
@@ -269,9 +270,37 @@ test("homepage hero word invokes the embedded nice button", async ({ page }) => 
   await expect(embedButton).toHaveClass(/niced/);
 });
 
+test("homepage hero word nices when the embed lacks nice-invoke", async ({ page }) => {
+  // Production api.nice.sbs (v0.3.0) still serves embeds without a nice-invoke
+  // listener. Pages preview hosts only the website, so hero clicks must work
+  // without relying on that postMessage handler — including off nice.sbs.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await installNiceApiMocks(page, { multiNice: true }, { omitNiceInvoke: true });
+  await page.setViewportSize(viewports[0]);
+  await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
+  await expectEmbedFrameReady(page, ".homepage-button iframe");
+
+  const embedButton = page.frameLocator(".homepage-button iframe").locator("#niceBtn");
+  await expect(embedButton).toHaveAttribute("aria-pressed", "false");
+
+  const multiRequest = page.waitForRequest(
+    (req) =>
+      req.method() === "POST" &&
+      /\/api\/v1\/nice\/[^/]+\/multi$/.test(req.url()),
+  );
+  await page.locator("#rotatingWord").click();
+  const request = await multiRequest;
+  expect(request.postDataJSON()).toMatchObject({
+    count: 1,
+    referrer: "https://nice.sbs/",
+  });
+  await expect(embedButton).toHaveAttribute("aria-pressed", "true");
+  await expect(embedButton).toHaveClass(/niced/);
+});
+
 test("homepage hero word keeps an early click for the embedded nice button", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await installNiceApiMocks(page);
+  await installNiceApiMocks(page, { multiNice: true }, { omitNiceInvoke: true });
   await page.setViewportSize(viewports[0]);
   await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
 
@@ -282,31 +311,16 @@ test("homepage hero word keeps an early click for the embedded nice button", asy
   );
 });
 
-test("homepage hero word invokes after a missed iframe load race", async ({ page }) => {
+test("homepage hero word corner radius matches the normal nice button proportion", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  // Delay MutationObserver callbacks so the embed iframe can finish loading before
-  // the homepage attaches its load listener — the cross-origin contentDocument
-  // shortcut never applies in production, so readiness must come from the embed.
-  await page.addInitScript(() => {
-    const OriginalObserver = window.MutationObserver;
-    window.MutationObserver = class extends OriginalObserver {
-      constructor(callback: MutationCallback) {
-        super((mutations, observer) => {
-          window.setTimeout(() => callback(mutations, observer), 300);
-        });
-      }
-    };
+  await openPage(page, "/", viewports[0]);
+  const radiusEm = await page.locator("#rotatingWord").evaluate((el) => {
+    const radiusPx = parseFloat(getComputedStyle(el).borderRadius);
+    const fontSizePx = parseFloat(getComputedStyle(el).fontSize);
+    return radiusPx / fontSizePx;
   });
-  await installNiceApiMocks(page);
-  await page.setViewportSize(viewports[0]);
-  await page.goto(`${server.origin}/`, { waitUntil: "domcontentloaded" });
-
-  await expectEmbedFrameReady(page, ".homepage-button iframe");
-  await page.locator("#rotatingWord").click();
-  await expect(page.frameLocator(".homepage-button iframe").locator("#niceBtn")).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  // size-md nice button uses 6px radius at 12px font (0.5em).
+  expect(radiusEm).toBeCloseTo(0.5, 2);
 });
 
 test("homepage cycles random words without repeats at mobile width", async ({ page }) => {
