@@ -386,7 +386,7 @@ const prevText=displayCountText(count);
 count++;hasNiced=true;pendingMultiCount++;
 const nextText=displayCountText(count);
 updateDisplay();playInteractionAnimation(IS_MULTI?150:300);
-if(COUNT_FORMAT==='compact'&&prevText===nextText){clapDelta=(clapDelta|0)+1;showClapDelta();}
+if(COUNT_FORMAT==='compact'&&prevText===nextText){clapDelta=clapDelta+1;showClapDelta();}
 clearTimeout(multiTimer);
 multiTimer=setTimeout(flushMultiNice,2000);
 return;
