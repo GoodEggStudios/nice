@@ -7,12 +7,25 @@ This repository builds Nice, an anonymous embeddable "nice" button service for w
 The Cloudflare Worker API lives under `src/`:
 
 - `src/index.ts` is the main Worker entry point and router.
-- `src/routes/` owns API, embed, badge, and button-management route handlers.
-- `src/lib/` contains shared utilities for IDs, hashing, formatting, rate limiting, URL handling, and badge rendering.
-- `src/embed/` contains the iframe/embed template and script assets served by the Worker.
+- `src/routes/` owns API, embed, badge, and button-management route handlers. The served `/embed.js` and iframe HTML are generated in `src/routes/embed.ts`.
+- `src/lib/` contains shared utilities for IDs, hashing, formatting, rate limiting, URL handling, badge rendering, button labels, appearance, and multi-nice batching.
+- `src/embed/` contains standalone embed files outside the current Worker response path.
 - `src/types/` contains Worker environment and shared TypeScript types.
 
 The public static site lives in `website/`. Active docs live in `docs/`; completed plans and historical specs live in `docs/archive/`. Bruno API collections live in `bruno/`.
+
+## Find The Change
+
+| Task | Start here | Check here |
+|---|---|---|
+| API paths and button storage | `src/index.ts`, `src/routes/buttons.ts`, `src/routes/nice.ts` | `test/e2e/`, `docs/API.md`, `website/docs.html`, `bruno/` |
+| Labels and saved appearance | `src/lib/button-labels.ts`, `src/lib/button-appearance.ts`, `src/routes/buttons.ts` | `test/lib/button-labels.test.ts`, `test/lib/button-appearance.test.ts`, `test/e2e/buttons.test.ts` |
+| Embed behavior, count display, and sizing | `src/routes/embed.ts`, `src/routes/embed-constants.ts`, `src/lib/multi-nice-batch.ts` | `test/e2e/embed.test.ts`, `test/lib/embed.test.ts`, `test/lib/embed-script.test.ts`, `test/visual/embed.visual.spec.ts` |
+| Create and manage pages | `website/create.html`, `website/stats.html` | `test/visual/create.visual.spec.ts`, `test/visual/website.visual.spec.ts` |
+| Homepage interactions | `website/index.html` | `test/lib/homepage-rotating-words.test.ts`, `test/visual/website.visual.spec.ts` |
+| Badges | `src/routes/badge.ts`, `src/lib/badge.ts` | `test/e2e/badge.test.ts`, `test/visual/badge.visual.spec.ts` |
+
+For visual tests, API mocks and sample data live in `test/visual/fixtures/`; committed images live in `test/visual/screenshots/`. Check the current branch against `origin/main` before deciding a feature is absent; recent changes to labels, appearance, and embed behavior may already be there.
 
 ## Development Commands
 
