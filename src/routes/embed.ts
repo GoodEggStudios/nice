@@ -128,7 +128,7 @@ const EMBED_HTML = `<!DOCTYPE html>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{background:transparent}
 body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-content:center;padding:2px}
-.nice-widget{display:inline-flex;align-items:center}
+.nice-widget{display:inline-flex;align-items:center;position:relative}
 .count-position-beside .nice-widget{gap:4px}
 .count-position-below .nice-widget{flex-direction:column;gap:4px}
 .nice-button{display:inline-flex;align-items:center;border:none;font-family:'Bungee',cursive;cursor:pointer;transition:all .15s ease;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap}
@@ -197,6 +197,14 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 
 .nice-text{transition:all .15s ease;white-space:nowrap}
 .nice-count{opacity:0.8}
+.nice-clap-delta{
+position:absolute;left:50%;bottom:0;transform:translate(-50%,100%);
+font-size:0.7em;line-height:1.1;opacity:0;pointer-events:none;
+white-space:nowrap;color:inherit;
+}
+.nice-clap-delta.is-visible{opacity:0.85}
+@keyframes clap-delta-fade{0%{opacity:0.85}70%{opacity:0.85}100%{opacity:0}}
+.nice-clap-delta.is-fading{animation:clap-delta-fade .9s ease forwards}
 
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
@@ -221,6 +229,7 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 <span class="nice-count nice-count-inside" id="niceCountInside" aria-live="polite"></span>
 </button>
 <span class="nice-count nice-count-outside" id="niceCountOutside" aria-live="polite"></span>
+<span class="nice-clap-delta" id="niceClapDelta" aria-live="off" aria-hidden="true"></span>
 </div>
 <script>
 (function(){'use strict';
@@ -238,6 +247,8 @@ const btn=document.getElementById('niceBtn');
 const textEl=document.getElementById('niceText');
 const countInsideEl=document.getElementById('niceCountInside');
 const countOutsideEl=document.getElementById('niceCountOutside');
+const deltaEl=document.getElementById('niceClapDelta');
+let clapDelta=0,clapDeltaTimer=null;
 let count=0,hasNiced=false,isLoading=false;
 let animationCleanup=null;
 // Get parent origin for secure postMessage; wildcard is used only when the
@@ -252,6 +263,24 @@ if(n>=1e3)return(n/1e3).toFixed(1).replace(/\\.0$/,'')+'K';
 return n.toString();
 }
 function reducedMotion(){return window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;}
+function displayCountText(n){return COUNT_FORMAT==='full'?n.toString():formatCount(n);}
+function clearClapDelta(){
+clapDelta=0;if(clapDeltaTimer){clearTimeout(clapDeltaTimer);clapDeltaTimer=null;}
+deltaEl.textContent='';deltaEl.classList.remove('is-visible','is-fading');
+deltaEl.setAttribute('aria-hidden','true');notifyResize();
+}
+function showClapDelta(){
+deltaEl.textContent='+'+clapDelta;
+deltaEl.classList.add('is-visible');deltaEl.classList.remove('is-fading');
+deltaEl.setAttribute('aria-hidden','false');
+if(clapDeltaTimer)clearTimeout(clapDeltaTimer);
+clapDeltaTimer=setTimeout(()=>{
+if(reducedMotion()){clearClapDelta();return;}
+deltaEl.classList.add('is-fading');
+clapDeltaTimer=setTimeout(clearClapDelta,900);
+},600);
+notifyResize();
+}
 function clearInteractionAnimation(){if(animationCleanup){animationCleanup();animationCleanup=null;}}
 function playInteractionAnimation(popDuration=300){
 clearInteractionAnimation();
@@ -325,7 +354,7 @@ const fp=encodeURIComponent(getFingerprint());
 const res=await fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID+'/count?fp='+fp);
 if(res.ok){
 const data=await res.json();
-count=data.count||0;
+count=Math.max(count,data.count||0);
 // Sync has_niced state from server (for gold colour on reload)
 if(data.has_niced&&!hasNiced){hasNiced=true;try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}
 updateDisplay();
@@ -346,15 +375,18 @@ fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID+'/multi',{method:'POST',headers:{'Conte
 .then(r=>r.json()).then(data=>{
 if(data.success){count=Math.max(count,data.count||0);if(parentOrigin){parent.postMessage({type:'nice-recorded',buttonId:BUTTON_ID,count:count},parentOrigin);}}
 updateDisplay();
-}).catch(e=>{count=Math.max(0,count-batch);updateDisplay();console.error('Nice: batch failed',e);})
+}).catch(e=>{count=Math.max(0,count-batch);clearClapDelta();updateDisplay();console.error('Nice: batch failed',e);})
 .finally(()=>{multiInFlight=false;if(pendingMultiCount>0){clearTimeout(multiTimer);multiTimer=setTimeout(flushMultiNice,0);}});
 }
 async function recordNice(){
 if(IS_MULTI){
 // Optimistic local update + debounced API call
 if(parentOrigin){parent.postMessage({type:'nice-clicked',buttonId:BUTTON_ID,count:count+1},parentOrigin);}
+const prevText=displayCountText(count);
 count++;hasNiced=true;pendingMultiCount++;
+const nextText=displayCountText(count);
 updateDisplay();playInteractionAnimation(IS_MULTI?150:300);
+if(COUNT_FORMAT==='compact'&&prevText===nextText){clapDelta=(clapDelta|0)+1;showClapDelta();}
 clearTimeout(multiTimer);
 multiTimer=setTimeout(flushMultiNice,2000);
 return;

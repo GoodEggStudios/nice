@@ -130,5 +130,22 @@ describe("multi-nice local batch reconcile", () => {
       expect(html).toContain("multiInFlight");
       expect(html).toMatch(/multiInFlight=false;if\(pendingMultiCount>0\)/);
     });
+
+    it("includes clap delta markup and stall feedback when compact shorthand is unchanged", () => {
+      const html = renderEmbedHtml({
+        apiBase: "https://api.nice.sbs",
+        buttonId: "n_abcdefgh",
+        theme: "light",
+        size: "md",
+        multiNice: true,
+      });
+
+      expect(html).toContain('id="niceClapDelta"');
+      expect(html).toContain("function showClapDelta");
+      expect(html).toContain("function clearClapDelta");
+      expect(html).toMatch(/COUNT_FORMAT==='compact'&&prevText===nextText/);
+      expect(html).toContain("clearClapDelta();updateDisplay()");
+      expect(html).toContain("count=Math.max(count,data.count||0)");
+    });
   });
 });

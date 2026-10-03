@@ -18,6 +18,11 @@ export {
   shouldFollowUpMultiNiceFlush,
   rollbackMultiNiceBatch,
 } from "./multi-nice-batch";
+export {
+  formatClapCountDelta,
+  shouldShowClapCountDelta,
+  nextClapCountDelta,
+} from "./clap-count-delta";
 
 // Button ID utilities
 export {
