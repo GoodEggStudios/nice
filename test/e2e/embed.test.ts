@@ -89,6 +89,9 @@ describe("Embed", () => {
       expect(darkBody).not.toContain(".theme-dark .nice-button.niced+.nice-count-outside");
       expect(monoDarkBody).toContain(".theme-mono-dark .nice-count-outside{color:#fff}");
       expect(monoDarkBody).not.toContain(".theme-mono-dark .nice-button.niced+.nice-count-outside");
+      // Clap +N sits outside the button; match outside-count colors so dark themes stay readable.
+      expect(darkBody).toContain(".theme-dark .nice-clap-delta{color:#f3f4f6}");
+      expect(monoDarkBody).toContain(".theme-mono-dark .nice-clap-delta{color:#fff}");
     });
 
     it("should apply size parameter", async () => {
