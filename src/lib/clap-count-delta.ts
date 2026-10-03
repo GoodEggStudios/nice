@@ -19,9 +19,6 @@ export function shouldShowClapCountDelta(opts: {
   );
 }
 
-export function nextClapCountDelta(
-  currentDelta: number,
-  clickAmount = 1,
-): number {
-  return Math.max(0, currentDelta) + Math.max(1, clickAmount);
+export function nextClapCountDelta(currentDelta: number): number {
+  return Math.max(0, currentDelta) + 1;
 }
