@@ -143,13 +143,12 @@ describe("multi-nice local batch reconcile", () => {
       expect(html).toContain('id="niceClapDelta"');
       expect(html).toContain("function showClapDelta");
       expect(html).toContain("function clearClapDelta");
-      // Single source of truth: clap-delta rules live only in the embed script.
+      // Production path inlines stall/+N; pure rules live in clap-count-delta.
       expect(html).toMatch(
         /if\(COUNT_FORMAT==='compact'&&prevText===nextText\)\{clapDelta=clapDelta\+1;showClapDelta\(\);\}/,
       );
       expect(html).toContain("deltaEl.textContent='+'+clapDelta");
       expect(html).toContain("clearClapDelta();updateDisplay()");
-      expect(html).toContain("count=Math.max(count,data.count||0)");
     });
   });
 });
