@@ -113,6 +113,9 @@ function renderLegacyEmbedScript(embedBase = DEFAULT_EMBED_BASE): string {
   return `(function(){'use strict';const EMBED_BASE='${renderedEmbedBase}';const SIZES=${sizes};function init(){document.querySelectorAll('script[data-button]').forEach(createEmbed)}function createEmbed(script){const buttonId=script.getAttribute('data-button');if(!buttonId)return;const theme=script.getAttribute('data-theme')||'light';const size=script.getAttribute('data-size')||'md';const multiAttr=script.getAttribute('data-multi');const isMultiAttr=multiAttr!==null&&multiAttr!=='false'&&multiAttr!=='0';const confettiAttr=script.getAttribute('data-confetti');const enableConfetti=confettiAttr!==null&&confettiAttr!=='false'&&confettiAttr!=='0';const dims=SIZES[size]||SIZES.md;const container=document.createElement('div');container.className='nice-embed';container.style.cssText='display:inline-block;vertical-align:middle;';const iframe=document.createElement('iframe');iframe.src=EMBED_BASE+'/embed/'+buttonId+'?theme='+encodeURIComponent(theme)+'&size='+encodeURIComponent(size)+(isMultiAttr?'&multi=1':'');iframe.style.cssText='background:transparent;border:none;overflow:hidden;width:'+dims.w+'px;height:'+dims.h+'px;display:block;color-scheme:normal;';iframe.setAttribute('scrolling','no');iframe.setAttribute('frameborder','0');iframe.setAttribute('allowtransparency','true');iframe.setAttribute('sandbox','allow-scripts allow-same-origin');iframe.setAttribute('title','Nice button');container.appendChild(iframe);script.parentNode.insertBefore(container,script.nextSibling);let isMultiNice=isMultiAttr,hasConfettied=false;function launchConfetti(){const canvas=document.createElement('canvas');canvas.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1000';canvas.width=window.innerWidth;canvas.height=window.innerHeight;document.body.appendChild(canvas);const ctx=canvas.getContext('2d');const rect=container.getBoundingClientRect();const originX=rect.left+rect.width/2;const originY=rect.top;const colors=['#fbbf24','#f59e0b','#fcd34d','#fde68a','#fff'];const particles=[];for(let i=0;i<35;i++){const angle=-Math.PI/2+(Math.random()-0.5)*1.2;const speed=6+Math.random()*8;particles.push({x:originX+(Math.random()-0.5)*rect.width*0.6,y:originY,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,w:4+Math.random()*5,h:3+Math.random()*6,color:colors[Math.floor(Math.random()*colors.length)],rotation:Math.random()*360,rotSpeed:(Math.random()-0.5)*12,opacity:1})}let frame=0;function tick(){ctx.clearRect(0,0,canvas.width,canvas.height);let alive=false;for(const p of particles){p.vy+=0.12;p.vx*=0.98;p.vy*=0.98;p.x+=p.vx;p.y+=p.vy;p.rotation+=p.rotSpeed;if(p.vy>0&&frame>20)p.opacity-=0.008;if(p.opacity<=0||p.y>canvas.height)continue;alive=true;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rotation*Math.PI/180);ctx.globalAlpha=p.opacity;ctx.fillStyle=p.color;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore()}frame++;if(alive&&frame<300)requestAnimationFrame(tick);else canvas.remove()}requestAnimationFrame(tick)}window.addEventListener('message',function(event){if(event.origin!==EMBED_BASE||event.source!==iframe.contentWindow)return;try{const data=event.data;if(data.type==='nice-resize'&&data.buttonId===buttonId){iframe.style.width=data.width+'px';iframe.style.height=data.height+'px'}if(enableConfetti&&data.buttonId===buttonId){if(data.type==='nice-clicked'){isMultiNice=true;launchConfetti()}else if(data.type==='nice-recorded'&&!isMultiNice&&!hasConfettied){hasConfettied=true;launchConfetti()}}}catch(e){}})}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}})();`;
 }
 
+// Keep CSS fade duration and the JS clear timeout in lockstep.
+const CLAP_DELTA_FADE_MS = 900;
+
 // Embed HTML template - Bungee font design with size variants
 const EMBED_HTML = `<!DOCTYPE html>
 <html lang="en">
@@ -128,7 +131,7 @@ const EMBED_HTML = `<!DOCTYPE html>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{background:transparent}
 body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-content:center;padding:2px}
-.nice-widget{display:inline-flex;align-items:center}
+.nice-widget{display:inline-flex;align-items:center;position:relative}
 .count-position-beside .nice-widget{gap:4px}
 .count-position-below .nice-widget{flex-direction:column;gap:4px}
 .nice-button{display:inline-flex;align-items:center;border:none;font-family:'Bungee',cursive;cursor:pointer;transition:all .15s ease;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap}
@@ -167,6 +170,7 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 .theme-dark .nice-button:hover{background:#4b5563}
 .theme-dark .nice-button.niced{background:#fbbf24;color:#000}
 .theme-dark .nice-count-outside{color:#f3f4f6}
+.theme-dark .nice-clap-delta{color:#f3f4f6}
 
 /* Theme: Minimal */
 .theme-minimal .nice-button{background:transparent;color:inherit;border:2px solid currentColor;opacity:.7}
@@ -178,12 +182,14 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 .theme-mono-dark .nice-button:hover{background:#111}
 .theme-mono-dark .nice-button.niced{background:#fff;color:#000;border-color:#fff}
 .theme-mono-dark .nice-count-outside{color:#fff}
+.theme-mono-dark .nice-clap-delta{color:#fff}
 
 /* Theme: Mono Light (black on white, inverts when niced) */
 .theme-mono-light .nice-button{background:#fff;color:#000;border:1px solid #ddd}
 .theme-mono-light .nice-button:hover{background:#f5f5f5}
 .theme-mono-light .nice-button.niced{background:#000;color:#fff;border-color:#000}
 .theme-mono-light .nice-count-outside{color:#000}
+.theme-mono-light .nice-clap-delta{color:#000}
 
 .shape-pill .nice-button{border-radius:9999px}
 .shape-square .nice-button{border-radius:0}
@@ -194,9 +200,19 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 .has-custom-colors .nice-button.disabled:hover{filter:none}
 .has-custom-colors .nice-count-outside{color:var(--nice-foreground)}
 .has-custom-colors .nice-button.niced+.nice-count-outside{color:var(--nice-pressed-foreground)}
+.has-custom-colors .nice-clap-delta{color:var(--nice-foreground)}
+.has-custom-colors .nice-button.niced~.nice-clap-delta{color:var(--nice-pressed-foreground)}
 
 .nice-text{transition:all .15s ease;white-space:nowrap}
 .nice-count{opacity:0.8}
+.nice-clap-delta{
+position:absolute;left:50%;bottom:0;transform:translate(-50%,100%);
+font-size:0.7em;line-height:1.1;opacity:0;pointer-events:none;
+white-space:nowrap;color:inherit;
+}
+.nice-clap-delta.is-visible{opacity:0.85}
+@keyframes clap-delta-fade{0%{opacity:0.85}70%{opacity:0.85}100%{opacity:0}}
+.nice-clap-delta.is-fading{animation:clap-delta-fade ${CLAP_DELTA_FADE_MS / 1000}s ease forwards}
 
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
@@ -221,6 +237,7 @@ body{font-family:'Bungee',cursive;display:flex;align-items:center;justify-conten
 <span class="nice-count nice-count-inside" id="niceCountInside" aria-live="polite"></span>
 </button>
 <span class="nice-count nice-count-outside" id="niceCountOutside" aria-live="polite"></span>
+<span class="nice-clap-delta" id="niceClapDelta" aria-live="off" aria-hidden="true"></span>
 </div>
 <script>
 (function(){'use strict';
@@ -238,6 +255,8 @@ const btn=document.getElementById('niceBtn');
 const textEl=document.getElementById('niceText');
 const countInsideEl=document.getElementById('niceCountInside');
 const countOutsideEl=document.getElementById('niceCountOutside');
+const deltaEl=document.getElementById('niceClapDelta');
+let clapDelta=0,clapDeltaTimer=null;
 let count=0,hasNiced=false,isLoading=false;
 let animationCleanup=null;
 // Get parent origin for secure postMessage; wildcard is used only when the
@@ -252,6 +271,24 @@ if(n>=1e3)return(n/1e3).toFixed(1).replace(/\\.0$/,'')+'K';
 return n.toString();
 }
 function reducedMotion(){return window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;}
+function displayCountText(n){return COUNT_FORMAT==='full'?n.toString():formatCount(n);}
+function clearClapDelta(){
+clapDelta=0;if(clapDeltaTimer){clearTimeout(clapDeltaTimer);clapDeltaTimer=null;}
+deltaEl.textContent='';deltaEl.classList.remove('is-visible','is-fading');
+deltaEl.setAttribute('aria-hidden','true');notifyResize();
+}
+function showClapDelta(){
+deltaEl.textContent='+'+clapDelta;
+deltaEl.classList.add('is-visible');deltaEl.classList.remove('is-fading');
+deltaEl.setAttribute('aria-hidden','false');
+if(clapDeltaTimer)clearTimeout(clapDeltaTimer);
+clapDeltaTimer=setTimeout(()=>{
+if(reducedMotion()){clearClapDelta();return;}
+deltaEl.classList.add('is-fading');
+clapDeltaTimer=setTimeout(clearClapDelta,${CLAP_DELTA_FADE_MS});
+},600);
+notifyResize();
+}
 function clearInteractionAnimation(){if(animationCleanup){animationCleanup();animationCleanup=null;}}
 function playInteractionAnimation(popDuration=300){
 clearInteractionAnimation();
@@ -286,7 +323,7 @@ window.setTimeout(()=>btn.classList.remove('shake'),300);
 }
 function updateCountDisplay(){
 const visible=COUNT_VISIBILITY==='always'||(COUNT_VISIBILITY==='nonzero'&&count>0);
-const text=COUNT_FORMAT==='full'?count.toString():formatCount(count);
+const text=displayCountText(count);
 const insideActive=visible&&COUNT_POSITION==='inside';
 const outsideActive=visible&&COUNT_POSITION!=='inside';
 countInsideEl.textContent=insideActive?text:'';
@@ -325,7 +362,7 @@ const fp=encodeURIComponent(getFingerprint());
 const res=await fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID+'/count?fp='+fp);
 if(res.ok){
 const data=await res.json();
-count=data.count||0;
+count=Math.max(count,data.count||0);
 // Sync has_niced state from server (for gold colour on reload)
 if(data.has_niced&&!hasNiced){hasNiced=true;try{localStorage.setItem(STORAGE_KEY,'1');}catch(e){}}
 updateDisplay();
@@ -346,15 +383,18 @@ fetch(API_BASE+'/api/v1/nice/'+BUTTON_ID+'/multi',{method:'POST',headers:{'Conte
 .then(r=>r.json()).then(data=>{
 if(data.success){count=Math.max(count,data.count||0);if(parentOrigin){parent.postMessage({type:'nice-recorded',buttonId:BUTTON_ID,count:count},parentOrigin);}}
 updateDisplay();
-}).catch(e=>{count=Math.max(0,count-batch);updateDisplay();console.error('Nice: batch failed',e);})
+}).catch(e=>{count=Math.max(0,count-batch);clearClapDelta();updateDisplay();console.error('Nice: batch failed',e);})
 .finally(()=>{multiInFlight=false;if(pendingMultiCount>0){clearTimeout(multiTimer);multiTimer=setTimeout(flushMultiNice,0);}});
 }
 async function recordNice(){
 if(IS_MULTI){
 // Optimistic local update + debounced API call
 if(parentOrigin){parent.postMessage({type:'nice-clicked',buttonId:BUTTON_ID,count:count+1},parentOrigin);}
+const prevText=displayCountText(count);
 count++;hasNiced=true;pendingMultiCount++;
+const nextText=displayCountText(count);
 updateDisplay();playInteractionAnimation(IS_MULTI?150:300);
+if(COUNT_FORMAT==='compact'&&prevText===nextText){clapDelta=clapDelta+1;showClapDelta();}
 clearTimeout(multiTimer);
 multiTimer=setTimeout(flushMultiNice,2000);
 return;

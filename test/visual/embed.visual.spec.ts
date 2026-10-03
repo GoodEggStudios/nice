@@ -1,10 +1,32 @@
 import { test, expect, type Page } from "@playwright/test";
-import { EMBED_DIMENSIONS, EMBED_SIZES, EMBED_THEMES, getEmbedInitialDimensions, type EmbedSize, type EmbedTheme } from "../../src/routes/embed";
+import { EMBED_DIMENSIONS, EMBED_FONT_SIZE, EMBED_SIZES, EMBED_THEMES, getEmbedInitialDimensions, type EmbedSize, type EmbedTheme } from "../../src/routes/embed";
 import type { EmbedAppearance } from "../../src/routes/embed-constants";
 import { normalizeVisualAppearance, VISUAL_BUTTON_ID, type VisualAppearanceOverrides } from "./fixtures/data";
 import { installNiceApiMocks } from "./fixtures/routes";
 import { screenshotPaddedLocator, stabilizePage, stableComponentClip } from "./fixtures/screenshot";
 import { startVisualServer, type VisualServer } from "./fixtures/server";
+
+/** Room under .nice-widget for absolutely positioned .nice-clap-delta (translateY 100%). */
+function clapDeltaOverflowHeight(size: EmbedSize): number {
+  return Math.ceil(EMBED_FONT_SIZE[size] * 0.7 * 1.2) + 4;
+}
+
+/** Keep ephemeral +N painted while Playwright finishes CSS animations on screenshot. */
+async function pinClapDeltaVisible(page: Page): Promise<void> {
+  await page.addStyleTag({
+    content: `
+      .nice-clap-delta.is-visible,
+      .nice-clap-delta.is-fading {
+        opacity: 0.85 !important;
+        animation: none !important;
+      }
+    `,
+  });
+  await page.locator("#niceClapDelta").evaluate((el) => {
+    el.classList.add("is-visible");
+    el.classList.remove("is-fading");
+  });
+}
 
 let server: VisualServer;
 
@@ -62,6 +84,13 @@ async function screenshotEmbedWidget(
     count?: number;
     appearance?: EmbedAppearance;
     padding?: number;
+    /** Extra clip height below the widget (e.g. ephemeral clap +N overflow). */
+    extraHeight?: number;
+    /**
+     * Opaque page fill for reviewable transparent-on-dark text (clap +N on dark themes).
+     * Disables omitBackground so the fill is captured in the PNG.
+     */
+    pageBackground?: string;
   } = {},
 ) {
   const size = options.size ?? "md";
@@ -73,12 +102,27 @@ async function screenshotEmbedWidget(
     options.count ?? 0,
     options.appearance,
   );
-  await page.setViewportSize({ width: dims.w + 16, height: dims.h + 16 });
-  const clip = stableComponentClip(dims, options.padding ?? 2);
-  await screenshotPaddedLocator(page.locator(".nice-widget"), name, options.padding ?? 2, {
-    minWidth: clip.width,
-    minHeight: clip.height,
-  });
+  const framed = {
+    w: dims.w,
+    h: dims.h + (options.extraHeight ?? 0),
+  };
+  await page.setViewportSize({ width: framed.w + 16, height: framed.h + 16 });
+  if (options.pageBackground) {
+    await page.addStyleTag({
+      content: `html, body { background: ${options.pageBackground} !important; }`,
+    });
+  }
+  const clip = stableComponentClip(framed, options.padding ?? 2);
+  await screenshotPaddedLocator(
+    page.locator(".nice-widget"),
+    name,
+    options.padding ?? 2,
+    {
+      minWidth: clip.width,
+      minHeight: clip.height,
+    },
+    { omitBackground: options.pageBackground ? false : true },
+  );
 }
 
 async function expectButtonFitsEmbed(page: Page): Promise<void> {
@@ -455,6 +499,85 @@ test.describe("embed appearance screenshots", () => {
       multiNice: true,
       count: 43,
       appearance,
+    });
+  });
+
+  test("clap compact stall shows ephemeral +1 under the button", async ({ page }) => {
+    const appearance = normalizeVisualAppearance({
+      count_visibility: "always",
+      count_position: "inside",
+      count_format: "compact",
+      animation: "none",
+    });
+    await openEmbed(page, "dark", "md", { multiNice: true, count: 1000, appearance });
+    await expect(page.locator("#niceCountInside")).toHaveText("1K");
+
+    await page.locator("#niceBtn").click();
+    await expect(page.locator("#niceCountInside")).toHaveText("1K");
+    await expect(page.locator("#niceClapDelta")).toHaveText("+1");
+    await expect(page.locator("#niceClapDelta")).toHaveClass(/is-visible/);
+    await pinClapDeltaVisible(page);
+
+    await screenshotEmbedWidget(page, "embed/appearance/clap-delta-1k-plus-1.png", {
+      multiNice: true,
+      count: 1001,
+      appearance,
+      extraHeight: clapDeltaOverflowHeight("md"),
+      // Dark fill so theme-dark clap +N (#f3f4f6) is visible in review.
+      pageBackground: "#111827",
+    });
+  });
+
+  test("clap compact stall burst accumulates +N under the button", async ({ page }) => {
+    const appearance = normalizeVisualAppearance({
+      count_visibility: "always",
+      count_position: "inside",
+      count_format: "compact",
+      animation: "none",
+    });
+    await openEmbed(page, "dark", "md", { multiNice: true, count: 1000, appearance });
+    await expect(page.locator("#niceCountInside")).toHaveText("1K");
+
+    const button = page.locator("#niceBtn");
+    await button.click();
+    await button.click();
+    await button.click();
+    await expect(page.locator("#niceCountInside")).toHaveText("1K");
+    await expect(page.locator("#niceClapDelta")).toHaveText("+3");
+    await expect(page.locator("#niceClapDelta")).toHaveClass(/is-visible/);
+    await pinClapDeltaVisible(page);
+
+    await screenshotEmbedWidget(page, "embed/appearance/clap-delta-1k-plus-3.png", {
+      multiNice: true,
+      count: 1003,
+      appearance,
+      extraHeight: clapDeltaOverflowHeight("md"),
+      pageBackground: "#111827",
+    });
+  });
+
+  test("clap compact stall delta still shows with count below", async ({ page }) => {
+    const appearance = normalizeVisualAppearance({
+      count_visibility: "always",
+      count_position: "below",
+      count_format: "compact",
+      animation: "none",
+    });
+    await openEmbed(page, "dark", "md", { multiNice: true, count: 1000, appearance });
+    await expect(page.locator("#niceCountOutside")).toHaveText("1K");
+
+    await page.locator("#niceBtn").click();
+    await expect(page.locator("#niceCountOutside")).toHaveText("1K");
+    await expect(page.locator("#niceClapDelta")).toHaveText("+1");
+    await expect(page.locator("#niceClapDelta")).toHaveClass(/is-visible/);
+    await pinClapDeltaVisible(page);
+
+    await screenshotEmbedWidget(page, "embed/appearance/clap-delta-1k-count-below.png", {
+      multiNice: true,
+      count: 1001,
+      appearance,
+      extraHeight: clapDeltaOverflowHeight("md"),
+      pageBackground: "#111827",
     });
   });
 });

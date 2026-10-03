@@ -203,6 +203,7 @@ export async function screenshotPaddedLocator(
   name: string,
   padding = 2,
   bounds: ComponentClipBounds = {},
+  options: { omitBackground?: boolean } = {},
 ): Promise<void> {
   const page = locator.page();
   const clip = await prepareCenteredComponentClip(page, locator, padding, bounds);
@@ -211,6 +212,6 @@ export async function screenshotPaddedLocator(
     animations: "disabled",
     clip,
     scale: "css",
-    omitBackground: true,
+    omitBackground: options.omitBackground ?? true,
   });
 }

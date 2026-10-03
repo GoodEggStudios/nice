@@ -127,8 +127,40 @@ describe("multi-nice local batch reconcile", () => {
       });
 
       expect(html).toContain("count=Math.max(count,data.count||0)");
+      // fetchCount and flushMultiNice both must Math.max; a lone flush match is not enough.
+      expect(
+        (html.match(/count=Math\.max\(count,data\.count\|\|0\)/g) ?? []).length,
+      ).toBeGreaterThanOrEqual(2);
+      // Unique to fetchCount (flush uses the same Math.max inside if(data.success)).
+      expect(html).toContain(
+        "count=Math.max(count,data.count||0);\n// Sync has_niced state from server",
+      );
       expect(html).toContain("multiInFlight");
       expect(html).toMatch(/multiInFlight=false;if\(pendingMultiCount>0\)/);
+    });
+
+    it("includes clap delta markup and stall feedback when compact shorthand is unchanged", () => {
+      const html = renderEmbedHtml({
+        apiBase: "https://api.nice.sbs",
+        buttonId: "n_abcdefgh",
+        theme: "light",
+        size: "md",
+        multiNice: true,
+      });
+
+      expect(html).toContain('id="niceClapDelta"');
+      expect(html).toContain("function showClapDelta");
+      expect(html).toContain("function clearClapDelta");
+      // Production path inlines stall/+N; pure rules live in clap-count-delta.
+      expect(html).toMatch(
+        /if\(COUNT_FORMAT==='compact'&&prevText===nextText\)\{clapDelta=clapDelta\+1;showClapDelta\(\);\}/,
+      );
+      expect(html).toContain("deltaEl.textContent='+'+clapDelta");
+      expect(html).toContain("clearClapDelta();updateDisplay()");
+      expect(html).toContain("count=Math.max(count,data.count||0)");
+      expect(html).toContain(
+        "count=Math.max(count,data.count||0);\n// Sync has_niced state from server",
+      );
     });
   });
 });
