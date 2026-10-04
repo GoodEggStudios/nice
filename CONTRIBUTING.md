@@ -6,7 +6,7 @@ Thanks for your interest in contributing to Nice! 🎉
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18+)
+- [Node.js](https://nodejs.org/) (v22+; required by the installed Wrangler version)
 - [Wrangler](https://developers.cloudflare.com/workers/wrangler/) (Cloudflare Workers CLI)
 
 ### Setup
@@ -32,8 +32,10 @@ npm test              # Watch mode
 npm test -- --run     # Single run
 npm run test:unit     # Unit tests only
 npm run test:e2e      # E2E tests only
-npm run test:coverage # With coverage report
-npm run typecheck     # TypeScript check
+npm run test:coverage   # With coverage report
+npm run typecheck       # TypeScript check
+npm run typecheck:visual # Visual test TypeScript check
+npm run test:visual     # Playwright screenshots and interactions
 ```
 
 ## Project Structure
@@ -48,25 +50,26 @@ src/
 │   ├── buttons.ts    # Button management (create, stats, delete)
 │   ├── embed.ts      # Embed script & page
 │   └── badge.ts      # SVG badge generation
-├── embed/            # Embed HTML template & JS
-├── pages/            # Page renderers (home, create, docs)
-└── assets/           # Static assets (favicon)
+└── embed/            # Standalone embed files outside the Worker route
 
-website/              # Static site (nice.sbs)
+website/              # Static site pages and assets (nice.sbs)
 bruno/                # API collection (Bruno)
 test/
 ├── lib/              # Unit tests for src/lib utilities
-└── e2e/              # End-to-end API route tests
+├── e2e/              # Worker API route tests
+└── visual/           # Playwright tests, fixtures, and committed screenshots
 docs/                 # Active docs (API, deploy, security)
-├── archive/          # Completed plans and historical specs
+└── archive/          # Completed plans and historical specs
 ```
+
+For a task-to-file map, see [AGENTS.md](AGENTS.md#find-the-change). The Worker routes in `src/index.ts` are the source of truth for API paths; the served embed is generated in `src/routes/embed.ts`.
 
 ## Making Changes
 
 1. **Fork** the repository
 2. **Create a branch** from `main`: `git checkout -b feat/your-feature`
 3. **Make your changes** with clear, conventional commits
-4. **Run tests**: `npm test -- --run && npm run typecheck`
+4. **Run checks**: `npm test -- --run && npm run typecheck`; for visual or embed changes, also run `npm run typecheck:visual && npm run test:visual`
 5. **Open a PR** against `main`
 
 ### Commit Style
