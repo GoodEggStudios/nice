@@ -150,8 +150,11 @@ Full API docs at **[nice.sbs/docs](https://nice.sbs/docs)** or in [docs/API.md](
 |---|---|
 | `POST /api/v1/buttons` | Create a button |
 | `POST /api/v1/nice/:id` | Record a nice |
-| `GET /api/v1/nice/:id` | Get nice count |
+| `POST /api/v1/nice/:id/multi` | Record a batch of nices for a multi-nice button |
+| `GET /api/v1/nice/:id/count` | Get nice count |
 | `GET /api/v1/buttons/stats/:private_id` | Button stats |
+| `PATCH /api/v1/buttons/:private_id` | Update button settings |
+| `POST /api/v1/buttons/:private_id/nice` | Record a nice with the private ID |
 | `GET /badge/:id.svg` | Markdown badge |
 | `DELETE /api/v1/buttons/:private_id` | Delete button |
 
