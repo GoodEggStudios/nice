@@ -3,6 +3,8 @@ import {
   checkCreateRateLimit,
   checkRateLimit,
   createRateLimitResponse,
+  rateLimitResponse,
+  validatePowSolution,
 } from "../../src/lib/ratelimit";
 
 // Mock KV namespace
@@ -226,6 +228,66 @@ describe("Rate Limiting", () => {
 
       expect(body.code).toBe("DAILY_LIMIT");
       expect(body.limits.daily.remaining).toBe(0);
+    });
+  });
+
+  describe("validatePowSolution", () => {
+    it("accepts a solution when proof-of-work is not active", async () => {
+      const result = await validatePowSolution(
+        mockKV as unknown as KVNamespace,
+        "n_button",
+        { challenge: "unused", nonce: "unused" }
+      );
+
+      expect(result).toEqual({ valid: true });
+    });
+
+    it("rejects a missing or expired challenge", async () => {
+      mockKV._store.set(
+        "pow:n_button",
+        JSON.stringify({
+          active: true,
+          difficulty: 16,
+          since: "2026-02-18T12:00:00.000Z",
+          lastCheck: "2026-02-18T12:00:00.000Z",
+          lowTrafficMinutes: 0,
+        })
+      );
+
+      const result = await validatePowSolution(
+        mockKV as unknown as KVNamespace,
+        "n_button",
+        { challenge: "expired", nonce: "0" }
+      );
+
+      expect(result).toEqual({
+        valid: false,
+        error: "Invalid or expired challenge",
+      });
+    });
+  });
+
+  describe("rateLimitResponse", () => {
+    it("serializes a proof-of-work challenge with the expected response contract", async () => {
+      const challenge = {
+        challenge: "abc123",
+        difficulty: 16,
+        expires_at: "2026-02-18T12:01:00.000Z",
+      };
+
+      const response = rateLimitResponse({
+        allowed: false,
+        reason: "pow_required",
+        powChallenge: challenge,
+      });
+
+      expect(response.status).toBe(429);
+      expect(response.headers.get("Content-Type")).toBe("application/json");
+      await expect(response.json()).resolves.toEqual({
+        error: "Proof of work required",
+        code: "POW_REQUIRED",
+        pow_challenge: challenge,
+      });
     });
   });
 });
